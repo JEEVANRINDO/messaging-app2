@@ -67,6 +67,15 @@
             display: inline-block;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Ringing Animation */
+        .ring-pulse {
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: ringPulse 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
+        }
+        @keyframes ringPulse {
+            to { box-shadow: 0 0 0 20px rgba(34, 197, 94, 0); }
+        }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -218,7 +227,7 @@
     <!-- INCOMING CALL MODAL -->
     <div id="incoming-call-modal" class="hidden fixed inset-0 z-[80] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 text-center max-w-sm w-full animate-bounce-slight">
-            <div class="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <div class="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 ring-pulse">
                 <i data-lucide="phone-incoming" class="w-8 h-8 text-green-400"></i>
             </div>
             <h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3>
@@ -299,7 +308,6 @@
             },
             deriveSharedKey: async (privateKey, publicKey) => window.crypto.subtle.deriveKey({ name: "ECDH", public: publicKey }, privateKey, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]),
             
-            // Text uses Base64 wrapper
             encryptText: async (text, sharedKey) => {
                 const encoder = new TextEncoder();
                 const data = encoder.encode(text);
@@ -313,7 +321,6 @@
                 return new TextDecoder().decode(decryptedBuffer);
             },
             
-            // Binary uses Raw Buffers
             encryptBuffer: async (bufferData, sharedKey) => {
                 const iv = window.crypto.getRandomValues(new Uint8Array(12));
                 const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, sharedKey, bufferData);
@@ -395,17 +402,14 @@
         function initializePeer(customId = null) {
             const id = customId || "ghost-" + Math.floor(Math.random() * 1000000);
             
-            // Robust ICE Configuration for WAN connectivity
             peer = new Peer(id, {
-                pingInterval: 5000, // Keep-alive for mobile connections
-                debug: 1, // Error logging
+                pingInterval: 5000, 
+                debug: 1, 
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
                         { urls: 'stun:stun1.l.google.com:19302' },
                         { urls: 'stun:stun2.l.google.com:19302' },
-                        { urls: 'stun:stun3.l.google.com:19302' },
-                        { urls: 'stun:stun4.l.google.com:19302' },
                         { urls: 'stun:global.stun.twilio.com:3478' }
                     ]
                 }
@@ -417,11 +421,9 @@
                 document.getElementById('status-indicator').classList.replace('bg-blue-500', 'bg-green-500');
                 document.getElementById('status-indicator').classList.add('animate-pulse');
                 
-                // Hide onboarding
                 document.getElementById('onboarding-screen').classList.add('hidden');
                 document.getElementById('app-layout').classList.remove('hidden');
                 
-                // Reset Loading States
                 resetLoadingStates();
             });
 
@@ -430,7 +432,7 @@
             
             peer.on('error', (err) => {
                 console.error("PeerJS Error:", err);
-                resetLoadingStates(); // Always reset on error
+                resetLoadingStates(); 
                 
                 const overlay = document.getElementById('video-overlay');
                 if (!overlay.classList.contains('hidden')) {
@@ -438,7 +440,7 @@
                 }
                 
                 if (err.type === 'peer-unavailable' && document.activeElement.id === 'input-join-id') {
-                    alert("Could not connect. Peer might be offline or on a different network without NAT traversal.");
+                    alert("Could not connect. Peer might be offline.");
                 } else if (err.type === 'network') {
                     document.getElementById('status-indicator').classList.replace('bg-green-500', 'bg-red-500');
                 }
@@ -446,19 +448,16 @@
             
             peer.on('disconnected', () => {
                 document.getElementById('status-indicator').classList.replace('bg-green-500', 'bg-red-500');
-                // Aggressive reconnect for mobile
                 setTimeout(() => { if (peer && !peer.destroyed) peer.reconnect(); }, 2000);
             });
         }
 
         function resetLoadingStates() {
-            // Reset Host Button
             document.getElementById('icon-host').classList.remove('hidden');
             document.getElementById('loader-host').classList.add('hidden');
             document.getElementById('text-host').innerText = "Host Node";
             document.getElementById('btn-host').disabled = false;
 
-            // Reset Join Button
             document.getElementById('text-join').innerText = "Join Network";
             document.getElementById('loader-join').classList.add('hidden');
             document.getElementById('btn-join').disabled = false;
@@ -467,13 +466,10 @@
         function ensurePeerReady() {
             return new Promise((resolve, reject) => {
                 if (!peer) { initializePeer(); }
-                
-                // Quick check
-                if (peer && peer.open) { resolve(peer); return; }
-                if (peer && peer.disconnected) { peer.reconnect(); }
+                if (peer.open) { resolve(peer); return; }
+                if (peer.disconnected) { peer.reconnect(); }
 
                 let attempts = 0;
-                // Wait up to 15 seconds (150 * 100ms) for mobile networks
                 const checkInterval = setInterval(() => {
                     attempts++;
                     if (peer && peer.open) { clearInterval(checkInterval); resolve(peer); }
@@ -487,7 +483,6 @@
         function handleIncomingConnection(conn) { setupConnection(conn); }
 
         async function connectToPeer(targetId) {
-            // UI Loading State
             const btn = document.getElementById('btn-join');
             btn.disabled = true;
             document.getElementById('text-join').innerText = "Connecting...";
@@ -497,7 +492,6 @@
                 await ensurePeerReady();
                 const conn = peer.connect(targetId, { reliable: true });
                 setupConnection(conn);
-                // We don't reset button here immediately, we wait for 'open' or handshake
             } catch(e) { 
                 alert("Connection failed: " + e); 
                 resetLoadingStates();
@@ -507,7 +501,7 @@
         function setupConnection(conn) {
             conn.on('open', async () => {
                 conn.send({ type: 'handshake', publicKey: myIdentity.pubKeyString });
-                resetLoadingStates(); // Connection successful UI update
+                resetLoadingStates();
             });
             conn.on('data', (data) => handleData(conn.peer, data, conn));
             conn.on('close', () => {
@@ -523,12 +517,17 @@
         }
 
         async function handleData(senderId, payload, conn) {
-            if (payload instanceof ArrayBuffer) {
+            // FIXED: Handle both raw ArrayBuffer and Uint8Array (common browser quirk)
+            if (payload instanceof ArrayBuffer || payload instanceof Uint8Array) {
+                // Normalize to ArrayBuffer
+                const buffer = payload instanceof Uint8Array ? payload.buffer : payload;
+                
                 const meta = pendingFileMeta[senderId];
                 if (!meta) return console.warn("Received bytes without metadata");
                 const key = sharedKeys[senderId];
                 if (!key) return;
-                const decryptedBuffer = await CryptoLayer.decryptBuffer(payload, key);
+                
+                const decryptedBuffer = await CryptoLayer.decryptBuffer(buffer, key);
                 if (typeof decryptedBuffer === 'string') {
                     addMessage(senderId, "Failed to decrypt file.", 'system');
                     delete pendingFileMeta[senderId];
@@ -550,7 +549,6 @@
                 if(!messages[senderId]) messages[senderId] = [];
                 addMessage(senderId, "Secure Handshake Complete.", 'system');
                 renderChatList();
-                // Ensure we select this chat if we just joined it
                 if (!activeChatId) selectChat(senderId);
                 return;
             }
@@ -628,7 +626,6 @@
             document.getElementById('chat-title').innerText = pid;
             document.getElementById('chat-avatar').innerText = pid.substring(0, 2).toUpperCase();
             
-            // Mobile Navigation Logic
             if(window.innerWidth < 768) {
                 document.getElementById('sidebar-panel').classList.add('hidden');
                 document.getElementById('chat-area').classList.remove('hidden');
@@ -743,15 +740,14 @@
             try {
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
-                    if (file.size > 20 * 1024 * 1024) { alert("File > 20MB."); return; }
+                    if (file.size > 50 * 1024 * 1024) { alert("File > 50MB."); return; } // Increased limit
                     
                     document.getElementById('upload-progress').classList.remove('hidden');
                     
                     const arrayBuffer = await file.arrayBuffer();
-                    // Encrypt Buffer (No Base64)
                     const encryptedBuffer = await CryptoLayer.encryptBuffer(arrayBuffer, key);
                     
-                    // 1. Send Metadata (Small JSON)
+                    // 1. Send Metadata 
                     conn.send({ 
                         type: 'file-meta', 
                         name: file.name, 
@@ -759,16 +755,18 @@
                         mime: file.type
                     });
                     
-                    // 2. Send Raw Binary (Fast!)
-                    // We check data channel buffer to prevent overflow, but for simple MVP we send
-                    conn.send(encryptedBuffer); 
+                    // 2. Send Binary Buffer (with small delay to guarantee order)
+                    setTimeout(() => {
+                        conn.send(encryptedBuffer); 
+                        
+                        const blob = new Blob([arrayBuffer], { type: file.type });
+                        const url = URL.createObjectURL(blob);
+                        addMessage(activeChatId, "File Sent", 'sent-file', { name: file.name, size: file.size, mime: file.type, url: url });
+                        
+                        document.getElementById('upload-progress').classList.add('hidden');
+                        clearFileSelection();
+                    }, 50); // 50ms safety buffer
                     
-                    const blob = new Blob([arrayBuffer], { type: file.type });
-                    const url = URL.createObjectURL(blob);
-                    addMessage(activeChatId, "File Sent", 'sent-file', { name: file.name, size: file.size, mime: file.type, url: url });
-                    
-                    document.getElementById('upload-progress').classList.add('hidden');
-                    clearFileSelection();
                 } else {
                     const text = textInput.value.trim();
                     if(!text) return;
@@ -805,7 +803,6 @@
             document.getElementById('icon-host').classList.add('hidden');
             document.getElementById('loader-host').classList.remove('hidden');
             document.getElementById('text-host').innerText = "Initializing...";
-            
             initializePeer("ghost-" + Math.floor(Math.random() * 1000000));
         };
         
