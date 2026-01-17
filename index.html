@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GhostMesh | Secure P2P Messenger</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PeerJS -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: #fff;
+            overflow: hidden; 
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #18181b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46; 
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b; 
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        #video-overlay {
+            transition: opacity 0.3s ease;
+        }
+
+        .animate-bounce-slight {
+            animation: bounceSlight 2s infinite;
+        }
+
+        @keyframes bounceSlight {
+            0%, 100% { transform: translateY(-5%); }
+            50% { transform: translateY(0); }
+        }
+        
+        /* Message bubble max width constraint */
+        .bubble-constraint {
+            max-width: 85%;
+        }
+        @media (min-width: 768px) {
+            .bubble-constraint {
+                max-width: 65%;
+            }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col md:flex-row">
+
+    <!-- ONBOARDING SCREEN -->
+    <div id="onboarding-screen" class="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <div class="relative mb-8">
+            <div class="absolute -inset-1 bg-green-500 rounded-full opacity-20 blur-xl animate-pulse"></div>
+            <i data-lucide="shield" class="w-24 h-24 text-green-500 relative z-10"></i>
+        </div>
+        
+        <h1 class="text-4xl font-bold tracking-tighter mb-2">GhostMesh</h1>
+        <p class="text-gray-400 max-w-md mx-auto mb-8">
+            Serverless. Metadata-free. End-to-End Encrypted.<br>
+            You own the infrastructure.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg">
+            <button id="btn-host" class="group relative flex flex-col items-center p-6 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer">
+                <i data-lucide="wifi" class="w-8 h-8 mb-3 text-green-400"></i>
+                <span class="text-lg font-semibold text-white">Host Node</span>
+                <span class="text-xs text-gray-500 mt-1">Initialize Network</span>
+            </button>
+
+            <div class="flex flex-col space-y-2">
+                <input id="input-join-id" type="text" placeholder="Paste Invite ID..." class="p-4 bg-zinc-900 border border-zinc-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-center">
+                <button id="btn-join" class="p-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl text-white font-semibold transition-all">
+                    Join Network
+                </button>
+            </div>
+        </div>
+        
+        <div id="identity-display" class="text-xs text-zinc-600 font-mono mt-8">Generating Identity...</div>
+    </div>
+
+    <!-- MAIN APP LAYOUT (Hidden initially) -->
+    <div id="app-layout" class="hidden w-full h-full flex flex-col md:flex-row">
+        
+        <!-- SIDEBAR -->
+        <div class="w-full md:w-80 border-r border-zinc-800 flex flex-col bg-zinc-900/50 backdrop-blur md:h-full h-auto">
+            <!-- Header -->
+            <div class="p-4 border-b border-zinc-800 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <div id="status-indicator" class="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <span class="font-bold text-zinc-200">GhostMesh</span>
+                </div>
+                <button id="btn-show-qr" class="p-2 hover:bg-zinc-800 rounded-full transition-colors" title="Show QR Code">
+                    <i data-lucide="qr-code" class="w-5 h-5 text-zinc-400"></i>
+                </button>
+            </div>
+
+            <!-- Chat List -->
+            <div id="chat-list" class="flex-1 overflow-y-auto min-h-[100px]">
+                <div id="empty-state-sidebar" class="p-8 text-center text-zinc-500">
+                    <i data-lucide="users" class="w-12 h-12 mx-auto mb-2 opacity-20"></i>
+                    <p>No active peers.</p>
+                </div>
+            </div>
+
+            <!-- My ID Footer -->
+            <div class="p-4 bg-zinc-900 border-t border-zinc-800 text-xs font-mono text-zinc-500 truncate flex justify-between items-center">
+                <span id="my-peer-id-display">Connecting...</span>
+                <button id="btn-copy-id" class="text-green-500 hover:text-green-400 ml-2">Copy</button>
+            </div>
+        </div>
+
+        <!-- CHAT AREA -->
+        <div id="chat-area" class="flex-1 flex flex-col h-full relative bg-black/95">
+            
+            <!-- Empty State -->
+            <div id="chat-empty-state" class="flex-1 flex flex-col items-center justify-center text-zinc-600">
+                <i data-lucide="shield" class="w-16 h-16 mb-4 opacity-20"></i>
+                <p>Select a peer to chat securely.</p>
+            </div>
+
+            <!-- Active Chat Interface -->
+            <div id="chat-interface" class="hidden flex-1 flex-col h-full">
+                <!-- Chat Header -->
+                <div class="h-16 border-b border-zinc-800 flex items-center justify-between px-4 bg-zinc-900/50">
+                    <div class="flex items-center space-x-3">
+                        <div id="chat-avatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-black font-bold text-xs">
+                            ID
+                        </div>
+                        <div>
+                            <div id="chat-title" class="font-semibold text-sm text-white">Peer ID</div>
+                            <div class="text-xs text-green-500 flex items-center">
+                                <i data-lucide="lock" class="w-3 h-3 mr-1"></i> Encrypted Route
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="btn-call-audio" class="p-2 hover:bg-zinc-800 rounded-full"><i data-lucide="phone" class="w-5 h-5 text-zinc-400"></i></button>
+                        <button id="btn-call-video" class="p-2 hover:bg-zinc-800 rounded-full"><i data-lucide="video" class="w-5 h-5 text-zinc-400"></i></button>
+                        <button id="btn-close-chat" class="md:hidden p-2 hover:bg-zinc-800 rounded-full"><i data-lucide="x" class="w-5 h-5 text-zinc-400"></i></button>
+                    </div>
+                </div>
+
+                <!-- Messages Container -->
+                <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+
+                <!-- Input Area -->
+                <div class="p-4 bg-zinc-900 border-t border-zinc-800">
+                    <!-- Preview for selected file -->
+                    <div id="file-preview-area" class="hidden mb-2 px-4 py-2 bg-zinc-800/50 rounded-lg flex items-center justify-between border border-zinc-700">
+                        <div class="flex items-center space-x-2 min-w-0 flex-1">
+                             <i data-lucide="file" class="w-4 h-4 text-green-400 flex-shrink-0"></i>
+                             <span id="file-preview-name" class="text-xs text-zinc-300 break-all whitespace-normal leading-tight"></span>
+                        </div>
+                        <button id="btn-clear-file" class="text-zinc-500 hover:text-red-400 ml-2 flex-shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+
+                    <div class="flex items-center space-x-2 bg-zinc-800 p-2 rounded-full border border-zinc-700">
+                        <input type="file" id="file-input" class="hidden">
+                        <button id="btn-attach" class="p-2 hover:bg-zinc-700 rounded-full text-zinc-400 transition-colors">
+                            <i data-lucide="paperclip" class="w-5 h-5"></i>
+                        </button>
+                        <input id="message-input" type="text" class="flex-1 bg-transparent border-none focus:outline-none text-sm text-white px-4" placeholder="Type a secure message...">
+                        <button id="btn-send" class="p-2 bg-green-600 hover:bg-green-500 rounded-full text-white transition-colors">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR CODE MODAL -->
+    <div id="qr-modal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 text-center max-w-sm w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Scan to Join</h3>
+            <div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit"></div>
+            <p id="qr-modal-text" class="text-xs text-zinc-500 font-mono break-all mb-4"></p>
+            <button id="btn-close-qr" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl font-semibold">Close</button>
+        </div>
+    </div>
+
+    <!-- INCOMING CALL MODAL -->
+    <div id="incoming-call-modal" class="hidden fixed inset-0 z-[80] bg-black/80 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 text-center max-w-sm w-full mx-4 animate-bounce-slight">
+            <div class="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <i data-lucide="phone-incoming" class="w-8 h-8 text-green-400"></i>
+            </div>
+            <h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3>
+            <p id="caller-id-display" class="text-zinc-400 text-sm mb-6">Peer ID</p>
+            <div class="flex space-x-3 justify-center">
+                <button id="btn-decline-call" class="p-3 bg-red-500/20 text-red-400 hover:bg-red-500/40 rounded-full transition-colors">
+                    <i data-lucide="phone-off" class="w-6 h-6"></i>
+                </button>
+                <button id="btn-accept-call" class="p-3 bg-green-500 text-white hover:bg-green-600 rounded-full transition-colors shadow-lg shadow-green-500/20">
+                    <i data-lucide="phone" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CALL OVERLAY -->
+    <div id="video-overlay" class="hidden fixed inset-0 z-[70] bg-black/90 flex flex-col p-4">
+        <div class="flex-1 relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800">
+            <!-- Call Status -->
+            <div id="call-status" class="absolute top-4 left-4 z-10 px-3 py-1 bg-black/50 backdrop-blur rounded-full text-xs font-mono text-zinc-300">
+                Connecting...
+            </div>
+            
+            <!-- Audio Call Placeholder -->
+            <div id="audio-call-ui" class="hidden absolute inset-0 flex items-center justify-center bg-zinc-900 z-0">
+                <div class="flex flex-col items-center animate-pulse">
+                    <div class="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center mb-4">
+                        <i data-lucide="mic" class="w-10 h-10 text-green-400"></i>
+                    </div>
+                    <span class="text-zinc-400 font-medium">Audio Call</span>
+                </div>
+            </div>
+
+            <!-- Remote Video -->
+            <video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-1 relative"></video>
+            <!-- Local Video -->
+            <div id="local-video-container" class="absolute top-4 right-4 w-32 h-48 bg-black rounded-lg border border-zinc-700 overflow-hidden shadow-2xl z-20">
+                <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+            </div>
+        </div>
+        <div class="h-20 flex items-center justify-center space-x-6 mt-4">
+            <button id="btn-end-call" class="p-4 bg-red-500 hover:bg-red-600 rounded-full text-white shadow-lg transition-transform hover:scale-110">
+                <i data-lucide="phone-off" class="w-8 h-8"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- LOGIC -->
+    <script>
+        // --- 1. CORE VARIABLES ---
+        let myIdentity = null;
+        let peer = null;
+        let myPeerId = null;
+        let connections = {}; 
+        let sharedKeys = {};  
+        let messages = {};    
+        let activeChatId = null;
+        let localStream = null;
+        let callInstance = null;
+        let pendingCall = null; 
+        let pendingCallType = 'video'; // Store incoming call type
+
+        // --- 2. CRYPTO LAYER ---
+        const CryptoLayer = {
+            generateIdentity: async () => {
+                return await window.crypto.subtle.generateKey(
+                    { name: "ECDH", namedCurve: "P-256" },
+                    true,
+                    ["deriveKey", "deriveBits"]
+                );
+            },
+            exportPublicKey: async (key) => {
+                const exported = await window.crypto.subtle.exportKey("spki", key);
+                return btoa(String.fromCharCode(...new Uint8Array(exported)));
+            },
+            importPublicKey: async (base64Key) => {
+                const binary = atob(base64Key);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                return await window.crypto.subtle.importKey(
+                    "spki",
+                    bytes.buffer,
+                    { name: "ECDH", namedCurve: "P-256" },
+                    true,
+                    []
+                );
+            },
+            deriveSharedKey: async (privateKey, publicKey) => {
+                return await window.crypto.subtle.deriveKey(
+                    { name: "ECDH", public: publicKey },
+                    privateKey,
+                    { name: "AES-GCM", length: 256 },
+                    true,
+                    ["encrypt", "decrypt"]
+                );
+            },
+            encryptText: async (text, sharedKey) => {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(text);
+                // Return as Base64 for text messages (small data)
+                const encrypted = await CryptoLayer.encryptBuffer(data, sharedKey);
+                return arrayBufferToBase64(encrypted); 
+            },
+            decryptText: async (cipherText, sharedKey) => {
+                // CipherText is Base64 for text
+                const encryptedBuffer = base64ToArrayBuffer(cipherText);
+                const decryptedBuffer = await CryptoLayer.decryptBuffer(encryptedBuffer, sharedKey);
+                if(typeof decryptedBuffer === 'string') return decryptedBuffer;
+                return new TextDecoder().decode(decryptedBuffer);
+            },
+            // FAST ENCRYPTION (No Base64)
+            encryptBuffer: async (bufferData, sharedKey) => {
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const encrypted = await window.crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv: iv },
+                    sharedKey,
+                    bufferData
+                );
+                // Combine IV + Data
+                const result = new Uint8Array(iv.byteLength + encrypted.byteLength);
+                result.set(iv, 0);
+                result.set(new Uint8Array(encrypted), 12);
+                return result.buffer; // Return ArrayBuffer directly!
+            },
+            // FAST DECRYPTION (No Base64)
+            decryptBuffer: async (bufferData, sharedKey) => {
+                try {
+                    const bytes = new Uint8Array(bufferData); // Expecting ArrayBuffer
+                    if (bytes.length < 13) throw new Error("Invalid data length");
+                    const iv = bytes.slice(0, 12);
+                    const data = bytes.slice(12);
+                    const decrypted = await window.crypto.subtle.decrypt(
+                        { name: "AES-GCM", iv: iv },
+                        sharedKey,
+                        data
+                    );
+                    return decrypted;
+                } catch (e) {
+                    console.error("Decryption failed", e);
+                    return "[Undecryptable Data]";
+                }
+            }
+        };
+
+        // Helper for text handling only
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
+
+        function base64ToArrayBuffer(base64) {
+            const binary_string = window.atob(base64);
+            const len = binary_string.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary_string.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // --- 3. HELPER FUNCTIONS FOR FILE UI ---
+        function formatBytes(bytes, decimals = 1) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        function getFileIcon(mime) {
+            if (mime.includes('pdf')) return 'file-text';
+            if (mime.includes('image')) return 'image';
+            if (mime.includes('video')) return 'video';
+            if (mime.includes('audio')) return 'music';
+            if (mime.includes('zip') || mime.includes('rar') || mime.includes('tar')) return 'archive';
+            if (mime.includes('text') || mime.includes('json') || mime.includes('code')) return 'file-code';
+            return 'file';
+        }
+
+        // --- 4. INITIALIZATION ---
+        async function init() {
+            lucide.createIcons();
+            try {
+                const keyPair = await CryptoLayer.generateIdentity();
+                const pubString = await CryptoLayer.exportPublicKey(keyPair.publicKey);
+                myIdentity = {
+                    publicKey: keyPair.publicKey,
+                    privateKey: keyPair.privateKey,
+                    pubKeyString: pubString,
+                    fingerprint: pubString.slice(0, 10)
+                };
+                document.getElementById('identity-display').innerText = `ID Fingerprint: ${myIdentity.fingerprint}`;
+            } catch(e) {
+                console.error("Init Error", e);
+                alert("Crypto initialization failed. Please use a modern browser (Chrome/Firefox/Edge).");
+            }
+        }
+
+        // --- 5. NETWORKING ---
+        function initializePeer(customId = null) {
+            const id = customId || "ghost-" + Math.floor(Math.random() * 1000000);
+            peer = new Peer(id, {
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                }
+            });
+
+            peer.on('open', (id) => {
+                myPeerId = id;
+                document.getElementById('my-peer-id-display').innerText = id;
+                document.getElementById('status-indicator').classList.replace('bg-blue-500', 'bg-green-500');
+                document.getElementById('status-indicator').classList.add('animate-pulse');
+                document.getElementById('onboarding-screen').classList.add('hidden');
+                document.getElementById('app-layout').classList.remove('hidden');
+            });
+
+            peer.on('connection', handleIncomingConnection);
+            peer.on('call', handleIncomingCall);
+            
+            peer.on('error', (err) => {
+                console.error("PeerJS Error:", err);
+                
+                // If call UI is open, close it
+                const overlay = document.getElementById('video-overlay');
+                if (!overlay.classList.contains('hidden')) {
+                    endCall(err.type === 'peer-unavailable' ? "Peer Unavailable" : "Connection Error");
+                }
+
+                if (err.type === 'peer-unavailable') {
+                    // Only alert if we are explicitly trying to connect via input
+                    if (document.activeElement.id === 'input-join-id') {
+                        alert("Could not connect to peer. They might be offline or the ID is incorrect.");
+                    }
+                } else if (err.type === 'network') {
+                    // Silent reconnect attempt usually happens, but let user know if persistent
+                    document.getElementById('status-indicator').classList.replace('bg-green-500', 'bg-red-500');
+                }
+            });
+            
+            peer.on('disconnected', () => {
+                document.getElementById('status-indicator').classList.replace('bg-green-500', 'bg-red-500');
+                // Auto-reconnect
+                setTimeout(() => {
+                    if (peer && !peer.destroyed) peer.reconnect();
+                }, 2000);
+            });
+        }
+
+        function ensurePeerReady() {
+            return new Promise((resolve, reject) => {
+                if (!peer) { initializePeer(); }
+                
+                // Immediate check
+                if (peer.open) { resolve(peer); return; }
+                if (peer.disconnected) { peer.reconnect(); }
+
+                let attempts = 0;
+                const checkInterval = setInterval(() => {
+                    attempts++;
+                    if (peer && peer.open) { 
+                        clearInterval(checkInterval); 
+                        resolve(peer); 
+                    } else if (peer && peer.disconnected && attempts % 10 === 0) {
+                        peer.reconnect(); // Retry reconnect every second if disconnected
+                    }
+                    
+                    if (attempts > 50) { // 5 seconds timeout
+                        clearInterval(checkInterval); 
+                        reject("Peer initialization timed out. Check your network."); 
+                    }
+                }, 100);
+            });
+        }
+
+        function handleIncomingConnection(conn) {
+            setupConnection(conn);
+        }
+
+        async function connectToPeer(targetId) {
+            try {
+                await ensurePeerReady();
+                const conn = peer.connect(targetId, { reliable: true });
+                setupConnection(conn);
+            } catch(e) {
+                alert("Connection failed: " + e);
+            }
+        }
+
+        function setupConnection(conn) {
+            conn.on('open', async () => {
+                console.log("Connection open with", conn.peer, "- Sending Handshake");
+                conn.send({ type: 'handshake', publicKey: myIdentity.pubKeyString });
+            });
+            conn.on('data', (data) => handleData(conn.peer, data, conn));
+            conn.on('close', () => {
+                addMessage(conn.peer, "Peer disconnected.", 'system');
+                delete connections[conn.peer];
+                delete sharedKeys[conn.peer];
+                renderChatList();
+            });
+            conn.on('error', (e) => console.error("Connection Error", e));
+        }
+
+        async function handleData(senderId, payload, conn) {
+            if (payload.type === 'handshake') {
+                console.log("Received Handshake from", senderId);
+                const remoteKey = await CryptoLayer.importPublicKey(payload.publicKey);
+                const sharedSecret = await CryptoLayer.deriveSharedKey(myIdentity.privateKey, remoteKey);
+                connections[senderId] = conn;
+                sharedKeys[senderId] = sharedSecret;
+                if(!messages[senderId]) messages[senderId] = [];
+                addMessage(senderId, "Secure Handshake Complete.", 'system');
+                renderChatList();
+                return;
+            }
+
+            const key = sharedKeys[senderId];
+            if (!key) { console.warn(`Received message from ${senderId} before handshake completed.`); return; }
+
+            if (payload.type === 'text') {
+                const text = await CryptoLayer.decryptText(payload.content, key);
+                addMessage(senderId, text, 'received');
+            } 
+            else if (payload.type === 'file') {
+                // content is now ArrayBuffer, so decryptBuffer expects ArrayBuffer
+                const decryptedBuffer = await CryptoLayer.decryptBuffer(payload.content, key);
+                if (typeof decryptedBuffer === 'string') {
+                    addMessage(senderId, "Failed to decrypt file.", 'system');
+                    return;
+                }
+                const blob = new Blob([decryptedBuffer], { type: payload.mime });
+                const url = URL.createObjectURL(blob);
+                const fileData = { name: payload.name, size: payload.size, mime: payload.mime, url: url };
+                addMessage(senderId, "File Received", 'received-file', fileData);
+            }
+        }
+
+        // --- 6. UI LOGIC ---
+        function addMessage(peerId, text, type, fileData = null) {
+            const msg = {
+                id: Date.now(),
+                text,
+                sender: (type === 'sent' || type === 'sent-file') ? 'Me' : peerId,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                type,
+                fileData 
+            };
+            if(!messages[peerId]) messages[peerId] = [];
+            messages[peerId].push(msg);
+            renderChatList();
+            if (activeChatId === peerId) {
+                renderMessages(peerId);
+            }
+        }
+
+        function renderChatList() {
+            const list = document.getElementById('chat-list');
+            const peerIds = Object.keys(messages);
+            if(peerIds.length === 0 && Object.keys(connections).length === 0) {
+                list.innerHTML = `<div class="p-8 text-center text-zinc-500"><i data-lucide="users" class="w-12 h-12 mx-auto mb-2 opacity-20"></i><p>No active peers.</p></div>`;
+                lucide.createIcons();
+                return;
+            }
+            const allPeers = new Set([...Object.keys(connections), ...peerIds]);
+            let html = '';
+            allPeers.forEach(pid => {
+                const msgs = messages[pid] || [];
+                const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : { text: 'Secure connection ready', time: '' };
+                const isActive = pid === activeChatId ? 'bg-zinc-800' : '';
+                let previewText = lastMsg.text;
+                if(lastMsg.type.includes('file')) previewText = `📎 ${lastMsg.fileData ? lastMsg.fileData.name : 'Attachment'}`;
+                html += `
+                <div onclick="selectChat('${pid}')" class="p-4 border-b border-zinc-800/50 cursor-pointer hover:bg-zinc-800/50 transition-colors ${isActive}">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-medium text-zinc-200 truncate w-32">${pid}</span>
+                        <span class="text-xs text-zinc-500">${lastMsg.time}</span>
+                    </div>
+                    <div class="text-sm text-zinc-500 truncate">${previewText}</div>
+                </div>`;
+            });
+            list.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        window.selectChat = (pid) => {
+            activeChatId = pid;
+            document.getElementById('chat-empty-state').classList.add('hidden');
+            document.getElementById('chat-interface').classList.remove('hidden');
+            document.getElementById('chat-interface').classList.add('flex');
+            document.getElementById('chat-title').innerText = pid;
+            document.getElementById('chat-avatar').innerText = pid.substring(0, 2).toUpperCase();
+            if(window.innerWidth < 768) {
+                document.querySelector('.w-full.md\\:w-80').classList.add('hidden');
+                document.getElementById('chat-area').classList.remove('hidden');
+            }
+            renderChatList();
+            renderMessages(pid);
+        };
+
+        function renderMessages(pid) {
+            const container = document.getElementById('messages-container');
+            const msgs = messages[pid] || [];
+            
+            let html = '';
+            msgs.forEach(msg => {
+                if(msg.type === 'system') {
+                    html += `<div class="flex justify-center my-4"><span class="text-xs bg-zinc-800 text-zinc-400 px-3 py-1 rounded-full">${msg.text}</span></div>`;
+                } else {
+                    const isMe = msg.sender === 'Me';
+                    const align = isMe ? 'justify-end' : 'justify-start';
+                    let bubbleClass = isMe ? 'bg-green-600 text-white rounded-2xl rounded-tr-none' : 'bg-zinc-800 text-zinc-200 rounded-2xl rounded-tl-none';
+                    let paddingClass = 'p-3'; 
+                    const timeColor = isMe ? 'text-green-200' : 'text-zinc-500';
+                    let contentHtml = '';
+                    let showFooterTime = true;
+
+                    if (msg.type === 'sent-file' || msg.type === 'received-file') {
+                        const { name, size, mime, url } = msg.fileData;
+                        const isImage = mime.startsWith('image/');
+                        const sizeStr = formatBytes(size);
+                        const icon = getFileIcon(mime);
+
+                        if (isImage) {
+                             paddingClass = 'p-1';
+                             bubbleClass += ' overflow-hidden';
+                             showFooterTime = false; // Overlay time on image
+                             
+                             contentHtml = `
+                                <div class="relative group">
+                                    <img src="${url}" class="rounded-lg max-w-full max-h-[300px] object-cover cursor-pointer hover:opacity-95 transition-opacity" 
+                                         onload="document.getElementById('messages-container').scrollTop = document.getElementById('messages-container').scrollHeight" 
+                                         onclick="window.open('${url}')" />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 rounded-lg pointer-events-none"></div>
+                                    <div class="absolute bottom-1 right-2 flex items-center space-x-1 text-[10px] text-white/90 font-medium drop-shadow-md">
+                                        <span>${msg.time}</span>
+                                    </div>
+                                    <a href="${url}" download="${name}" class="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm shadow-sm">
+                                        <i data-lucide="download" class="w-4 h-4"></i>
+                                    </a>
+                                </div>
+                            `;
+                        } else {
+                            // Unified style for Sender/Receiver, differentiating only by colors
+                            let iconBg, iconColor;
+                            
+                            if (isMe) {
+                                // Sender (Green Bubble) - use monochrome icons to not clash
+                                iconBg = 'bg-green-800/40';
+                                iconColor = 'text-green-100';
+                            } else {
+                                // Receiver (Dark Gray Bubble) - use colored icons for types
+                                if(mime.includes('pdf')) { iconBg = 'bg-red-900/40'; iconColor = 'text-red-400'; }
+                                else if(mime.includes('sheet') || mime.includes('excel')) { iconBg = 'bg-emerald-900/40'; iconColor = 'text-emerald-400'; }
+                                else if(mime.includes('word') || mime.includes('document')) { iconBg = 'bg-blue-900/40'; iconColor = 'text-blue-400'; }
+                                else if(mime.includes('zip')) { iconBg = 'bg-yellow-900/40'; iconColor = 'text-yellow-400'; }
+                                else if(mime.includes('audio')) { iconBg = 'bg-purple-900/40'; iconColor = 'text-purple-400'; }
+                                else if(mime.includes('video')) { iconBg = 'bg-pink-900/40'; iconColor = 'text-pink-400'; }
+                                else { iconBg = 'bg-zinc-700'; iconColor = 'text-zinc-300'; }
+                            }
+                            
+                            contentHtml = `
+                                <div class="flex items-center gap-3 w-full overflow-hidden">
+                                    <div class="flex-shrink-0 w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center relative">
+                                        <i data-lucide="${icon}" class="w-5 h-5 ${iconColor}"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-sm font-medium break-all whitespace-normal leading-tight">${name}</div>
+                                        <div class="text-[10px] opacity-70 flex items-center mt-0.5">
+                                            <span>${sizeStr}</span>
+                                            <span class="mx-1">•</span>
+                                            <span>${mime.split('/')[1].toUpperCase().slice(0,4)}</span>
+                                        </div>
+                                    </div>
+                                    <a href="${url}" download="${name}" class="p-2 hover:bg-black/10 rounded-full transition-colors cursor-pointer flex-shrink-0 self-center">
+                                        <i data-lucide="download" class="w-5 h-5 opacity-70 hover:opacity-100"></i>
+                                    </a>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        // Text messages: Add break-all for very long words/URLs
+                        contentHtml = `<div class="break-words">${msg.text}</div>`;
+                    }
+
+                    html += `
+                    <div class="flex ${align} mb-1">
+                        <div class="bubble-constraint ${paddingClass} text-sm ${bubbleClass} shadow-sm overflow-hidden">
+                            ${contentHtml}
+                            ${ showFooterTime ? `<div class="text-[10px] mt-1 text-right ${timeColor} opacity-70 select-none">${msg.time}</div>` : '' }
+                        </div>
+                    </div>`;
+                }
+            });
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+            lucide.createIcons();
+        }
+
+        async function sendMessage() {
+            if(!activeChatId) return;
+            if (!sharedKeys[activeChatId]) { alert("Secure Handshake not complete yet."); return; }
+            const conn = connections[activeChatId];
+            const key = sharedKeys[activeChatId];
+            const fileInput = document.getElementById('file-input');
+            const textInput = document.getElementById('message-input');
+            
+            if(!conn || !conn.open) { alert("Connection lost."); return; }
+
+            try {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    if (file.size > 20 * 1024 * 1024) { alert("File > 20MB."); return; }
+                    
+                    const arrayBuffer = await file.arrayBuffer();
+                    // Encrypt Buffer (NO Base64 conversion now!)
+                    const encryptedBuffer = await CryptoLayer.encryptBuffer(arrayBuffer, key);
+                    
+                    conn.send({ 
+                        type: 'file', 
+                        name: file.name, 
+                        size: file.size, 
+                        mime: file.type, 
+                        content: encryptedBuffer // Sending raw binary packed by PeerJS
+                    });
+                    
+                    const blob = new Blob([arrayBuffer], { type: file.type });
+                    const url = URL.createObjectURL(blob);
+                    addMessage(activeChatId, "File Sent", 'sent-file', { name: file.name, size: file.size, mime: file.type, url: url });
+                    clearFileSelection();
+                } else {
+                    const text = textInput.value.trim();
+                    if(!text) return;
+                    // Text still uses Base64 wrapper for simplicity, small data
+                    const encrypted = await CryptoLayer.encryptText(text, key);
+                    conn.send({ type: 'text', content: encrypted });
+                    addMessage(activeChatId, text, 'sent');
+                    textInput.value = '';
+                }
+            } catch (err) {
+                console.error("Send Error", err);
+                alert("Failed to send. See console.");
+            }
+        }
+
+        document.getElementById('btn-attach').onclick = () => { document.getElementById('file-input').click(); };
+        document.getElementById('file-input').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('file-preview-area').classList.remove('hidden');
+                document.getElementById('file-preview-name').innerText = file.name;
+            }
+        };
+        document.getElementById('btn-clear-file').onclick = clearFileSelection;
+        function clearFileSelection() {
+            document.getElementById('file-input').value = '';
+            document.getElementById('file-preview-area').classList.add('hidden');
+        }
+
+        // --- 7. EVENT LISTENERS ---
+        document.getElementById('btn-host').onclick = () => { initializePeer("ghost-" + Math.floor(Math.random() * 1000000)); };
+        document.getElementById('btn-join').onclick = async () => {
+            const id = document.getElementById('input-join-id').value.trim();
+            if(!id) return alert("Enter ID");
+            await connectToPeer(id);
+        };
+        document.getElementById('btn-send').onclick = sendMessage;
+        document.getElementById('message-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
+        document.getElementById('btn-copy-id').onclick = () => {
+            const textArea = document.createElement("textarea");
+            textArea.value = myPeerId;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            const btn = document.getElementById('btn-copy-id');
+            const old = btn.innerText;
+            btn.innerText = "Copied!";
+            setTimeout(() => btn.innerText = old, 2000);
+        };
+        document.getElementById('btn-show-qr').onclick = () => {
+            if(!myPeerId) return;
+            const modal = document.getElementById('qr-modal');
+            const container = document.getElementById('qrcode-container');
+            container.innerHTML = ""; 
+            new QRCode(container, { text: myPeerId, width: 200, height: 200 });
+            document.getElementById('qr-modal-text').innerText = myPeerId;
+            modal.classList.remove('hidden');
+        };
+        document.getElementById('btn-close-qr').onclick = () => { document.getElementById('qr-modal').classList.add('hidden'); };
+        document.getElementById('btn-close-chat').onclick = () => { document.querySelector('.w-full.md\\:w-80').classList.remove('hidden'); };
+
+        // --- 8. CALL LOGIC ---
+        function setCallStatus(status) {
+             const statusEl = document.getElementById('call-status');
+             if(statusEl) statusEl.innerText = status;
+        }
+
+        async function startCall(isVideo = false) {
+            if(!activeChatId) return;
+            setCallStatus("Calling...");
+            
+            // Adjust UI for Audio Call
+            const remoteVideo = document.getElementById('remote-video');
+            const localVideoCont = document.getElementById('local-video-container');
+            const audioUI = document.getElementById('audio-call-ui');
+            
+            if (isVideo) {
+                remoteVideo.classList.remove('hidden');
+                localVideoCont.classList.remove('hidden');
+                audioUI.classList.add('hidden');
+            } else {
+                remoteVideo.classList.add('hidden');
+                localVideoCont.classList.add('hidden');
+                audioUI.classList.remove('hidden');
+            }
+
+            try {
+                if (localStream) { localStream.getTracks().forEach(track => track.stop()); }
+
+                // Request appropriate stream
+                const stream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
+                localStream = stream;
+                
+                // Only attach to video element if it's a video call
+                if (isVideo) {
+                    document.getElementById('local-video').srcObject = stream;
+                }
+                
+                document.getElementById('video-overlay').classList.remove('hidden');
+                setCallStatus("Connecting...");
+                
+                // Send metadata about call type
+                callInstance = peer.call(activeChatId, stream, {
+                    metadata: { type: isVideo ? 'video' : 'audio' }
+                });
+                
+                if (!callInstance) throw new Error("Call failed to init");
+
+                setupCallEvents(callInstance, isVideo);
+            } catch(err) { 
+                console.error("Start Call Error:", err); 
+                endCall("Failed: " + err.message);
+            }
+        }
+
+        function handleIncomingCall(call) {
+            pendingCall = call;
+            pendingCallType = call.metadata?.type || 'video'; // Default to video if unknown
+            
+            document.getElementById('caller-id-display').innerText = call.peer;
+            // Update Text
+            const title = pendingCallType === 'video' ? 'Incoming Video Call...' : 'Incoming Audio Call...';
+            document.getElementById('incoming-call-title').innerText = title;
+            
+            document.getElementById('incoming-call-modal').classList.remove('hidden');
+        }
+
+        document.getElementById('btn-accept-call').onclick = () => {
+            if (!pendingCall) return;
+            document.getElementById('incoming-call-modal').classList.add('hidden');
+            
+            if (localStream) { localStream.getTracks().forEach(track => track.stop()); }
+
+            const isVideo = pendingCallType === 'video';
+            
+            // Adjust UI based on incoming call type
+            const remoteVideo = document.getElementById('remote-video');
+            const localVideoCont = document.getElementById('local-video-container');
+            const audioUI = document.getElementById('audio-call-ui');
+
+            if (isVideo) {
+                remoteVideo.classList.remove('hidden');
+                localVideoCont.classList.remove('hidden');
+                audioUI.classList.add('hidden');
+            } else {
+                remoteVideo.classList.add('hidden');
+                localVideoCont.classList.add('hidden');
+                audioUI.classList.remove('hidden');
+            }
+
+            navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true })
+            .then(stream => {
+                localStream = stream;
+                if (isVideo) {
+                    document.getElementById('local-video').srcObject = stream;
+                }
+                document.getElementById('video-overlay').classList.remove('hidden');
+                setCallStatus("Connecting...");
+                
+                pendingCall.answer(stream);
+                callInstance = pendingCall;
+                setupCallEvents(pendingCall, isVideo);
+            })
+            .catch(err => {
+                console.error("Accept Call Error:", err);
+                endCall("Mic/Cam Error");
+            });
+        };
+
+        document.getElementById('btn-decline-call').onclick = () => {
+            if (pendingCall) pendingCall.close();
+            document.getElementById('incoming-call-modal').classList.add('hidden');
+            pendingCall = null;
+        };
+
+        function setupCallEvents(call, isVideo) {
+            call.on('stream', (remoteStream) => { 
+                // Only attach if it's a video call, otherwise audio plays automatically via audio tracks
+                if (isVideo) {
+                    document.getElementById('remote-video').srcObject = remoteStream; 
+                } else {
+                    // Create invisible audio element for audio-only
+                    const audio = new Audio();
+                    audio.srcObject = remoteStream;
+                    audio.play();
+                }
+                setCallStatus("Connected");
+            });
+            call.on('close', () => endCall("Call Ended"));
+            call.on('error', (err) => { console.error("Call Error:", err); endCall("Error"); });
+        }
+
+        function endCall(msg = "") {
+            if (msg) {
+                setCallStatus(msg);
+                setTimeout(closeCallResources, 1500);
+            } else {
+                closeCallResources();
+            }
+        }
+
+        function closeCallResources() {
+            if(localStream) { 
+                localStream.getTracks().forEach(track => track.stop()); 
+            }
+            if(callInstance) {
+                callInstance.removeAllListeners();
+                callInstance.close();
+            }
+            document.getElementById('video-overlay').classList.add('hidden');
+            document.getElementById('local-video').srcObject = null;
+            document.getElementById('remote-video').srcObject = null;
+            localStream = null;
+            callInstance = null;
+            setCallStatus("Idle");
+        }
+
+        document.getElementById('btn-call-video').onclick = () => startCall(true);
+        document.getElementById('btn-call-audio').onclick = () => startCall(false);
+        document.getElementById('btn-end-call').onclick = () => endCall("Call Ended");
+
+        init();
+    </script>
+</body>
+</html>
