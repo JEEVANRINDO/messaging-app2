@@ -24,64 +24,37 @@
             font-family: 'Inter', sans-serif;
             background-color: #000;
             color: #fff;
-            /* Mobile Viewport Fixes */
             height: 100dvh; 
             width: 100vw;
             overflow: hidden;
-            position: fixed; /* Prevent body scroll on mobile */
+            position: fixed; 
             inset: 0;
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #18181b; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #3f3f46; 
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #52525b; 
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #18181b; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
 
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
-        
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
         }
 
-        #video-overlay {
-            transition: opacity 0.3s ease;
-        }
+        #video-overlay { transition: opacity 0.3s ease; }
 
-        .animate-bounce-slight {
-            animation: bounceSlight 2s infinite;
-        }
-
+        .animate-bounce-slight { animation: bounceSlight 2s infinite; }
         @keyframes bounceSlight {
             0%, 100% { transform: translateY(-5%); }
             50% { transform: translateY(0); }
         }
         
-        .bubble-constraint {
-            max-width: 85%;
-        }
-        @media (min-width: 768px) {
-            .bubble-constraint {
-                max-width: 65%;
-            }
-        }
+        .bubble-constraint { max-width: 85%; }
+        @media (min-width: 768px) { .bubble-constraint { max-width: 65%; } }
 
-        /* Safe area padding for iPhones */
-        .pb-safe {
-            padding-bottom: max(1rem, env(safe-area-inset-bottom));
-        }
+        .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -117,10 +90,10 @@
         <div id="identity-display" class="text-xs text-zinc-600 font-mono">Generating Identity...</div>
     </div>
 
-    <!-- MAIN APP LAYOUT (Hidden initially) -->
+    <!-- MAIN APP LAYOUT -->
     <div id="app-layout" class="hidden w-full h-full flex flex-col md:flex-row relative">
         
-        <!-- SIDEBAR (Visible on mobile by default) -->
+        <!-- SIDEBAR -->
         <div id="sidebar-panel" class="w-full md:w-80 border-r border-zinc-800 flex flex-col bg-zinc-900/50 backdrop-blur h-full">
             <!-- Header -->
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
@@ -141,17 +114,16 @@
                 </div>
             </div>
 
-            <!-- My ID Footer -->
+            <!-- Footer -->
             <div class="p-4 bg-zinc-900 border-t border-zinc-800 text-xs font-mono text-zinc-500 truncate flex justify-between items-center pb-safe shrink-0">
                 <span id="my-peer-id-display">Connecting...</span>
                 <button id="btn-copy-id" class="text-green-500 hover:text-green-400 ml-2 p-2">Copy</button>
             </div>
         </div>
 
-        <!-- CHAT AREA (Hidden on mobile initially, visible on desktop) -->
+        <!-- CHAT AREA -->
         <div id="chat-area" class="hidden md:flex flex-1 flex-col h-full relative bg-black/95">
             
-            <!-- Empty State (Desktop only) -->
             <div id="chat-empty-state" class="flex-1 flex flex-col items-center justify-center text-zinc-600">
                 <i data-lucide="shield" class="w-16 h-16 mb-4 opacity-20"></i>
                 <p>Select a peer to chat securely.</p>
@@ -165,9 +137,7 @@
                         <button id="btn-close-chat" class="md:hidden p-2 -ml-2 hover:bg-zinc-800 rounded-full text-zinc-400">
                             <i data-lucide="arrow-left" class="w-5 h-5"></i>
                         </button>
-                        <div id="chat-avatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-black font-bold text-xs">
-                            ID
-                        </div>
+                        <div id="chat-avatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-black font-bold text-xs">ID</div>
                         <div class="overflow-hidden">
                             <div id="chat-title" class="font-semibold text-sm text-white truncate">Peer ID</div>
                             <div class="text-xs text-green-500 flex items-center">
@@ -184,9 +154,14 @@
                 <!-- Messages Container -->
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 w-full"></div>
 
+                <!-- Upload Progress -->
+                <div id="upload-progress" class="hidden px-4 py-2 bg-blue-900/50 text-xs text-blue-200 text-center">
+                    Processing large file... Do not close.
+                </div>
+
                 <!-- Input Area -->
                 <div class="bg-zinc-900 border-t border-zinc-800 shrink-0 w-full">
-                    <!-- Preview for selected file -->
+                    <!-- Preview -->
                     <div id="file-preview-area" class="hidden px-4 py-2 bg-zinc-800/50 border-b border-zinc-700 flex items-center justify-between">
                         <div class="flex items-center space-x-2 min-w-0 flex-1">
                              <i data-lucide="file" class="w-4 h-4 text-green-400 flex-shrink-0"></i>
@@ -216,7 +191,7 @@
         </div>
     </div>
 
-    <!-- QR CODE MODAL -->
+    <!-- QR MODAL -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 text-center max-w-sm w-full">
             <h3 class="text-xl font-bold mb-4">Scan to Join</h3>
@@ -255,7 +230,7 @@
                 Connecting...
             </div>
             
-            <!-- Audio Call Placeholder -->
+            <!-- Audio Call UI -->
             <div id="audio-call-ui" class="hidden absolute inset-0 flex items-center justify-center bg-zinc-900 z-0">
                 <div class="flex flex-col items-center animate-pulse">
                     <div class="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center mb-4">
@@ -293,16 +268,12 @@
         let callInstance = null;
         let pendingCall = null; 
         let pendingCallType = 'video'; 
+        // File Transfer State
+        let pendingFileMeta = {}; // { senderId: { name, size, mime } }
 
         // --- 2. CRYPTO LAYER ---
         const CryptoLayer = {
-            generateIdentity: async () => {
-                return await window.crypto.subtle.generateKey(
-                    { name: "ECDH", namedCurve: "P-256" },
-                    true,
-                    ["deriveKey", "deriveBits"]
-                );
-            },
+            generateIdentity: async () => window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]),
             exportPublicKey: async (key) => {
                 const exported = await window.crypto.subtle.exportKey("spki", key);
                 return btoa(String.fromCharCode(...new Uint8Array(exported)));
@@ -311,23 +282,11 @@
                 const binary = atob(base64Key);
                 const bytes = new Uint8Array(binary.length);
                 for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                return await window.crypto.subtle.importKey(
-                    "spki",
-                    bytes.buffer,
-                    { name: "ECDH", namedCurve: "P-256" },
-                    true,
-                    []
-                );
+                return await window.crypto.subtle.importKey("spki", bytes.buffer, { name: "ECDH", namedCurve: "P-256" }, true, []);
             },
-            deriveSharedKey: async (privateKey, publicKey) => {
-                return await window.crypto.subtle.deriveKey(
-                    { name: "ECDH", public: publicKey },
-                    privateKey,
-                    { name: "AES-GCM", length: 256 },
-                    true,
-                    ["encrypt", "decrypt"]
-                );
-            },
+            deriveSharedKey: async (privateKey, publicKey) => window.crypto.subtle.deriveKey({ name: "ECDH", public: publicKey }, privateKey, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]),
+            
+            // Text uses Base64 wrapper
             encryptText: async (text, sharedKey) => {
                 const encoder = new TextEncoder();
                 const data = encoder.encode(text);
@@ -340,13 +299,11 @@
                 if(typeof decryptedBuffer === 'string') return decryptedBuffer;
                 return new TextDecoder().decode(decryptedBuffer);
             },
+            
+            // Binary uses Raw Buffers
             encryptBuffer: async (bufferData, sharedKey) => {
                 const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                const encrypted = await window.crypto.subtle.encrypt(
-                    { name: "AES-GCM", iv: iv },
-                    sharedKey,
-                    bufferData
-                );
+                const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, sharedKey, bufferData);
                 const result = new Uint8Array(iv.byteLength + encrypted.byteLength);
                 result.set(iv, 0);
                 result.set(new Uint8Array(encrypted), 12);
@@ -358,11 +315,7 @@
                     if (bytes.length < 13) throw new Error("Invalid data length");
                     const iv = bytes.slice(0, 12);
                     const data = bytes.slice(12);
-                    const decrypted = await window.crypto.subtle.decrypt(
-                        { name: "AES-GCM", iv: iv },
-                        sharedKey,
-                        data
-                    );
+                    const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, sharedKey, data);
                     return decrypted;
                 } catch (e) {
                     console.error("Decryption failed", e);
@@ -375,9 +328,7 @@
             let binary = '';
             const bytes = new Uint8Array(buffer);
             const len = bytes.byteLength;
-            for (let i = 0; i < len; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
+            for (let i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
             return window.btoa(binary);
         }
 
@@ -385,9 +336,7 @@
             const binary_string = window.atob(base64);
             const len = binary_string.length;
             const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binary_string.charCodeAt(i);
-            }
+            for (let i = 0; i < len; i++) bytes[i] = binary_string.charCodeAt(i);
             return bytes.buffer;
         }
 
@@ -410,7 +359,7 @@
             return 'file';
         }
 
-        // --- 4. INITIALIZATION ---
+        // --- 3. INITIALIZATION ---
         async function init() {
             lucide.createIcons();
             try {
@@ -429,19 +378,16 @@
             }
         }
 
-        // --- 5. NETWORKING ---
+        // --- 4. NETWORKING ---
         function initializePeer(customId = null) {
             const id = customId || "ghost-" + Math.floor(Math.random() * 1000000);
             
-            // Robust ICE Configuration for WAN connectivity
+            // Config for connectivity
             peer = new Peer(id, {
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
                         { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' },
-                        { urls: 'stun:stun3.l.google.com:19302' },
-                        { urls: 'stun:stun4.l.google.com:19302' },
                         { urls: 'stun:global.stun.twilio.com:3478' }
                     ]
                 }
@@ -461,13 +407,8 @@
             
             peer.on('error', (err) => {
                 console.error("PeerJS Error:", err);
-                const overlay = document.getElementById('video-overlay');
-                if (!overlay.classList.contains('hidden')) {
-                    endCall(err.type === 'peer-unavailable' ? "Peer Unavailable" : "Connection Error");
-                }
-                
                 if (err.type === 'peer-unavailable' && document.activeElement.id === 'input-join-id') {
-                    alert("Could not connect. Peer might be offline or on a different network without NAT traversal.");
+                    alert("Could not connect. Peer might be offline.");
                 } else if (err.type === 'network') {
                     document.getElementById('status-indicator').classList.replace('bg-green-500', 'bg-red-500');
                 }
@@ -521,6 +462,32 @@
         }
 
         async function handleData(senderId, payload, conn) {
+            // 1. RAW BINARY (FILE CONTENT)
+            // This is the High-Speed Transfer path
+            if (payload instanceof ArrayBuffer) {
+                const meta = pendingFileMeta[senderId];
+                if (!meta) return console.warn("Received bytes without metadata");
+                
+                const key = sharedKeys[senderId];
+                if (!key) return;
+
+                const decryptedBuffer = await CryptoLayer.decryptBuffer(payload, key);
+                if (typeof decryptedBuffer === 'string') {
+                    addMessage(senderId, "Failed to decrypt file.", 'system');
+                    delete pendingFileMeta[senderId];
+                    return;
+                }
+
+                const blob = new Blob([decryptedBuffer], { type: meta.mime });
+                const url = URL.createObjectURL(blob);
+                const fileData = { name: meta.name, size: meta.size, mime: meta.mime, url: url };
+                
+                addMessage(senderId, "File Received", 'received-file', fileData);
+                delete pendingFileMeta[senderId]; // Clear state
+                return;
+            }
+
+            // 2. JSON MESSAGES
             if (payload.type === 'handshake') {
                 const remoteKey = await CryptoLayer.importPublicKey(payload.publicKey);
                 const sharedSecret = await CryptoLayer.deriveSharedKey(myIdentity.privateKey, remoteKey);
@@ -539,19 +506,18 @@
                 const text = await CryptoLayer.decryptText(payload.content, key);
                 addMessage(senderId, text, 'received');
             } 
-            else if (payload.type === 'file') {
-                const decryptedBuffer = await CryptoLayer.decryptBuffer(payload.content, key);
-                if (typeof decryptedBuffer === 'string') {
-                    addMessage(senderId, "Failed to decrypt file.", 'system');
-                    return;
-                }
-                const blob = new Blob([decryptedBuffer], { type: payload.mime });
-                const url = URL.createObjectURL(blob);
-                const fileData = { name: payload.name, size: payload.size, mime: payload.mime, url: url };
-                addMessage(senderId, "File Received", 'received-file', fileData);
+            else if (payload.type === 'file-meta') {
+                // Store metadata and wait for the binary payload
+                pendingFileMeta[senderId] = {
+                    name: payload.name,
+                    size: payload.size,
+                    mime: payload.mime
+                };
+                // Optional: Show "Receiving..." status
             }
         }
 
+        // --- 5. UI LOGIC ---
         function addMessage(peerId, text, type, fileData = null) {
             const msg = {
                 id: Date.now(),
@@ -621,7 +587,6 @@
             renderMessages(pid);
         };
 
-        // Go back to list (Mobile)
         document.getElementById('btn-close-chat').onclick = () => {
             document.getElementById('chat-area').classList.add('hidden');
             document.getElementById('chat-area').classList.remove('flex');
@@ -725,12 +690,30 @@
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
                     if (file.size > 20 * 1024 * 1024) { alert("File > 20MB."); return; }
+                    
+                    document.getElementById('upload-progress').classList.remove('hidden');
+                    
                     const arrayBuffer = await file.arrayBuffer();
+                    // Encrypt Buffer (No Base64)
                     const encryptedBuffer = await CryptoLayer.encryptBuffer(arrayBuffer, key);
-                    conn.send({ type: 'file', name: file.name, size: file.size, mime: file.type, content: encryptedBuffer });
+                    
+                    // 1. Send Metadata (Small JSON)
+                    conn.send({ 
+                        type: 'file-meta', 
+                        name: file.name, 
+                        size: file.size, 
+                        mime: file.type
+                    });
+                    
+                    // 2. Send Raw Binary (Fast!)
+                    // We check data channel buffer to prevent overflow, but for simple MVP we send
+                    conn.send(encryptedBuffer); 
+                    
                     const blob = new Blob([arrayBuffer], { type: file.type });
                     const url = URL.createObjectURL(blob);
                     addMessage(activeChatId, "File Sent", 'sent-file', { name: file.name, size: file.size, mime: file.type, url: url });
+                    
+                    document.getElementById('upload-progress').classList.add('hidden');
                     clearFileSelection();
                 } else {
                     const text = textInput.value.trim();
@@ -742,6 +725,7 @@
                 }
             } catch (err) {
                 console.error("Send Error", err);
+                document.getElementById('upload-progress').classList.add('hidden');
                 alert("Failed to send. See console.");
             }
         }
