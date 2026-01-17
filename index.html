@@ -32,10 +32,9 @@
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #18181b; }
-        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
 
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn {
@@ -56,10 +55,9 @@
 
         .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
 
-        /* Loading Spinner */
         .loader {
             border: 2px solid #f3f3f3;
-            border-top: 2px solid #16a34a; /* Green 600 */
+            border-top: 2px solid #16a34a;
             border-radius: 50%;
             width: 16px;
             height: 16px;
@@ -68,19 +66,16 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Ringing Animation */
-        .ring-pulse {
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-            animation: ringPulse 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
-        }
-        @keyframes ringPulse {
-            to { box-shadow: 0 0 0 20px rgba(34, 197, 94, 0); }
-        }
+        /* Tick Marks Styles */
+        .tick-icon { width: 14px; height: 14px; margin-left: 2px; }
+        .tick-sent { color: #9ca3af; } /* Gray 400 */
+        .tick-delivered { color: #d1d5db; } /* Gray 300 */
+        .tick-read { color: #60a5fa; } /* Blue 400 */
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
 
-    <!-- ONBOARDING SCREEN -->
+    <!-- ONBOARDING -->
     <div id="onboarding-screen" class="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center p-6 text-center animate-fade-in overflow-y-auto">
         <div class="relative mb-8">
             <div class="absolute -inset-1 bg-green-500 rounded-full opacity-20 blur-xl animate-pulse"></div>
@@ -88,56 +83,43 @@
         </div>
         
         <h1 class="text-4xl font-bold tracking-tighter mb-2">GhostMesh</h1>
-        <p class="text-gray-400 max-w-md mx-auto mb-8">
-            Serverless. Metadata-free. End-to-End Encrypted.<br>
-            You own the infrastructure.
-        </p>
+        <p class="text-gray-400 max-w-md mx-auto mb-8">Zero Servers. Max Privacy. Max Speed.</p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg mb-8">
             <button id="btn-host" class="group relative flex flex-col items-center p-6 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer">
                 <i id="icon-host" data-lucide="wifi" class="w-8 h-8 mb-3 text-green-400"></i>
                 <div id="loader-host" class="hidden mb-3"><div class="loader w-8 h-8"></div></div>
                 <span id="text-host" class="text-lg font-semibold text-white">Host Node</span>
-                <span class="text-xs text-gray-500 mt-1">Initialize Network</span>
             </button>
 
             <div class="flex flex-col space-y-2">
-                <input id="input-join-id" type="text" placeholder="Paste Invite ID..." class="p-4 bg-zinc-900 border border-zinc-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-center">
+                <input id="input-join-id" type="text" placeholder="Paste ID..." class="p-4 bg-zinc-900 border border-zinc-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-center">
                 <button id="btn-join" class="p-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2">
                     <span id="text-join">Join Network</span>
                     <div id="loader-join" class="hidden"><div class="loader"></div></div>
                 </button>
             </div>
         </div>
-        
-        <div id="identity-display" class="text-xs text-zinc-600 font-mono">Generating Identity...</div>
+        <div id="identity-display" class="text-xs text-zinc-600 font-mono">Securing Environment...</div>
     </div>
 
-    <!-- MAIN APP LAYOUT -->
+    <!-- APP LAYOUT -->
     <div id="app-layout" class="hidden w-full h-full flex flex-col md:flex-row relative">
-        
         <!-- SIDEBAR -->
         <div id="sidebar-panel" class="w-full md:w-80 border-r border-zinc-800 flex flex-col bg-zinc-900/50 backdrop-blur h-full">
-            <!-- Header -->
             <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
                 <div class="flex items-center space-x-2">
                     <div id="status-indicator" class="w-3 h-3 rounded-full bg-blue-500"></div>
                     <span class="font-bold text-zinc-200">GhostMesh</span>
                 </div>
-                <button id="btn-show-qr" class="p-2 hover:bg-zinc-800 rounded-full transition-colors" title="Show QR Code">
-                    <i data-lucide="qr-code" class="w-5 h-5 text-zinc-400"></i>
-                </button>
+                <button id="btn-show-qr" class="p-2 hover:bg-zinc-800 rounded-full"><i data-lucide="qr-code" class="w-5 h-5 text-zinc-400"></i></button>
             </div>
-
-            <!-- Chat List -->
             <div id="chat-list" class="flex-1 overflow-y-auto">
                 <div id="empty-state-sidebar" class="p-8 text-center text-zinc-500 h-full flex flex-col justify-center items-center">
                     <i data-lucide="users" class="w-12 h-12 mb-2 opacity-20"></i>
                     <p>No active peers.</p>
                 </div>
             </div>
-
-            <!-- Footer -->
             <div class="p-4 bg-zinc-900 border-t border-zinc-800 text-xs font-mono text-zinc-500 truncate flex justify-between items-center pb-safe shrink-0">
                 <span id="my-peer-id-display">Connecting...</span>
                 <button id="btn-copy-id" class="text-green-500 hover:text-green-400 ml-2 p-2">Copy</button>
@@ -146,26 +128,20 @@
 
         <!-- CHAT AREA -->
         <div id="chat-area" class="hidden md:flex flex-1 flex-col h-full relative bg-black/95">
-            
             <div id="chat-empty-state" class="flex-1 flex flex-col items-center justify-center text-zinc-600">
                 <i data-lucide="shield" class="w-16 h-16 mb-4 opacity-20"></i>
-                <p>Select a peer to chat securely.</p>
+                <p>Select a peer to chat.</p>
             </div>
 
-            <!-- Active Chat Interface -->
             <div id="chat-interface" class="hidden flex-1 flex-col h-full w-full">
-                <!-- Chat Header -->
+                <!-- Header -->
                 <div class="h-16 border-b border-zinc-800 flex items-center justify-between px-4 bg-zinc-900/50 shrink-0">
                     <div class="flex items-center space-x-3">
-                        <button id="btn-close-chat" class="md:hidden p-2 -ml-2 hover:bg-zinc-800 rounded-full text-zinc-400">
-                            <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                        </button>
+                        <button id="btn-close-chat" class="md:hidden p-2 -ml-2 hover:bg-zinc-800 rounded-full text-zinc-400"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
                         <div id="chat-avatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-black font-bold text-xs">ID</div>
                         <div class="overflow-hidden">
                             <div id="chat-title" class="font-semibold text-sm text-white truncate">Peer ID</div>
-                            <div class="text-xs text-green-500 flex items-center">
-                                <i data-lucide="lock" class="w-3 h-3 mr-1"></i> Encrypted
-                            </div>
+                            <div class="text-xs text-green-500 flex items-center"><i data-lucide="lock" class="w-3 h-3 mr-1"></i> E2EE</div>
                         </div>
                     </div>
                     <div class="flex space-x-1">
@@ -174,17 +150,11 @@
                     </div>
                 </div>
 
-                <!-- Messages Container -->
+                <!-- Messages -->
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 w-full"></div>
 
-                <!-- Upload Progress -->
-                <div id="upload-progress" class="hidden px-4 py-2 bg-blue-900/50 text-xs text-blue-200 text-center">
-                    Processing large file... Do not close.
-                </div>
-
-                <!-- Input Area -->
+                <!-- Input -->
                 <div class="bg-zinc-900 border-t border-zinc-800 shrink-0 w-full">
-                    <!-- Preview -->
                     <div id="file-preview-area" class="hidden px-4 py-2 bg-zinc-800/50 border-b border-zinc-700 flex items-center justify-between">
                         <div class="flex items-center space-x-2 min-w-0 flex-1">
                              <i data-lucide="file" class="w-4 h-4 text-green-400 flex-shrink-0"></i>
@@ -192,29 +162,20 @@
                         </div>
                         <button id="btn-clear-file" class="text-zinc-500 hover:text-red-400 ml-2 flex-shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
-
-                    <!-- Input Bar -->
                     <div class="flex items-center space-x-2 p-2 pb-safe">
                         <input type="file" id="file-input" class="hidden">
-                        
-                        <button id="btn-attach" class="p-3 hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors shrink-0">
-                            <i data-lucide="paperclip" class="w-5 h-5"></i>
-                        </button>
-
+                        <button id="btn-attach" class="p-3 hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors shrink-0"><i data-lucide="paperclip" class="w-5 h-5"></i></button>
                         <div class="flex-1 bg-zinc-800 rounded-full px-4 py-2 flex items-center">
                             <input id="message-input" type="text" class="flex-1 bg-transparent border-none focus:outline-none text-sm text-white" placeholder="Message...">
                         </div>
-                        
-                        <button id="btn-send" class="p-3 bg-green-600 hover:bg-green-500 rounded-full text-white transition-colors shrink-0 shadow-lg">
-                            <i data-lucide="send" class="w-4 h-4"></i>
-                        </button>
+                        <button id="btn-send" class="p-3 bg-green-600 hover:bg-green-500 rounded-full text-white transition-colors shrink-0 shadow-lg"><i data-lucide="send" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- QR MODAL -->
+    <!-- MODALS -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 text-center max-w-sm w-full">
             <h3 class="text-xl font-bold mb-4">Scan to Join</h3>
@@ -224,195 +185,99 @@
         </div>
     </div>
 
-    <!-- INCOMING CALL MODAL -->
     <div id="incoming-call-modal" class="hidden fixed inset-0 z-[80] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 text-center max-w-sm w-full animate-bounce-slight">
-            <div class="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 ring-pulse">
+            <div class="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-green-500/50">
                 <i data-lucide="phone-incoming" class="w-8 h-8 text-green-400"></i>
             </div>
             <h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3>
-            <p id="caller-id-display" class="text-zinc-400 text-sm mb-6 truncate px-4">Peer ID</p>
+            <p id="caller-id-display" class="text-zinc-400 text-sm mb-6 truncate px-4"></p>
             <div class="flex space-x-6 justify-center">
-                <button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400 hover:text-red-300">
-                    <div class="p-4 bg-red-500/20 rounded-full"><i data-lucide="phone-off" class="w-6 h-6"></i></div>
-                    <span class="text-xs">Decline</span>
-                </button>
-                <button id="btn-accept-call" class="flex flex-col items-center gap-2 text-green-400 hover:text-green-300">
-                    <div class="p-4 bg-green-500/20 rounded-full"><i data-lucide="phone" class="w-6 h-6"></i></div>
-                    <span class="text-xs">Accept</span>
-                </button>
+                <button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400"><div class="p-4 bg-red-500/20 rounded-full"><i data-lucide="phone-off" class="w-6 h-6"></i></div><span class="text-xs">Decline</span></button>
+                <button id="btn-accept-call" class="flex flex-col items-center gap-2 text-green-400"><div class="p-4 bg-green-500/20 rounded-full"><i data-lucide="phone" class="w-6 h-6"></i></div><span class="text-xs">Accept</span></button>
             </div>
         </div>
     </div>
 
-    <!-- CALL OVERLAY -->
     <div id="video-overlay" class="hidden fixed inset-0 z-[70] bg-black/95 flex flex-col p-4 pb-safe">
         <div class="flex-1 relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 mb-4">
-            <!-- Call Status -->
-            <div id="call-status" class="absolute top-4 left-4 z-10 px-3 py-1 bg-black/50 backdrop-blur rounded-full text-xs font-mono text-zinc-300">
-                Connecting...
-            </div>
-            
-            <!-- Audio Call UI -->
+            <div id="call-status" class="absolute top-4 left-4 z-10 px-3 py-1 bg-black/50 backdrop-blur rounded-full text-xs font-mono text-zinc-300">Connecting...</div>
             <div id="audio-call-ui" class="hidden absolute inset-0 flex items-center justify-center bg-zinc-900 z-0">
                 <div class="flex flex-col items-center animate-pulse">
-                    <div class="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center mb-4">
-                        <i data-lucide="mic" class="w-10 h-10 text-green-400"></i>
-                    </div>
+                    <div class="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center mb-4"><i data-lucide="mic" class="w-10 h-10 text-green-400"></i></div>
                     <span class="text-zinc-400 font-medium">Audio Call</span>
                 </div>
             </div>
-
-            <!-- Remote Video -->
             <video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-1 relative"></video>
-            <!-- Local Video -->
             <div id="local-video-container" class="absolute top-4 right-4 w-28 h-40 sm:w-32 sm:h-48 bg-black rounded-lg border border-zinc-700 overflow-hidden shadow-2xl z-20">
                 <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
             </div>
         </div>
         <div class="h-20 flex items-center justify-center space-x-6">
-            <button id="btn-end-call" class="p-4 bg-red-500 hover:bg-red-600 rounded-full text-white shadow-lg transition-transform hover:scale-110">
-                <i data-lucide="phone-off" class="w-8 h-8"></i>
-            </button>
+            <button id="btn-end-call" class="p-4 bg-red-500 hover:bg-red-600 rounded-full text-white shadow-lg"><i data-lucide="phone-off" class="w-8 h-8"></i></button>
         </div>
     </div>
 
     <!-- LOGIC -->
     <script>
-        // --- 1. CORE VARIABLES ---
-        let myIdentity = null;
-        let peer = null;
-        let myPeerId = null;
-        let connections = {}; 
-        let sharedKeys = {};  
-        let messages = {};    
-        let activeChatId = null;
-        let localStream = null;
-        let callInstance = null;
-        let pendingCall = null; 
-        let pendingCallType = 'video'; 
-        let pendingFileMeta = {}; 
-
-        // --- 2. CRYPTO LAYER ---
+        // GLOBALS
+        let myIdentity = null, peer = null, myPeerId = null, connections = {}, sharedKeys = {}, messages = {}, activeChatId = null;
+        let localStream = null, callInstance = null, pendingCall = null, pendingCallType = 'video';
+        let fileChunks = {}; // Store chunks { senderId: { chunks: [], count, total } }
+        
+        // --- CRYPTO (Optimized) ---
         const CryptoLayer = {
             generateIdentity: async () => window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]),
-            exportPublicKey: async (key) => {
-                const exported = await window.crypto.subtle.exportKey("spki", key);
-                return btoa(String.fromCharCode(...new Uint8Array(exported)));
-            },
-            importPublicKey: async (base64Key) => {
-                const binary = atob(base64Key);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            exportPublicKey: async (key) => btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", key)))),
+            importPublicKey: async (str) => {
+                const bytes = new Uint8Array(atob(str).split('').map(c => c.charCodeAt(0)));
                 return await window.crypto.subtle.importKey("spki", bytes.buffer, { name: "ECDH", namedCurve: "P-256" }, true, []);
             },
-            deriveSharedKey: async (privateKey, publicKey) => window.crypto.subtle.deriveKey({ name: "ECDH", public: publicKey }, privateKey, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]),
-            
-            encryptText: async (text, sharedKey) => {
-                const encoder = new TextEncoder();
-                const data = encoder.encode(text);
-                const encrypted = await CryptoLayer.encryptBuffer(data, sharedKey);
-                return arrayBufferToBase64(encrypted); 
-            },
-            decryptText: async (cipherText, sharedKey) => {
-                const encryptedBuffer = base64ToArrayBuffer(cipherText);
-                const decryptedBuffer = await CryptoLayer.decryptBuffer(encryptedBuffer, sharedKey);
-                if(typeof decryptedBuffer === 'string') return decryptedBuffer;
-                return new TextDecoder().decode(decryptedBuffer);
-            },
-            
-            encryptBuffer: async (bufferData, sharedKey) => {
+            deriveSharedKey: async (priv, pub) => window.crypto.subtle.deriveKey({ name: "ECDH", public: pub }, priv, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]),
+            encryptText: async (text, key) => {
+                const enc = new TextEncoder().encode(text);
                 const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, sharedKey, bufferData);
-                const result = new Uint8Array(iv.byteLength + encrypted.byteLength);
-                result.set(iv, 0);
-                result.set(new Uint8Array(encrypted), 12);
-                return result.buffer; 
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc);
+                return { iv: Array.from(iv), data: Array.from(new Uint8Array(cipher)) }; // JSON compatible
             },
-            decryptBuffer: async (bufferData, sharedKey) => {
+            decryptText: async (obj, key) => {
                 try {
-                    const bytes = new Uint8Array(bufferData); 
-                    if (bytes.length < 13) throw new Error("Invalid data length");
-                    const iv = bytes.slice(0, 12);
-                    const data = bytes.slice(12);
-                    const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, sharedKey, data);
-                    return decrypted;
-                } catch (e) {
-                    console.error("Decryption failed", e);
-                    return "[Undecryptable Data]";
-                }
+                    const iv = new Uint8Array(obj.iv);
+                    const data = new Uint8Array(obj.data);
+                    const dec = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
+                    return new TextDecoder().decode(dec);
+                } catch(e) { return "[Decryption Failed]"; }
+            },
+            // Fast binary crypto
+            encryptBin: async (buffer, key) => {
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buffer);
+                const res = new Uint8Array(iv.length + cipher.byteLength);
+                res.set(iv, 0); res.set(new Uint8Array(cipher), 12);
+                return res.buffer;
+            },
+            decryptBin: async (buffer, key) => {
+                const u8 = new Uint8Array(buffer);
+                const iv = u8.slice(0, 12);
+                const data = u8.slice(12);
+                return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
             }
         };
 
-        function arrayBufferToBase64(buffer) {
-            let binary = '';
-            const bytes = new Uint8Array(buffer);
-            const len = bytes.byteLength;
-            for (let i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
-            return window.btoa(binary);
-        }
-
-        function base64ToArrayBuffer(base64) {
-            const binary_string = window.atob(base64);
-            const len = binary_string.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) bytes[i] = binary_string.charCodeAt(i);
-            return bytes.buffer;
-        }
-
-        function formatBytes(bytes, decimals = 1) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-        }
-
-        function getFileIcon(mime) {
-            if (mime.includes('pdf')) return 'file-text';
-            if (mime.includes('image')) return 'image';
-            if (mime.includes('video')) return 'video';
-            if (mime.includes('audio')) return 'music';
-            if (mime.includes('zip') || mime.includes('rar') || mime.includes('tar')) return 'archive';
-            if (mime.includes('text') || mime.includes('json') || mime.includes('code')) return 'file-code';
-            return 'file';
-        }
-
-        // --- 3. INITIALIZATION ---
-        async function init() {
+        // --- NETWORKING ---
+        function init() {
             lucide.createIcons();
-            try {
-                const keyPair = await CryptoLayer.generateIdentity();
-                const pubString = await CryptoLayer.exportPublicKey(keyPair.publicKey);
-                myIdentity = {
-                    publicKey: keyPair.publicKey,
-                    privateKey: keyPair.privateKey,
-                    pubKeyString: pubString,
-                    fingerprint: pubString.slice(0, 10)
-                };
-                document.getElementById('identity-display').innerText = `ID Fingerprint: ${myIdentity.fingerprint}`;
-            } catch(e) {
-                console.error("Init Error", e);
-                alert("Crypto initialization failed. Please use a modern browser.");
-            }
+            CryptoLayer.generateIdentity().then(async (kp) => {
+                myIdentity = { publicKey: kp.publicKey, privateKey: kp.privateKey, pubKeyString: await CryptoLayer.exportPublicKey(kp.publicKey) };
+                document.getElementById('identity-display').innerText = "Security Ready. ID: " + myIdentity.pubKeyString.slice(0, 8);
+            });
         }
 
-        // --- 4. NETWORKING ---
         function initializePeer(customId = null) {
             const id = customId || "ghost-" + Math.floor(Math.random() * 1000000);
-            
             peer = new Peer(id, {
-                pingInterval: 5000, 
-                debug: 1, 
-                config: {
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' },
-                        { urls: 'stun:global.stun.twilio.com:3478' }
-                    ]
-                }
+                pingInterval: 5000,
+                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }
             });
 
             peer.on('open', (id) => {
@@ -420,374 +285,369 @@
                 document.getElementById('my-peer-id-display').innerText = id;
                 document.getElementById('status-indicator').classList.replace('bg-blue-500', 'bg-green-500');
                 document.getElementById('status-indicator').classList.add('animate-pulse');
-                
                 document.getElementById('onboarding-screen').classList.add('hidden');
                 document.getElementById('app-layout').classList.remove('hidden');
-                
                 resetLoadingStates();
             });
 
-            peer.on('connection', handleIncomingConnection);
+            peer.on('connection', conn => setupConnection(conn));
             peer.on('call', handleIncomingCall);
             
-            peer.on('error', (err) => {
-                console.error("PeerJS Error:", err);
-                resetLoadingStates(); 
-                
-                const overlay = document.getElementById('video-overlay');
-                if (!overlay.classList.contains('hidden')) {
-                    endCall(err.type === 'peer-unavailable' ? "Peer Unavailable" : "Connection Error");
-                }
-                
-                if (err.type === 'peer-unavailable' && document.activeElement.id === 'input-join-id') {
-                    alert("Could not connect. Peer might be offline.");
-                } else if (err.type === 'network') {
-                    document.getElementById('status-indicator').classList.replace('bg-green-500', 'bg-red-500');
-                }
+            peer.on('error', err => {
+                console.error(err);
+                resetLoadingStates();
+                if (err.type === 'peer-unavailable') alert("Peer offline or unreachable.");
             });
             
-            peer.on('disconnected', () => {
-                document.getElementById('status-indicator').classList.replace('bg-green-500', 'bg-red-500');
-                setTimeout(() => { if (peer && !peer.destroyed) peer.reconnect(); }, 2000);
-            });
+            peer.on('disconnected', () => setTimeout(() => !peer.destroyed && peer.reconnect(), 2000));
         }
 
         function resetLoadingStates() {
-            document.getElementById('icon-host').classList.remove('hidden');
             document.getElementById('loader-host').classList.add('hidden');
-            document.getElementById('text-host').innerText = "Host Node";
+            document.getElementById('icon-host').classList.remove('hidden');
             document.getElementById('btn-host').disabled = false;
-
-            document.getElementById('text-join').innerText = "Join Network";
+            document.getElementById('text-host').innerText = "Host Node";
             document.getElementById('loader-join').classList.add('hidden');
             document.getElementById('btn-join').disabled = false;
+            document.getElementById('text-join').innerText = "Join Network";
         }
 
-        function ensurePeerReady() {
-            return new Promise((resolve, reject) => {
-                if (!peer) { initializePeer(); }
-                if (peer.open) { resolve(peer); return; }
-                if (peer.disconnected) { peer.reconnect(); }
-
-                let attempts = 0;
-                const checkInterval = setInterval(() => {
-                    attempts++;
-                    if (peer && peer.open) { clearInterval(checkInterval); resolve(peer); }
-                    else if (peer && peer.disconnected && attempts % 10 === 0) { peer.reconnect(); }
-                    
-                    if (attempts > 150) { clearInterval(checkInterval); reject("Peer init timeout (Network Slow)"); }
-                }, 100);
-            });
-        }
-
-        function handleIncomingConnection(conn) { setupConnection(conn); }
-
-        async function connectToPeer(targetId) {
-            const btn = document.getElementById('btn-join');
-            btn.disabled = true;
-            document.getElementById('text-join').innerText = "Connecting...";
+        async function connectToPeer(id) {
+            document.getElementById('btn-join').disabled = true;
             document.getElementById('loader-join').classList.remove('hidden');
-
-            try {
-                await ensurePeerReady();
-                const conn = peer.connect(targetId, { reliable: true });
+            
+            if(!peer) initializePeer();
+            // Wait for peer ready
+            let attempts = 0;
+            while((!peer || !peer.open) && attempts < 50) { await new Promise(r => setTimeout(r, 100)); attempts++; }
+            
+            if(peer.open) {
+                const conn = peer.connect(id, { reliable: true });
                 setupConnection(conn);
-            } catch(e) { 
-                alert("Connection failed: " + e); 
+            } else {
+                alert("Network timeout");
                 resetLoadingStates();
             }
         }
 
         function setupConnection(conn) {
-            conn.on('open', async () => {
-                conn.send({ type: 'handshake', publicKey: myIdentity.pubKeyString });
+            conn.on('open', () => {
+                conn.send({ type: 'handshake', key: myIdentity.pubKeyString });
                 resetLoadingStates();
             });
-            conn.on('data', (data) => handleData(conn.peer, data, conn));
+            conn.on('data', data => handleData(conn.peer, data, conn));
             conn.on('close', () => {
-                addMessage(conn.peer, "Peer disconnected.", 'system');
                 delete connections[conn.peer];
-                delete sharedKeys[conn.peer];
                 renderChatList();
-            });
-            conn.on('error', (e) => {
-                console.error("Connection Error", e);
-                resetLoadingStates();
             });
         }
 
-        async function handleData(senderId, payload, conn) {
-            // FIXED: Handle both raw ArrayBuffer and Uint8Array (common browser quirk)
-            if (payload instanceof ArrayBuffer || payload instanceof Uint8Array) {
-                // Normalize to ArrayBuffer
-                const buffer = payload instanceof Uint8Array ? payload.buffer : payload;
+        async function handleData(sender, data, conn) {
+            // RAW BINARY (File Chunk)
+            if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
+                if (!fileChunks[sender]) return;
+                const tracker = fileChunks[sender];
+                tracker.receivedBytes += data.byteLength;
+                tracker.chunks.push(data);
                 
-                const meta = pendingFileMeta[senderId];
-                if (!meta) return console.warn("Received bytes without metadata");
-                const key = sharedKeys[senderId];
-                if (!key) return;
-                
-                const decryptedBuffer = await CryptoLayer.decryptBuffer(buffer, key);
-                if (typeof decryptedBuffer === 'string') {
-                    addMessage(senderId, "Failed to decrypt file.", 'system');
-                    delete pendingFileMeta[senderId];
-                    return;
+                // Update Progress UI if active chat
+                if (activeChatId === sender) {
+                    const percent = Math.round((tracker.receivedBytes / tracker.totalSize) * 100);
+                    // Could update a progress bar here
                 }
-                const blob = new Blob([decryptedBuffer], { type: meta.mime });
-                const url = URL.createObjectURL(blob);
-                const fileData = { name: meta.name, size: meta.size, mime: meta.mime, url: url };
-                addMessage(senderId, "File Received", 'received-file', fileData);
-                delete pendingFileMeta[senderId]; 
+
+                if (tracker.receivedBytes >= tracker.totalSize) {
+                    // Reassemble
+                    const completeBlob = new Blob(tracker.chunks);
+                    const arrayBuffer = await completeBlob.arrayBuffer();
+                    
+                    const key = sharedKeys[sender];
+                    try {
+                        const decrypted = await CryptoLayer.decryptBin(arrayBuffer, key);
+                        const finalBlob = new Blob([decrypted], { type: tracker.mime });
+                        const url = URL.createObjectURL(finalBlob);
+                        
+                        addMessage(sender, "File", 'received-file', { name: tracker.name, size: tracker.totalSize, mime: tracker.mime, url });
+                        
+                        // Send Receipt
+                        conn.send({ type: 'receipt', id: tracker.msgId, status: 'delivered' });
+                    } catch(e) { console.error(e); }
+                    
+                    delete fileChunks[sender];
+                }
                 return;
             }
 
-            if (payload.type === 'handshake') {
-                const remoteKey = await CryptoLayer.importPublicKey(payload.publicKey);
-                const sharedSecret = await CryptoLayer.deriveSharedKey(myIdentity.privateKey, remoteKey);
-                connections[senderId] = conn;
-                sharedKeys[senderId] = sharedSecret;
-                if(!messages[senderId]) messages[senderId] = [];
-                addMessage(senderId, "Secure Handshake Complete.", 'system');
-                renderChatList();
-                if (!activeChatId) selectChat(senderId);
+            // JSON MESSAGES
+            if (data.type === 'handshake') {
+                const rKey = await CryptoLayer.importPublicKey(data.key);
+                const sKey = await CryptoLayer.deriveSharedKey(myIdentity.privateKey, rKey);
+                connections[sender] = conn;
+                sharedKeys[sender] = sKey;
+                if(!messages[sender]) messages[sender] = [];
+                addMessage(sender, "Secure Handshake Complete", 'system');
                 return;
             }
 
-            const key = sharedKeys[senderId];
-            if (!key) return;
+            if (data.type === 'receipt') {
+                const msgs = messages[sender];
+                const m = msgs.find(x => x.id === data.id);
+                if (m) {
+                    m.status = data.status;
+                    if(activeChatId === sender) renderMessages(sender);
+                }
+                return;
+            }
 
-            if (payload.type === 'text') {
-                const text = await CryptoLayer.decryptText(payload.content, key);
-                addMessage(senderId, text, 'received');
-            } 
-            else if (payload.type === 'file-meta') {
-                pendingFileMeta[senderId] = {
-                    name: payload.name,
-                    size: payload.size,
-                    mime: payload.mime
+            if (data.type === 'text') {
+                const key = sharedKeys[sender];
+                const text = await CryptoLayer.decryptText(data.content, key);
+                addMessage(sender, text, 'received', null, data.id);
+                // Send Receipt
+                conn.send({ type: 'receipt', id: data.id, status: 'read' }); // Auto read if active? Simplification: just delivered/read
+            }
+
+            if (data.type === 'file-start') {
+                fileChunks[sender] = {
+                    msgId: data.id,
+                    name: data.name,
+                    size: data.size,
+                    mime: data.mime,
+                    totalSize: data.encSize, // Encrypted size
+                    receivedBytes: 0,
+                    chunks: []
                 };
             }
         }
 
-        // --- 5. UI LOGIC ---
-        function addMessage(peerId, text, type, fileData = null) {
-            const msg = {
-                id: Date.now(),
-                text,
-                sender: (type === 'sent' || type === 'sent-file') ? 'Me' : peerId,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                type,
-                fileData 
-            };
-            if(!messages[peerId]) messages[peerId] = [];
-            messages[peerId].push(msg);
-            renderChatList();
-            if (activeChatId === peerId) {
-                renderMessages(peerId);
+        // --- MESSAGING ---
+        async function sendMessage() {
+            if(!activeChatId) return;
+            const conn = connections[activeChatId];
+            const key = sharedKeys[activeChatId];
+            if(!conn || !key) return alert("Not connected");
+
+            const fileInput = document.getElementById('file-input');
+            const textInput = document.getElementById('message-input');
+            const msgId = Date.now();
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const ab = await file.arrayBuffer();
+                const enc = await CryptoLayer.encryptBin(ab, key); // Encrypt whole buffer (fast enough < 100MB)
+                
+                // 1. Send Meta
+                conn.send({ type: 'file-start', id: msgId, name: file.name, size: file.size, mime: file.type, encSize: enc.byteLength });
+                
+                // 2. Chunk & Send
+                const CHUNK_SIZE = 16384; // 16KB safe chunk
+                let offset = 0;
+                
+                // UI feedback
+                addMessage(activeChatId, "Sending File...", 'sent-file', { name: file.name, size: file.size, mime: file.type, url: URL.createObjectURL(file), id: msgId, status: 'sent' });
+                
+                // Non-blocking loop
+                function sendNextChunk() {
+                    const chunk = enc.slice(offset, offset + CHUNK_SIZE);
+                    conn.send(chunk);
+                    offset += CHUNK_SIZE;
+                    if (offset < enc.byteLength) {
+                        // Respect buffer
+                        if (conn.dataChannel.bufferedAmount > 1024 * 1024) {
+                            setTimeout(sendNextChunk, 50);
+                        } else {
+                            requestAnimationFrame(sendNextChunk); // Max speed
+                        }
+                    } else {
+                        clearFileSelection();
+                    }
+                }
+                sendNextChunk();
+
+            } else {
+                const text = textInput.value.trim();
+                if(!text) return;
+                const content = await CryptoLayer.encryptText(text, key);
+                conn.send({ type: 'text', id: msgId, content: content });
+                addMessage(activeChatId, text, 'sent', null, msgId);
+                textInput.value = '';
             }
+        }
+
+        function addMessage(peerId, text, type, fileData = null, id = Date.now()) {
+            if(!messages[peerId]) messages[peerId] = [];
+            messages[peerId].push({
+                id, text, type, fileData, 
+                time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                status: type === 'sent' ? 'sent' : 'read' // Incoming is assumed read locally
+            });
+            renderChatList();
+            if (activeChatId === peerId) renderMessages(peerId);
         }
 
         function renderChatList() {
             const list = document.getElementById('chat-list');
-            const peerIds = Object.keys(messages);
-            const allPeers = new Set([...Object.keys(connections), ...peerIds]);
-            
-            if(allPeers.size === 0) {
-                list.innerHTML = `<div class="p-8 text-center text-zinc-500 h-full flex flex-col justify-center items-center"><i data-lucide="users" class="w-12 h-12 mb-2 opacity-20"></i><p>No active peers.</p></div>`;
-                lucide.createIcons();
-                return;
-            }
-            
-            let html = '';
-            allPeers.forEach(pid => {
-                const msgs = messages[pid] || [];
-                const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1] : { text: 'Secure connection ready', time: '' };
-                const isActive = pid === activeChatId ? 'bg-zinc-800' : '';
-                let previewText = lastMsg.text;
-                if(lastMsg.type && lastMsg.type.includes('file')) previewText = `📎 ${lastMsg.fileData ? lastMsg.fileData.name : 'Attachment'}`;
-                html += `
-                <div onclick="selectChat('${pid}')" class="p-4 border-b border-zinc-800/50 cursor-pointer hover:bg-zinc-800/50 transition-colors ${isActive}">
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="font-medium text-zinc-200 truncate w-32">${pid}</span>
-                        <span class="text-xs text-zinc-500">${lastMsg.time}</span>
-                    </div>
-                    <div class="text-sm text-zinc-500 truncate">${previewText}</div>
-                </div>`;
-            });
-            list.innerHTML = html;
-            lucide.createIcons();
+            list.innerHTML = Object.keys(messages).map(pid => {
+                const last = messages[pid][messages[pid].length-1];
+                const txt = last ? (last.type.includes('file') ? 'File' : last.text) : 'New Chat';
+                return `<div onclick="selectChat('${pid}')" class="p-4 border-b border-zinc-800/50 hover:bg-zinc-800/50 cursor-pointer ${activeChatId===pid?'bg-zinc-800':''}">
+                    <div class="font-bold text-zinc-200">${pid}</div>
+                    <div class="text-xs text-zinc-500 truncate">${txt}</div>
+                </div>`
+            }).join('') || '<div class="p-8 text-center text-zinc-500">No chats</div>';
         }
 
-        window.selectChat = (pid) => {
+        function selectChat(pid) {
             activeChatId = pid;
-            document.getElementById('chat-empty-state').classList.add('hidden');
-            document.getElementById('chat-interface').classList.remove('hidden');
-            document.getElementById('chat-interface').classList.add('flex');
-            document.getElementById('chat-title').innerText = pid;
-            document.getElementById('chat-avatar').innerText = pid.substring(0, 2).toUpperCase();
-            
             if(window.innerWidth < 768) {
                 document.getElementById('sidebar-panel').classList.add('hidden');
                 document.getElementById('chat-area').classList.remove('hidden');
                 document.getElementById('chat-area').classList.add('flex');
-            } else {
-                document.getElementById('chat-area').classList.remove('hidden');
             }
-            
-            renderChatList();
+            document.getElementById('chat-interface').classList.remove('hidden');
+            document.getElementById('chat-interface').classList.add('flex');
+            document.getElementById('chat-empty-state').classList.add('hidden');
+            document.getElementById('chat-title').innerText = pid;
+            document.getElementById('chat-avatar').innerText = pid.substring(0,2).toUpperCase();
             renderMessages(pid);
-        };
-
-        document.getElementById('btn-close-chat').onclick = () => {
-            document.getElementById('chat-area').classList.add('hidden');
-            document.getElementById('chat-area').classList.remove('flex');
-            document.getElementById('sidebar-panel').classList.remove('hidden');
-            activeChatId = null;
-            renderChatList();
-        };
+        }
 
         function renderMessages(pid) {
             const container = document.getElementById('messages-container');
-            const msgs = messages[pid] || [];
-            let html = '';
-            msgs.forEach(msg => {
-                if(msg.type === 'system') {
-                    html += `<div class="flex justify-center my-4"><span class="text-xs bg-zinc-800 text-zinc-400 px-3 py-1 rounded-full">${msg.text}</span></div>`;
-                } else {
-                    const isMe = msg.sender === 'Me';
-                    const align = isMe ? 'justify-end' : 'justify-start';
-                    let bubbleClass = isMe ? 'bg-green-600 text-white rounded-2xl rounded-tr-none' : 'bg-zinc-800 text-zinc-200 rounded-2xl rounded-tl-none';
-                    let paddingClass = 'p-3'; 
-                    const timeColor = isMe ? 'text-green-200' : 'text-zinc-500';
-                    let contentHtml = '';
-                    let showFooterTime = true;
-
-                    if (msg.type === 'sent-file' || msg.type === 'received-file') {
-                        const { name, size, mime, url } = msg.fileData;
-                        const isImage = mime.startsWith('image/');
-                        const sizeStr = formatBytes(size);
-                        const icon = getFileIcon(mime);
-
-                        if (isImage) {
-                             paddingClass = 'p-1';
-                             bubbleClass += ' overflow-hidden';
-                             showFooterTime = false;
-                             contentHtml = `
-                                <div class="relative group">
-                                    <img src="${url}" class="rounded-lg max-w-full max-h-[300px] object-cover cursor-pointer hover:opacity-95 transition-opacity" 
-                                         onload="document.getElementById('messages-container').scrollTop = document.getElementById('messages-container').scrollHeight" 
-                                         onclick="window.open('${url}')" />
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 rounded-lg pointer-events-none"></div>
-                                    <div class="absolute bottom-1 right-2 flex items-center space-x-1 text-[10px] text-white/90 font-medium drop-shadow-md">
-                                        <span>${msg.time}</span>
-                                    </div>
-                                    <a href="${url}" download="${name}" class="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm shadow-sm">
-                                        <i data-lucide="download" class="w-4 h-4"></i>
-                                    </a>
-                                </div>
-                            `;
-                        } else {
-                            let iconBg = isMe ? 'bg-green-800/40' : (mime.includes('pdf') ? 'bg-red-900/40' : (mime.includes('video') ? 'bg-pink-900/40' : 'bg-zinc-700'));
-                            let iconColor = isMe ? 'text-green-100' : (mime.includes('pdf') ? 'text-red-400' : (mime.includes('video') ? 'text-pink-400' : 'text-zinc-300'));
-                            
-                            contentHtml = `
-                                <div class="flex items-center gap-3 w-full overflow-hidden">
-                                    <div class="flex-shrink-0 w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center relative">
-                                        <i data-lucide="${icon}" class="w-5 h-5 ${iconColor}"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="text-sm font-medium break-all whitespace-normal leading-tight">${name}</div>
-                                        <div class="text-[10px] opacity-70 flex items-center mt-0.5">
-                                            <span>${sizeStr}</span>
-                                            <span class="mx-1">•</span>
-                                            <span>${mime.split('/')[1].toUpperCase().slice(0,4)}</span>
-                                        </div>
-                                    </div>
-                                    <a href="${url}" download="${name}" class="p-2 hover:bg-black/10 rounded-full transition-colors cursor-pointer flex-shrink-0 self-center">
-                                        <i data-lucide="download" class="w-5 h-5 opacity-70 hover:opacity-100"></i>
-                                    </a>
-                                </div>
-                            `;
-                        }
-                    } else {
-                        contentHtml = `<div class="break-words">${msg.text}</div>`;
-                    }
-
-                    html += `
-                    <div class="flex ${align} mb-1">
-                        <div class="bubble-constraint ${paddingClass} text-sm ${bubbleClass} shadow-sm overflow-hidden">
-                            ${contentHtml}
-                            ${ showFooterTime ? `<div class="text-[10px] mt-1 text-right ${timeColor} opacity-70 select-none">${msg.time}</div>` : '' }
-                        </div>
-                    </div>`;
+            container.innerHTML = messages[pid].map(m => {
+                if(m.type === 'system') return `<div class="text-center my-2"><span class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-400">${m.text}</span></div>`;
+                
+                const isMe = m.type.includes('sent');
+                const align = isMe ? 'justify-end' : 'justify-start';
+                const bg = isMe ? 'bg-green-700' : 'bg-zinc-800';
+                
+                // Tick Logic
+                let tickHtml = '';
+                if (isMe) {
+                    let color = 'text-gray-400'; // sent
+                    let icon = 'check'; 
+                    if (m.status === 'delivered') { color = 'text-gray-300'; icon = 'check-check'; }
+                    if (m.status === 'read') { color = 'text-blue-400'; icon = 'check-check'; }
+                    tickHtml = `<i data-lucide="${icon}" class="w-3 h-3 ${color} ml-1 inline-block"></i>`;
                 }
-            });
-            container.innerHTML = html;
+
+                let content = m.text;
+                if (m.fileData) {
+                    if (m.fileData.mime.startsWith('image/')) {
+                        content = `<img src="${m.fileData.url}" class="max-w-full rounded-lg mb-1" onclick="window.open('${m.fileData.url}')">`;
+                    } else {
+                        content = `<div class="flex items-center gap-2 p-1"><i data-lucide="file" class="w-5 h-5"></i> <a href="${m.fileData.url}" download="${m.fileData.name}" class="underline truncate">${m.fileData.name}</a></div>`;
+                    }
+                }
+
+                return `<div class="flex ${align}"><div class="max-w-[75%] p-2 rounded-lg ${bg} text-sm break-words shadow-sm">
+                    ${content}
+                    <div class="text-[10px] text-right opacity-70 mt-1 flex items-center justify-end gap-1">
+                        ${m.time} ${tickHtml}
+                    </div>
+                </div></div>`;
+            }).join('');
             container.scrollTop = container.scrollHeight;
             lucide.createIcons();
         }
 
-        async function sendMessage() {
+        // --- CALLS ---
+        async function startCall(video) {
             if(!activeChatId) return;
-            if (!sharedKeys[activeChatId]) { alert("Secure Handshake not complete yet."); return; }
-            const conn = connections[activeChatId];
-            const key = sharedKeys[activeChatId];
-            const fileInput = document.getElementById('file-input');
-            const textInput = document.getElementById('message-input');
+            const stream = await navigator.mediaDevices.getUserMedia({video, audio:true});
+            localStream = stream;
             
-            if(!conn || !conn.open) { alert("Connection lost."); return; }
-
-            try {
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    if (file.size > 50 * 1024 * 1024) { alert("File > 50MB."); return; } // Increased limit
-                    
-                    document.getElementById('upload-progress').classList.remove('hidden');
-                    
-                    const arrayBuffer = await file.arrayBuffer();
-                    const encryptedBuffer = await CryptoLayer.encryptBuffer(arrayBuffer, key);
-                    
-                    // 1. Send Metadata 
-                    conn.send({ 
-                        type: 'file-meta', 
-                        name: file.name, 
-                        size: file.size, 
-                        mime: file.type
-                    });
-                    
-                    // 2. Send Binary Buffer (with small delay to guarantee order)
-                    setTimeout(() => {
-                        conn.send(encryptedBuffer); 
-                        
-                        const blob = new Blob([arrayBuffer], { type: file.type });
-                        const url = URL.createObjectURL(blob);
-                        addMessage(activeChatId, "File Sent", 'sent-file', { name: file.name, size: file.size, mime: file.type, url: url });
-                        
-                        document.getElementById('upload-progress').classList.add('hidden');
-                        clearFileSelection();
-                    }, 50); // 50ms safety buffer
-                    
-                } else {
-                    const text = textInput.value.trim();
-                    if(!text) return;
-                    const encrypted = await CryptoLayer.encryptText(text, key);
-                    conn.send({ type: 'text', content: encrypted });
-                    addMessage(activeChatId, text, 'sent');
-                    textInput.value = '';
-                }
-            } catch (err) {
-                console.error("Send Error", err);
-                document.getElementById('upload-progress').classList.add('hidden');
-                alert("Failed to send. See console.");
-            }
+            // Set local video
+            if(video) document.getElementById('local-video').srcObject = stream;
+            
+            document.getElementById('video-overlay').classList.remove('hidden');
+            document.getElementById('call-status').innerText = "Calling...";
+            
+            const call = peer.call(activeChatId, stream, { metadata: { type: video?'video':'audio' } });
+            setupCall(call, video);
         }
 
-        document.getElementById('btn-attach').onclick = () => { document.getElementById('file-input').click(); };
-        document.getElementById('file-input').onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
+        function handleIncomingCall(call) {
+            pendingCall = call;
+            pendingCallType = call.metadata.type;
+            document.getElementById('incoming-call-modal').classList.remove('hidden');
+            document.getElementById('caller-id-display').innerText = call.peer;
+            document.getElementById('incoming-call-title').innerText = "Incoming " + (pendingCallType==='video'?'Video':'Audio') + " Call";
+        }
+
+        document.getElementById('btn-accept-call').onclick = async () => {
+            document.getElementById('incoming-call-modal').classList.add('hidden');
+            const isVideo = pendingCallType === 'video';
+            const stream = await navigator.mediaDevices.getUserMedia({video: isVideo, audio:true});
+            localStream = stream;
+            if(isVideo) document.getElementById('local-video').srcObject = stream;
+            
+            document.getElementById('video-overlay').classList.remove('hidden');
+            document.getElementById('call-status').innerText = "Connecting...";
+            
+            pendingCall.answer(stream);
+            setupCall(pendingCall, isVideo);
+        };
+
+        function setupCall(call, isVideo) {
+            callInstance = call;
+            
+            // UI Toggle
+            const uiAudio = document.getElementById('audio-call-ui');
+            const vidRemote = document.getElementById('remote-video');
+            const vidLocal = document.getElementById('local-video-container');
+            
+            if (isVideo) {
+                uiAudio.classList.add('hidden');
+                vidRemote.classList.remove('hidden');
+                vidLocal.classList.remove('hidden');
+            } else {
+                uiAudio.classList.remove('hidden');
+                vidRemote.classList.add('hidden');
+                vidLocal.classList.add('hidden');
+            }
+
+            call.on('stream', rStream => {
+                document.getElementById('call-status').innerText = "Connected";
+                const v = document.getElementById('remote-video');
+                v.srcObject = rStream;
+                v.play().catch(console.error);
+                
+                // Force audio output for mobile
+                if (!isVideo) {
+                    const a = new Audio();
+                    a.srcObject = rStream;
+                    a.play().catch(console.error);
+                }
+            });
+            call.on('close', endCall);
+            call.on('error', () => endCall());
+        }
+
+        function endCall() {
+            if(localStream) localStream.getTracks().forEach(t=>t.stop());
+            if(callInstance) callInstance.close();
+            document.getElementById('video-overlay').classList.add('hidden');
+            document.getElementById('incoming-call-modal').classList.add('hidden');
+        }
+
+        // --- LISTENERS ---
+        document.getElementById('btn-host').onclick = () => {
+            document.getElementById('loader-host').classList.remove('hidden');
+            document.getElementById('icon-host').classList.add('hidden');
+            initializePeer("ghost-" + Math.floor(Math.random()*100000));
+        };
+        document.getElementById('btn-join').onclick = () => {
+            const id = document.getElementById('input-join-id').value;
+            if(id) connectToPeer(id);
+        };
+        document.getElementById('btn-send').onclick = sendMessage;
+        document.getElementById('message-input').onkeypress = e => e.key==='Enter' && sendMessage();
+        document.getElementById('btn-attach').onclick = () => document.getElementById('file-input').click();
+        document.getElementById('file-input').onchange = e => {
+            if(e.target.files[0]) {
                 document.getElementById('file-preview-area').classList.remove('hidden');
-                document.getElementById('file-preview-name').innerText = file.name;
+                document.getElementById('file-preview-name').innerText = e.target.files[0].name;
             }
         };
         document.getElementById('btn-clear-file').onclick = clearFileSelection;
@@ -795,172 +655,26 @@
             document.getElementById('file-input').value = '';
             document.getElementById('file-preview-area').classList.add('hidden');
         }
-
-        // --- 7. EVENT LISTENERS ---
-        document.getElementById('btn-host').onclick = () => {
-            const btn = document.getElementById('btn-host');
-            btn.disabled = true;
-            document.getElementById('icon-host').classList.add('hidden');
-            document.getElementById('loader-host').classList.remove('hidden');
-            document.getElementById('text-host').innerText = "Initializing...";
-            initializePeer("ghost-" + Math.floor(Math.random() * 1000000));
-        };
-        
-        document.getElementById('btn-join').onclick = async () => {
-            const id = document.getElementById('input-join-id').value.trim();
-            if(!id) return alert("Enter ID");
-            await connectToPeer(id);
-        };
-        document.getElementById('btn-send').onclick = sendMessage;
-        document.getElementById('message-input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
-        document.getElementById('btn-copy-id').onclick = () => {
-            const textArea = document.createElement("textarea");
-            textArea.value = myPeerId;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            const btn = document.getElementById('btn-copy-id');
-            const old = btn.innerText;
-            btn.innerText = "Copied!";
-            setTimeout(() => btn.innerText = old, 2000);
-        };
-        document.getElementById('btn-show-qr').onclick = () => {
-            if(!myPeerId) return;
-            const modal = document.getElementById('qr-modal');
-            const container = document.getElementById('qrcode-container');
-            container.innerHTML = ""; 
-            new QRCode(container, { text: myPeerId, width: 200, height: 200 });
-            document.getElementById('qr-modal-text').innerText = myPeerId;
-            modal.classList.remove('hidden');
-        };
-        document.getElementById('btn-close-qr').onclick = () => { document.getElementById('qr-modal').classList.add('hidden'); };
-
-        // --- 8. CALL LOGIC ---
-        function setCallStatus(status) {
-             const statusEl = document.getElementById('call-status');
-             if(statusEl) statusEl.innerText = status;
-        }
-
-        async function startCall(isVideo = false) {
-            if(!activeChatId) return;
-            setCallStatus("Calling...");
-            const remoteVideo = document.getElementById('remote-video');
-            const localVideoCont = document.getElementById('local-video-container');
-            const audioUI = document.getElementById('audio-call-ui');
-            
-            if (isVideo) {
-                remoteVideo.classList.remove('hidden');
-                localVideoCont.classList.remove('hidden');
-                audioUI.classList.add('hidden');
-            } else {
-                remoteVideo.classList.add('hidden');
-                localVideoCont.classList.add('hidden');
-                audioUI.classList.remove('hidden');
-            }
-
-            try {
-                if (localStream) { localStream.getTracks().forEach(track => track.stop()); }
-                const stream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
-                localStream = stream;
-                if (isVideo) { document.getElementById('local-video').srcObject = stream; }
-                document.getElementById('video-overlay').classList.remove('hidden');
-                setCallStatus("Connecting...");
-                
-                callInstance = peer.call(activeChatId, stream, { metadata: { type: isVideo ? 'video' : 'audio' } });
-                if (!callInstance) throw new Error("Call failed to init");
-                setupCallEvents(callInstance, isVideo);
-            } catch(err) { console.error("Start Call Error:", err); endCall("Failed: " + err.message); }
-        }
-
-        function handleIncomingCall(call) {
-            pendingCall = call;
-            pendingCallType = call.metadata?.type || 'video';
-            document.getElementById('caller-id-display').innerText = call.peer;
-            const title = pendingCallType === 'video' ? 'Incoming Video Call...' : 'Incoming Audio Call...';
-            document.getElementById('incoming-call-title').innerText = title;
-            document.getElementById('incoming-call-modal').classList.remove('hidden');
-        }
-
-        document.getElementById('btn-accept-call').onclick = () => {
-            if (!pendingCall) return;
-            document.getElementById('incoming-call-modal').classList.add('hidden');
-            if (localStream) { localStream.getTracks().forEach(track => track.stop()); }
-            const isVideo = pendingCallType === 'video';
-            
-            const remoteVideo = document.getElementById('remote-video');
-            const localVideoCont = document.getElementById('local-video-container');
-            const audioUI = document.getElementById('audio-call-ui');
-
-            if (isVideo) {
-                remoteVideo.classList.remove('hidden');
-                localVideoCont.classList.remove('hidden');
-                audioUI.classList.add('hidden');
-            } else {
-                remoteVideo.classList.add('hidden');
-                localVideoCont.classList.add('hidden');
-                audioUI.classList.remove('hidden');
-            }
-
-            navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true })
-            .then(stream => {
-                localStream = stream;
-                if (isVideo) { document.getElementById('local-video').srcObject = stream; }
-                document.getElementById('video-overlay').classList.remove('hidden');
-                setCallStatus("Connecting...");
-                pendingCall.answer(stream);
-                callInstance = pendingCall;
-                setupCallEvents(pendingCall, isVideo);
-            })
-            .catch(err => { console.error("Accept Call Error:", err); endCall("Mic/Cam Error"); });
-        };
-
-        document.getElementById('btn-decline-call').onclick = () => {
-            if (pendingCall) pendingCall.close();
-            document.getElementById('incoming-call-modal').classList.add('hidden');
-            pendingCall = null;
-        };
-
-        function setupCallEvents(call, isVideo) {
-            call.on('stream', (remoteStream) => { 
-                if (isVideo) {
-                    const vid = document.getElementById('remote-video');
-                    vid.srcObject = remoteStream;
-                    vid.play().catch(e => console.error("Play error", e));
-                } else {
-                    const audio = new Audio();
-                    audio.srcObject = remoteStream;
-                    audio.play().catch(e => console.error("Play error", e));
-                }
-                setCallStatus("Connected");
-            });
-            call.on('close', () => endCall("Call Ended"));
-            call.on('error', (err) => { console.error("Call Error:", err); endCall("Error"); });
-        }
-
-        function endCall(msg = "") {
-            if (msg) {
-                setCallStatus(msg);
-                setTimeout(closeCallResources, 1500);
-            } else {
-                closeCallResources();
-            }
-        }
-
-        function closeCallResources() {
-            if(localStream) { localStream.getTracks().forEach(track => track.stop()); }
-            if(callInstance) { callInstance.removeAllListeners(); callInstance.close(); }
-            document.getElementById('video-overlay').classList.add('hidden');
-            document.getElementById('local-video').srcObject = null;
-            document.getElementById('remote-video').srcObject = null;
-            localStream = null;
-            callInstance = null;
-            setCallStatus("Idle");
-        }
-
         document.getElementById('btn-call-video').onclick = () => startCall(true);
         document.getElementById('btn-call-audio').onclick = () => startCall(false);
-        document.getElementById('btn-end-call').onclick = () => endCall("Call Ended");
+        document.getElementById('btn-end-call').onclick = endCall;
+        document.getElementById('btn-decline-call').onclick = endCall;
+        document.getElementById('btn-close-chat').onclick = () => {
+            document.getElementById('chat-area').classList.add('hidden');
+            document.getElementById('chat-area').classList.remove('flex');
+            document.getElementById('sidebar-panel').classList.remove('hidden');
+        };
+        document.getElementById('btn-copy-id').onclick = () => {
+            navigator.clipboard.writeText(myPeerId);
+            alert("ID Copied");
+        };
+        document.getElementById('btn-show-qr').onclick = () => {
+            document.getElementById('qr-modal').classList.remove('hidden');
+            document.getElementById('qrcode-container').innerHTML = '';
+            new QRCode(document.getElementById('qrcode-container'), {text: myPeerId, width:200, height:200});
+            document.getElementById('qr-modal-text').innerText = myPeerId;
+        };
+        document.getElementById('btn-close-qr').onclick = () => document.getElementById('qr-modal').classList.add('hidden');
 
         init();
     </script>
