@@ -22,8 +22,8 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #000;
-            color: #fff;
+            background-color: #0b141a; /* WhatsApp Dark BG */
+            color: #e9edef;
             height: 100dvh; 
             width: 100vw;
             overflow: hidden;
@@ -34,7 +34,7 @@
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb { background: #374045; border-radius: 2px; }
 
         .animate-fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn {
@@ -57,7 +57,7 @@
 
         .loader {
             border: 2px solid #f3f3f3;
-            border-top: 2px solid #16a34a;
+            border-top: 2px solid #00a884;
             border-radius: 50%;
             width: 16px;
             height: 16px;
@@ -66,35 +66,45 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Tick Marks Styles */
-        .tick-icon { width: 14px; height: 14px; margin-left: 2px; }
-        .tick-sent { color: #9ca3af; } /* Gray 400 */
-        .tick-delivered { color: #d1d5db; } /* Gray 300 */
-        .tick-read { color: #60a5fa; } /* Blue 400 */
+        /* Tick Marks Styles - WhatsApp Colors */
+        .tick-icon { width: 16px; height: 16px; margin-left: 2px; }
+        .tick-sending { color: #8696a0; } /* Clock */
+        .tick-sent { color: #8696a0; } /* 1 Gray Tick */
+        .tick-delivered { color: #8696a0; } /* 2 Gray Ticks */
+        .tick-read { color: #53bdeb; } /* 2 Blue Ticks */
+        
+        /* Message Bubbles */
+        .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; }
+        .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; }
+        
+        /* Image Overlay Gradient */
+        .img-overlay {
+            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+        }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
 
     <!-- ONBOARDING -->
-    <div id="onboarding-screen" class="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center p-6 text-center animate-fade-in overflow-y-auto">
+    <div id="onboarding-screen" class="absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in overflow-y-auto">
         <div class="relative mb-8">
-            <div class="absolute -inset-1 bg-green-500 rounded-full opacity-20 blur-xl animate-pulse"></div>
-            <i data-lucide="shield" class="w-24 h-24 text-green-500 relative z-10"></i>
+            <div class="absolute -inset-1 bg-[#00a884] rounded-full opacity-20 blur-xl animate-pulse"></div>
+            <i data-lucide="shield" class="w-24 h-24 text-[#00a884] relative z-10"></i>
         </div>
         
         <h1 class="text-4xl font-bold tracking-tighter mb-2">GhostMesh</h1>
         <p class="text-gray-400 max-w-md mx-auto mb-8">Zero Servers. Max Privacy. Max Speed.</p>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg mb-8">
-            <button id="btn-host" class="group relative flex flex-col items-center p-6 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer">
-                <i id="icon-host" data-lucide="wifi" class="w-8 h-8 mb-3 text-green-400"></i>
+            <button id="btn-host" class="group relative flex flex-col items-center p-6 bg-[#202c33] hover:bg-[#2a3942] border border-[#2a3942] rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer">
+                <i id="icon-host" data-lucide="wifi" class="w-8 h-8 mb-3 text-[#00a884]"></i>
                 <div id="loader-host" class="hidden mb-3"><div class="loader w-8 h-8"></div></div>
                 <span id="text-host" class="text-lg font-semibold text-white">Host Node</span>
             </button>
 
             <div class="flex flex-col space-y-2">
-                <input id="input-join-id" type="text" placeholder="Paste ID..." class="p-4 bg-zinc-900 border border-zinc-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 text-center">
-                <button id="btn-join" class="p-4 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2">
+                <input id="input-join-id" type="text" placeholder="Paste ID..." class="p-4 bg-[#2a3942] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#00a884] text-center">
+                <button id="btn-join" class="p-4 bg-[#202c33] hover:bg-[#2a3942] border border-[#2a3942] rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2">
                     <span id="text-join">Join Network</span>
                     <div id="loader-join" class="hidden"><div class="loader"></div></div>
                 </button>
@@ -106,69 +116,77 @@
     <!-- APP LAYOUT -->
     <div id="app-layout" class="hidden w-full h-full flex flex-col md:flex-row relative">
         <!-- SIDEBAR -->
-        <div id="sidebar-panel" class="w-full md:w-80 border-r border-zinc-800 flex flex-col bg-zinc-900/50 backdrop-blur h-full">
-            <div class="p-4 border-b border-zinc-800 flex justify-between items-center shrink-0">
-                <div class="flex items-center space-x-2">
+        <div id="sidebar-panel" class="w-full md:w-96 border-r border-[#2a3942] flex flex-col bg-[#111b21] h-full">
+            <div class="p-4 border-b border-[#2a3942] flex justify-between items-center shrink-0 bg-[#202c33]">
+                <div class="flex items-center space-x-3">
                     <div id="status-indicator" class="w-3 h-3 rounded-full bg-blue-500"></div>
                     <span class="font-bold text-zinc-200">GhostMesh</span>
                 </div>
-                <button id="btn-show-qr" class="p-2 hover:bg-zinc-800 rounded-full"><i data-lucide="qr-code" class="w-5 h-5 text-zinc-400"></i></button>
+                <button id="btn-show-qr" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
             </div>
             <div id="chat-list" class="flex-1 overflow-y-auto">
-                <div id="empty-state-sidebar" class="p-8 text-center text-zinc-500 h-full flex flex-col justify-center items-center">
+                <div id="empty-state-sidebar" class="p-8 text-center text-[#8696a0] h-full flex flex-col justify-center items-center">
                     <i data-lucide="users" class="w-12 h-12 mb-2 opacity-20"></i>
                     <p>No active peers.</p>
                 </div>
             </div>
-            <div class="p-4 bg-zinc-900 border-t border-zinc-800 text-xs font-mono text-zinc-500 truncate flex justify-between items-center pb-safe shrink-0">
+            <div class="p-4 bg-[#111b21] border-t border-[#2a3942] text-xs font-mono text-[#8696a0] truncate flex justify-between items-center pb-safe shrink-0">
                 <span id="my-peer-id-display">Connecting...</span>
-                <button id="btn-copy-id" class="text-green-500 hover:text-green-400 ml-2 p-2">Copy</button>
+                <button id="btn-copy-id" class="text-[#00a884] hover:text-white ml-2 p-2 font-bold">COPY</button>
             </div>
         </div>
 
         <!-- CHAT AREA -->
-        <div id="chat-area" class="hidden md:flex flex-1 flex-col h-full relative bg-black/95">
-            <div id="chat-empty-state" class="flex-1 flex flex-col items-center justify-center text-zinc-600">
+        <div id="chat-area" class="hidden md:flex flex-1 flex-col h-full relative bg-[#0b141a]">
+            <!-- Background Pattern -->
+            <div class="absolute inset-0 opacity-[0.06] pointer-events-none" style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-repeat: repeat;"></div>
+
+            <div id="chat-empty-state" class="flex-1 flex flex-col items-center justify-center text-[#8696a0] relative z-10">
                 <i data-lucide="shield" class="w-16 h-16 mb-4 opacity-20"></i>
                 <p>Select a peer to chat.</p>
             </div>
 
-            <div id="chat-interface" class="hidden flex-1 flex-col h-full w-full">
+            <div id="chat-interface" class="hidden flex-1 flex-col h-full w-full relative z-10">
                 <!-- Header -->
-                <div class="h-16 border-b border-zinc-800 flex items-center justify-between px-4 bg-zinc-900/50 shrink-0">
+                <div class="h-16 border-b border-[#2a3942] flex items-center justify-between px-4 bg-[#202c33] shrink-0">
                     <div class="flex items-center space-x-3">
-                        <button id="btn-close-chat" class="md:hidden p-2 -ml-2 hover:bg-zinc-800 rounded-full text-zinc-400"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
-                        <div id="chat-avatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-black font-bold text-xs">ID</div>
+                        <button id="btn-close-chat" class="md:hidden p-2 -ml-2 hover:bg-[#2a3942] rounded-full text-[#aebac1]"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+                        <div id="chat-avatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00a884] to-blue-500 flex items-center justify-center text-white font-bold text-sm">ID</div>
                         <div class="overflow-hidden">
-                            <div id="chat-title" class="font-semibold text-sm text-white truncate">Peer ID</div>
-                            <div class="text-xs text-green-500 flex items-center"><i data-lucide="lock" class="w-3 h-3 mr-1"></i> E2EE</div>
+                            <div id="chat-title" class="font-semibold text-sm text-[#e9edef] truncate">Peer ID</div>
+                            <div class="text-xs text-[#8696a0] flex items-center"><i data-lucide="lock" class="w-3 h-3 mr-1"></i> End-to-end encrypted</div>
                         </div>
                     </div>
-                    <div class="flex space-x-1">
-                        <button id="btn-call-audio" class="p-2 hover:bg-zinc-800 rounded-full"><i data-lucide="phone" class="w-5 h-5 text-zinc-400"></i></button>
-                        <button id="btn-call-video" class="p-2 hover:bg-zinc-800 rounded-full"><i data-lucide="video" class="w-5 h-5 text-zinc-400"></i></button>
+                    <div class="flex space-x-3 text-[#aebac1]">
+                        <button id="btn-call-audio" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="phone" class="w-5 h-5"></i></button>
+                        <button id="btn-call-video" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="video" class="w-5 h-5"></i></button>
                     </div>
                 </div>
 
                 <!-- Messages -->
-                <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-3 w-full"></div>
+                <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full"></div>
+
+                <!-- Upload Progress -->
+                <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942] text-xs text-[#00a884] text-center font-bold">
+                    Sending File... Do not close app.
+                </div>
 
                 <!-- Input -->
-                <div class="bg-zinc-900 border-t border-zinc-800 shrink-0 w-full">
-                    <div id="file-preview-area" class="hidden px-4 py-2 bg-zinc-800/50 border-b border-zinc-700 flex items-center justify-between">
-                        <div class="flex items-center space-x-2 min-w-0 flex-1">
-                             <i data-lucide="file" class="w-4 h-4 text-green-400 flex-shrink-0"></i>
-                             <span id="file-preview-name" class="text-xs text-zinc-300 break-all whitespace-normal leading-tight"></span>
+                <div class="bg-[#202c33] border-t border-[#2a3942] shrink-0 w-full">
+                    <div id="file-preview-area" class="hidden px-4 py-2 bg-[#2a3942] flex items-center justify-between">
+                        <div class="flex items-center space-x-3 min-w-0 flex-1">
+                             <div class="bg-[#202c33] p-2 rounded"><i data-lucide="file" class="w-5 h-5 text-[#00a884]"></i></div>
+                             <span id="file-preview-name" class="text-sm text-[#e9edef] break-all line-clamp-1"></span>
                         </div>
-                        <button id="btn-clear-file" class="text-zinc-500 hover:text-red-400 ml-2 flex-shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <button id="btn-clear-file" class="text-[#8696a0] hover:text-red-400 p-2"><i data-lucide="x" class="w-5 h-5"></i></button>
                     </div>
                     <div class="flex items-center space-x-2 p-2 pb-safe">
                         <input type="file" id="file-input" class="hidden">
-                        <button id="btn-attach" class="p-3 hover:bg-zinc-800 rounded-full text-zinc-400 transition-colors shrink-0"><i data-lucide="paperclip" class="w-5 h-5"></i></button>
-                        <div class="flex-1 bg-zinc-800 rounded-full px-4 py-2 flex items-center">
-                            <input id="message-input" type="text" class="flex-1 bg-transparent border-none focus:outline-none text-sm text-white" placeholder="Message...">
+                        <button id="btn-attach" class="p-3 hover:bg-[#2a3942] rounded-full text-[#8696a0] transition-colors shrink-0"><i data-lucide="paperclip" class="w-6 h-6"></i></button>
+                        <div class="flex-1 bg-[#2a3942] rounded-lg px-4 py-2 flex items-center">
+                            <input id="message-input" type="text" class="flex-1 bg-transparent border-none focus:outline-none text-base text-[#e9edef] placeholder-[#8696a0]" placeholder="Type a message">
                         </div>
-                        <button id="btn-send" class="p-3 bg-green-600 hover:bg-green-500 rounded-full text-white transition-colors shrink-0 shadow-lg"><i data-lucide="send" class="w-4 h-4"></i></button>
+                        <button id="btn-send" class="p-3 bg-[#00a884] hover:bg-[#008f6f] rounded-full text-white transition-colors shrink-0 shadow-lg"><i data-lucide="send" class="w-5 h-5 pl-0.5"></i></button>
                     </div>
                 </div>
             </div>
@@ -177,55 +195,64 @@
 
     <!-- MODALS -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 text-center max-w-sm w-full">
+        <div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full">
             <h3 class="text-xl font-bold mb-4">Scan to Join</h3>
             <div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit"></div>
-            <p id="qr-modal-text" class="text-xs text-zinc-500 font-mono break-all mb-4"></p>
-            <button id="btn-close-qr" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 rounded-xl font-semibold">Close</button>
+            <p id="qr-modal-text" class="text-xs text-[#8696a0] font-mono break-all mb-4"></p>
+            <button id="btn-close-qr" class="w-full py-3 bg-[#2a3942] hover:bg-[#111b21] rounded-xl font-semibold">Close</button>
         </div>
     </div>
 
     <div id="incoming-call-modal" class="hidden fixed inset-0 z-[80] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-700 text-center max-w-sm w-full animate-bounce-slight">
-            <div class="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-green-500/50">
-                <i data-lucide="phone-incoming" class="w-8 h-8 text-green-400"></i>
+        <div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full animate-bounce-slight">
+            <div class="w-20 h-20 bg-[#2a3942] rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-[#00a884]">
+                <i data-lucide="phone-incoming" class="w-10 h-10 text-[#00a884] animate-pulse"></i>
             </div>
             <h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3>
-            <p id="caller-id-display" class="text-zinc-400 text-sm mb-6 truncate px-4"></p>
-            <div class="flex space-x-6 justify-center">
-                <button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400"><div class="p-4 bg-red-500/20 rounded-full"><i data-lucide="phone-off" class="w-6 h-6"></i></div><span class="text-xs">Decline</span></button>
-                <button id="btn-accept-call" class="flex flex-col items-center gap-2 text-green-400"><div class="p-4 bg-green-500/20 rounded-full"><i data-lucide="phone" class="w-6 h-6"></i></div><span class="text-xs">Accept</span></button>
+            <p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4"></p>
+            <div class="flex space-x-8 justify-center">
+                <button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400 group">
+                    <div class="p-4 bg-red-500/20 group-hover:bg-red-500/30 rounded-full transition-colors"><i data-lucide="phone-off" class="w-8 h-8"></i></div>
+                    <span class="text-xs font-medium">Decline</span>
+                </button>
+                <button id="btn-accept-call" class="flex flex-col items-center gap-2 text-[#00a884] group">
+                    <div class="p-4 bg-[#00a884]/20 group-hover:bg-[#00a884]/30 rounded-full transition-colors"><i data-lucide="phone" class="w-8 h-8"></i></div>
+                    <span class="text-xs font-medium">Accept</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="video-overlay" class="hidden fixed inset-0 z-[70] bg-black/95 flex flex-col p-4 pb-safe">
-        <div class="flex-1 relative rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 mb-4">
-            <div id="call-status" class="absolute top-4 left-4 z-10 px-3 py-1 bg-black/50 backdrop-blur rounded-full text-xs font-mono text-zinc-300">Connecting...</div>
-            <div id="audio-call-ui" class="hidden absolute inset-0 flex items-center justify-center bg-zinc-900 z-0">
-                <div class="flex flex-col items-center animate-pulse">
-                    <div class="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center mb-4"><i data-lucide="mic" class="w-10 h-10 text-green-400"></i></div>
-                    <span class="text-zinc-400 font-medium">Audio Call</span>
+    <div id="video-overlay" class="hidden fixed inset-0 z-[70] bg-[#0b141a] flex flex-col p-4 pb-safe">
+        <div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4 shadow-2xl">
+            <div id="call-status" class="absolute top-4 left-4 z-10 px-4 py-2 bg-black/60 backdrop-blur rounded-full text-xs font-mono text-white/80">Connecting...</div>
+            
+            <div id="audio-call-ui" class="hidden absolute inset-0 flex items-center justify-center z-0">
+                <div class="flex flex-col items-center">
+                    <div class="w-32 h-32 bg-[#202c33] rounded-full flex items-center justify-center mb-6 animate-pulse">
+                        <i data-lucide="mic" class="w-16 h-16 text-[#00a884]"></i>
+                    </div>
+                    <span class="text-[#e9edef] text-xl font-medium">Audio Call</span>
                 </div>
             </div>
-            <video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-1 relative"></video>
-            <div id="local-video-container" class="absolute top-4 right-4 w-28 h-40 sm:w-32 sm:h-48 bg-black rounded-lg border border-zinc-700 overflow-hidden shadow-2xl z-20">
+            <video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-1 relative bg-black"></video>
+            <div id="local-video-container" class="absolute top-4 right-4 w-32 h-48 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-20">
                 <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
             </div>
         </div>
-        <div class="h-20 flex items-center justify-center space-x-6">
-            <button id="btn-end-call" class="p-4 bg-red-500 hover:bg-red-600 rounded-full text-white shadow-lg"><i data-lucide="phone-off" class="w-8 h-8"></i></button>
+        <div class="h-24 flex items-center justify-center space-x-6">
+            <button id="btn-end-call" class="p-5 bg-red-500 hover:bg-red-600 rounded-full text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
+                <i data-lucide="phone-off" class="w-8 h-8"></i>
+            </button>
         </div>
     </div>
 
     <!-- LOGIC -->
     <script>
-        // GLOBALS
-        let myIdentity = null, peer = null, myPeerId = null, connections = {}, sharedKeys = {}, messages = {}, activeChatId = null;
-        let localStream = null, callInstance = null, pendingCall = null, pendingCallType = 'video';
-        let fileChunks = {}; // Store chunks { senderId: { chunks: [], count, total } }
-        
-        // --- CRYPTO (Optimized) ---
+        let myIdentity=null, peer=null, myPeerId=null, connections={}, sharedKeys={}, messages={}, activeChatId=null;
+        let localStream=null, callInstance=null, pendingCall=null, pendingCallType='video';
+        let fileChunks={}; 
+
         const CryptoLayer = {
             generateIdentity: async () => window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]),
             exportPublicKey: async (key) => btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", key)))),
@@ -237,21 +264,20 @@
             encryptText: async (text, key) => {
                 const enc = new TextEncoder().encode(text);
                 const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc);
-                return { iv: Array.from(iv), data: Array.from(new Uint8Array(cipher)) }; // JSON compatible
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc);
+                return { iv: Array.from(iv), data: Array.from(new Uint8Array(cipher)) };
             },
             decryptText: async (obj, key) => {
                 try {
                     const iv = new Uint8Array(obj.iv);
                     const data = new Uint8Array(obj.data);
-                    const dec = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
+                    const dec = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
                     return new TextDecoder().decode(dec);
-                } catch(e) { return "[Decryption Failed]"; }
+                } catch(e) { return "Decryption Error"; }
             },
-            // Fast binary crypto
             encryptBin: async (buffer, key) => {
                 const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, buffer);
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, buffer);
                 const res = new Uint8Array(iv.length + cipher.byteLength);
                 res.set(iv, 0); res.set(new Uint8Array(cipher), 12);
                 return res.buffer;
@@ -260,11 +286,10 @@
                 const u8 = new Uint8Array(buffer);
                 const iv = u8.slice(0, 12);
                 const data = u8.slice(12);
-                return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
+                return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
             }
         };
 
-        // --- NETWORKING ---
         function init() {
             lucide.createIcons();
             CryptoLayer.generateIdentity().then(async (kp) => {
@@ -279,26 +304,20 @@
                 pingInterval: 5000,
                 config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }
             });
-
             peer.on('open', (id) => {
                 myPeerId = id;
                 document.getElementById('my-peer-id-display').innerText = id;
-                document.getElementById('status-indicator').classList.replace('bg-blue-500', 'bg-green-500');
-                document.getElementById('status-indicator').classList.add('animate-pulse');
                 document.getElementById('onboarding-screen').classList.add('hidden');
                 document.getElementById('app-layout').classList.remove('hidden');
                 resetLoadingStates();
             });
-
             peer.on('connection', conn => setupConnection(conn));
             peer.on('call', handleIncomingCall);
-            
             peer.on('error', err => {
                 console.error(err);
                 resetLoadingStates();
-                if (err.type === 'peer-unavailable') alert("Peer offline or unreachable.");
+                if (err.type === 'peer-unavailable' && document.activeElement.id === 'input-join-id') alert("Peer offline.");
             });
-            
             peer.on('disconnected', () => setTimeout(() => !peer.destroyed && peer.reconnect(), 2000));
         }
 
@@ -306,21 +325,16 @@
             document.getElementById('loader-host').classList.add('hidden');
             document.getElementById('icon-host').classList.remove('hidden');
             document.getElementById('btn-host').disabled = false;
-            document.getElementById('text-host').innerText = "Host Node";
             document.getElementById('loader-join').classList.add('hidden');
             document.getElementById('btn-join').disabled = false;
-            document.getElementById('text-join').innerText = "Join Network";
         }
 
         async function connectToPeer(id) {
             document.getElementById('btn-join').disabled = true;
             document.getElementById('loader-join').classList.remove('hidden');
-            
             if(!peer) initializePeer();
-            // Wait for peer ready
             let attempts = 0;
-            while((!peer || !peer.open) && attempts < 50) { await new Promise(r => setTimeout(r, 100)); attempts++; }
-            
+            while((!peer || !peer.open) && attempts < 150) { await new Promise(r => setTimeout(r, 100)); attempts++; }
             if(peer.open) {
                 const conn = peer.connect(id, { reliable: true });
                 setupConnection(conn);
@@ -336,49 +350,46 @@
                 resetLoadingStates();
             });
             conn.on('data', data => handleData(conn.peer, data, conn));
-            conn.on('close', () => {
-                delete connections[conn.peer];
-                renderChatList();
-            });
+            conn.on('close', () => { delete connections[conn.peer]; renderChatList(); });
         }
 
         async function handleData(sender, data, conn) {
-            // RAW BINARY (File Chunk)
+            // BINARY (File Chunk)
             if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
+                const buffer = data instanceof Uint8Array ? data.buffer : data;
                 if (!fileChunks[sender]) return;
                 const tracker = fileChunks[sender];
-                tracker.receivedBytes += data.byteLength;
-                tracker.chunks.push(data);
+                tracker.receivedBytes += buffer.byteLength;
+                tracker.chunks.push(buffer);
                 
-                // Update Progress UI if active chat
                 if (activeChatId === sender) {
-                    const percent = Math.round((tracker.receivedBytes / tracker.totalSize) * 100);
-                    // Could update a progress bar here
+                    // Could update progress bar
                 }
 
                 if (tracker.receivedBytes >= tracker.totalSize) {
-                    // Reassemble
                     const completeBlob = new Blob(tracker.chunks);
                     const arrayBuffer = await completeBlob.arrayBuffer();
-                    
                     const key = sharedKeys[sender];
                     try {
                         const decrypted = await CryptoLayer.decryptBin(arrayBuffer, key);
                         const finalBlob = new Blob([decrypted], { type: tracker.mime });
                         const url = URL.createObjectURL(finalBlob);
-                        
                         addMessage(sender, "File", 'received-file', { name: tracker.name, size: tracker.totalSize, mime: tracker.mime, url });
                         
-                        // Send Receipt
+                        // Send Delivered Receipt
                         conn.send({ type: 'receipt', id: tracker.msgId, status: 'delivered' });
+                        // Simulate Read
+                        setTimeout(() => {
+                             conn.send({ type: 'receipt', id: tracker.msgId, status: 'read' });
+                        }, 1000);
+                        
                     } catch(e) { console.error(e); }
-                    
                     delete fileChunks[sender];
                 }
                 return;
             }
 
-            // JSON MESSAGES
+            // JSON
             if (data.type === 'handshake') {
                 const rKey = await CryptoLayer.importPublicKey(data.key);
                 const sKey = await CryptoLayer.deriveSharedKey(myIdentity.privateKey, rKey);
@@ -386,41 +397,36 @@
                 sharedKeys[sender] = sKey;
                 if(!messages[sender]) messages[sender] = [];
                 addMessage(sender, "Secure Handshake Complete", 'system');
-                return;
+                if(!activeChatId) selectChat(sender);
             }
-
-            if (data.type === 'receipt') {
+            else if (data.type === 'receipt') {
                 const msgs = messages[sender];
                 const m = msgs.find(x => x.id === data.id);
                 if (m) {
                     m.status = data.status;
                     if(activeChatId === sender) renderMessages(sender);
                 }
-                return;
             }
-
-            if (data.type === 'text') {
+            else if (data.type === 'text') {
                 const key = sharedKeys[sender];
                 const text = await CryptoLayer.decryptText(data.content, key);
                 addMessage(sender, text, 'received', null, data.id);
-                // Send Receipt
-                conn.send({ type: 'receipt', id: data.id, status: 'read' }); // Auto read if active? Simplification: just delivered/read
+                conn.send({ type: 'receipt', id: data.id, status: 'delivered' });
+                setTimeout(() => conn.send({ type: 'receipt', id: data.id, status: 'read' }), 500);
             }
-
-            if (data.type === 'file-start') {
+            else if (data.type === 'file-meta') {
                 fileChunks[sender] = {
                     msgId: data.id,
                     name: data.name,
                     size: data.size,
                     mime: data.mime,
-                    totalSize: data.encSize, // Encrypted size
+                    totalSize: data.encSize,
                     receivedBytes: 0,
                     chunks: []
                 };
             }
         }
 
-        // --- MESSAGING ---
         async function sendMessage() {
             if(!activeChatId) return;
             const conn = connections[activeChatId];
@@ -433,53 +439,58 @@
 
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
+                if(file.size > 50*1024*1024) { alert("File too big (Max 50MB)"); return; }
+                
+                document.getElementById('upload-progress').classList.remove('hidden');
+                
                 const ab = await file.arrayBuffer();
-                const enc = await CryptoLayer.encryptBin(ab, key); // Encrypt whole buffer (fast enough < 100MB)
+                const enc = await CryptoLayer.encryptBin(ab, key);
                 
-                // 1. Send Meta
-                conn.send({ type: 'file-start', id: msgId, name: file.name, size: file.size, mime: file.type, encSize: enc.byteLength });
+                // Add message with 'sending' status
+                addMessage(activeChatId, "File", 'sent-file', { 
+                    name: file.name, size: file.size, mime: file.type, url: URL.createObjectURL(file) 
+                }, msgId, 'sending');
+
+                conn.send({ type: 'file-meta', id: msgId, name: file.name, size: file.size, mime: file.type, encSize: enc.byteLength });
                 
-                // 2. Chunk & Send
-                const CHUNK_SIZE = 16384; // 16KB safe chunk
+                // Chunking Loop
+                const CHUNK = 16384; 
                 let offset = 0;
                 
-                // UI feedback
-                addMessage(activeChatId, "Sending File...", 'sent-file', { name: file.name, size: file.size, mime: file.type, url: URL.createObjectURL(file), id: msgId, status: 'sent' });
-                
-                // Non-blocking loop
-                function sendNextChunk() {
-                    const chunk = enc.slice(offset, offset + CHUNK_SIZE);
+                const sendChunk = () => {
+                    const chunk = enc.slice(offset, offset + CHUNK);
                     conn.send(chunk);
-                    offset += CHUNK_SIZE;
+                    offset += CHUNK;
                     if (offset < enc.byteLength) {
-                        // Respect buffer
-                        if (conn.dataChannel.bufferedAmount > 1024 * 1024) {
-                            setTimeout(sendNextChunk, 50);
-                        } else {
-                            requestAnimationFrame(sendNextChunk); // Max speed
-                        }
+                        if (conn.dataChannel.bufferedAmount > 1024*1024) setTimeout(sendChunk, 50);
+                        else requestAnimationFrame(sendChunk);
                     } else {
+                        // Done sending
+                        document.getElementById('upload-progress').classList.add('hidden');
                         clearFileSelection();
+                        // Update status to 'sent' locally (1 tick)
+                        const m = messages[activeChatId].find(x => x.id === msgId);
+                        if(m) { m.status = 'sent'; renderMessages(activeChatId); }
                     }
-                }
-                sendNextChunk();
+                };
+                sendChunk();
 
             } else {
                 const text = textInput.value.trim();
                 if(!text) return;
                 const content = await CryptoLayer.encryptText(text, key);
-                conn.send({ type: 'text', id: msgId, content: content });
-                addMessage(activeChatId, text, 'sent', null, msgId);
+                // Status: sent (1 tick) immediately for text
+                conn.send({ type: 'text', id: msgId, content });
+                addMessage(activeChatId, text, 'sent', null, msgId, 'sent');
                 textInput.value = '';
             }
         }
 
-        function addMessage(peerId, text, type, fileData = null, id = Date.now()) {
+        function addMessage(peerId, text, type, fileData = null, id = Date.now(), status='read') {
             if(!messages[peerId]) messages[peerId] = [];
             messages[peerId].push({
-                id, text, type, fileData, 
-                time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                status: type === 'sent' ? 'sent' : 'read' // Incoming is assumed read locally
+                id, text, type, fileData, status,
+                time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
             });
             renderChatList();
             if (activeChatId === peerId) renderMessages(peerId);
@@ -489,12 +500,12 @@
             const list = document.getElementById('chat-list');
             list.innerHTML = Object.keys(messages).map(pid => {
                 const last = messages[pid][messages[pid].length-1];
-                const txt = last ? (last.type.includes('file') ? 'File' : last.text) : 'New Chat';
-                return `<div onclick="selectChat('${pid}')" class="p-4 border-b border-zinc-800/50 hover:bg-zinc-800/50 cursor-pointer ${activeChatId===pid?'bg-zinc-800':''}">
-                    <div class="font-bold text-zinc-200">${pid}</div>
-                    <div class="text-xs text-zinc-500 truncate">${txt}</div>
+                const txt = last ? (last.type.includes('file') ? '📎 File' : last.text) : 'New Chat';
+                return `<div onclick="selectChat('${pid}')" class="p-4 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer ${activeChatId===pid?'bg-[#202c33]':''}">
+                    <div class="font-bold text-[#e9edef]">${pid}</div>
+                    <div class="text-xs text-[#8696a0] truncate">${txt}</div>
                 </div>`
-            }).join('') || '<div class="p-8 text-center text-zinc-500">No chats</div>';
+            }).join('') || '<div class="p-8 text-center text-[#8696a0]">No chats</div>';
         }
 
         function selectChat(pid) {
@@ -515,37 +526,66 @@
         function renderMessages(pid) {
             const container = document.getElementById('messages-container');
             container.innerHTML = messages[pid].map(m => {
-                if(m.type === 'system') return `<div class="text-center my-2"><span class="text-xs bg-zinc-800 px-2 py-1 rounded text-zinc-400">${m.text}</span></div>`;
+                if(m.type === 'system') return `<div class="text-center my-2"><span class="text-xs bg-[#1f2c34] text-[#8696a0] px-3 py-1 rounded-lg uppercase tracking-wide font-medium">${m.text}</span></div>`;
                 
                 const isMe = m.type.includes('sent');
                 const align = isMe ? 'justify-end' : 'justify-start';
-                const bg = isMe ? 'bg-green-700' : 'bg-zinc-800';
+                const bg = isMe ? 'msg-sent' : 'msg-received';
                 
                 // Tick Logic
                 let tickHtml = '';
                 if (isMe) {
-                    let color = 'text-gray-400'; // sent
-                    let icon = 'check'; 
-                    if (m.status === 'delivered') { color = 'text-gray-300'; icon = 'check-check'; }
-                    if (m.status === 'read') { color = 'text-blue-400'; icon = 'check-check'; }
-                    tickHtml = `<i data-lucide="${icon}" class="w-3 h-3 ${color} ml-1 inline-block"></i>`;
+                    let icon = 'check'; // sent/delivered
+                    let color = 'tick-sent';
+                    
+                    if (m.status === 'sending') { icon = 'clock'; color = 'tick-sending'; }
+                    else if (m.status === 'delivered') { icon = 'check-check'; color = 'tick-delivered'; }
+                    else if (m.status === 'read') { icon = 'check-check'; color = 'tick-read'; }
+                    
+                    tickHtml = `<i data-lucide="${icon}" class="tick-icon ${color} inline-block"></i>`;
                 }
 
-                let content = m.text;
+                let content = '';
+                let extraClasses = '';
+                let showTime = true;
+
                 if (m.fileData) {
                     if (m.fileData.mime.startsWith('image/')) {
-                        content = `<img src="${m.fileData.url}" class="max-w-full rounded-lg mb-1" onclick="window.open('${m.fileData.url}')">`;
+                        extraClasses = 'p-1';
+                        showTime = false; // Overlay time
+                        content = `
+                            <div class="relative group cursor-pointer" onclick="window.open('${m.fileData.url}')">
+                                <img src="${m.fileData.url}" class="rounded-lg max-w-[260px] max-h-[300px] object-cover" />
+                                <div class="absolute inset-0 img-overlay rounded-lg flex items-end justify-end p-1">
+                                    <span class="text-[10px] text-white/90 mr-1 font-medium">${m.time}</span>
+                                    ${tickHtml}
+                                </div>
+                            </div>`;
                     } else {
-                        content = `<div class="flex items-center gap-2 p-1"><i data-lucide="file" class="w-5 h-5"></i> <a href="${m.fileData.url}" download="${m.fileData.name}" class="underline truncate">${m.fileData.name}</a></div>`;
+                        // File Card
+                        const sizeStr = (m.fileData.size/1024).toFixed(1) + ' KB';
+                        content = `
+                            <div class="flex items-center gap-3 min-w-[200px] p-1">
+                                <div class="w-10 h-10 bg-black/20 rounded-lg flex items-center justify-center text-[#00a884]"><i data-lucide="file" class="w-5 h-5"></i></div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-medium truncate text-[#e9edef]">${m.fileData.name}</div>
+                                    <div class="text-[10px] text-[#8696a0]">${sizeStr} • ${m.fileData.mime.split('/')[1].toUpperCase()}</div>
+                                </div>
+                                <a href="${m.fileData.url}" download="${m.fileData.name}" class="p-2 hover:bg-black/10 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></a>
+                            </div>
+                        `;
                     }
+                } else {
+                    content = `<div class="text-[#e9edef] text-sm break-words leading-relaxed">${m.text}</div>`;
                 }
 
-                return `<div class="flex ${align}"><div class="max-w-[75%] p-2 rounded-lg ${bg} text-sm break-words shadow-sm">
-                    ${content}
-                    <div class="text-[10px] text-right opacity-70 mt-1 flex items-center justify-end gap-1">
-                        ${m.time} ${tickHtml}
+                return `
+                <div class="flex ${align} mb-1">
+                    <div class="bubble-constraint p-2 ${bg} shadow-sm ${extraClasses} relative group">
+                        ${content}
+                        ${showTime ? `<div class="flex items-center justify-end space-x-1 mt-1 -mb-1"><span class="text-[10px] text-[#8696a0]">${m.time}</span>${tickHtml}</div>` : ''}
                     </div>
-                </div></div>`;
+                </div>`;
             }).join('');
             container.scrollTop = container.scrollHeight;
             lucide.createIcons();
@@ -556,10 +596,7 @@
             if(!activeChatId) return;
             const stream = await navigator.mediaDevices.getUserMedia({video, audio:true});
             localStream = stream;
-            
-            // Set local video
             if(video) document.getElementById('local-video').srcObject = stream;
-            
             document.getElementById('video-overlay').classList.remove('hidden');
             document.getElementById('call-status').innerText = "Calling...";
             
@@ -591,8 +628,6 @@
 
         function setupCall(call, isVideo) {
             callInstance = call;
-            
-            // UI Toggle
             const uiAudio = document.getElementById('audio-call-ui');
             const vidRemote = document.getElementById('remote-video');
             const vidLocal = document.getElementById('local-video-container');
@@ -609,12 +644,11 @@
 
             call.on('stream', rStream => {
                 document.getElementById('call-status').innerText = "Connected";
-                const v = document.getElementById('remote-video');
-                v.srcObject = rStream;
-                v.play().catch(console.error);
-                
-                // Force audio output for mobile
-                if (!isVideo) {
+                if(isVideo) {
+                    const v = document.getElementById('remote-video');
+                    v.srcObject = rStream;
+                    v.play().catch(console.error);
+                } else {
                     const a = new Audio();
                     a.srcObject = rStream;
                     a.play().catch(console.error);
@@ -631,7 +665,7 @@
             document.getElementById('incoming-call-modal').classList.add('hidden');
         }
 
-        // --- LISTENERS ---
+        // --- HANDLERS ---
         document.getElementById('btn-host').onclick = () => {
             document.getElementById('loader-host').classList.remove('hidden');
             document.getElementById('icon-host').classList.add('hidden');
@@ -650,11 +684,10 @@
                 document.getElementById('file-preview-name').innerText = e.target.files[0].name;
             }
         };
-        document.getElementById('btn-clear-file').onclick = clearFileSelection;
-        function clearFileSelection() {
+        document.getElementById('btn-clear-file').onclick = () => {
             document.getElementById('file-input').value = '';
             document.getElementById('file-preview-area').classList.add('hidden');
-        }
+        };
         document.getElementById('btn-call-video').onclick = () => startCall(true);
         document.getElementById('btn-call-audio').onclick = () => startCall(false);
         document.getElementById('btn-end-call').onclick = endCall;
@@ -666,7 +699,7 @@
         };
         document.getElementById('btn-copy-id').onclick = () => {
             navigator.clipboard.writeText(myPeerId);
-            alert("ID Copied");
+            alert("Copied");
         };
         document.getElementById('btn-show-qr').onclick = () => {
             document.getElementById('qr-modal').classList.remove('hidden');
