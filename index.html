@@ -432,11 +432,17 @@
         // --- 5. NETWORKING ---
         function initializePeer(customId = null) {
             const id = customId || "ghost-" + Math.floor(Math.random() * 1000000);
+            
+            // Robust ICE Configuration for WAN connectivity
             peer = new Peer(id, {
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' }
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun3.l.google.com:19302' },
+                        { urls: 'stun:stun4.l.google.com:19302' },
+                        { urls: 'stun:global.stun.twilio.com:3478' }
                     ]
                 }
             });
@@ -459,8 +465,9 @@
                 if (!overlay.classList.contains('hidden')) {
                     endCall(err.type === 'peer-unavailable' ? "Peer Unavailable" : "Connection Error");
                 }
+                
                 if (err.type === 'peer-unavailable' && document.activeElement.id === 'input-join-id') {
-                    alert("Could not connect. Peer might be offline.");
+                    alert("Could not connect. Peer might be offline or on a different network without NAT traversal.");
                 } else if (err.type === 'network') {
                     document.getElementById('status-indicator').classList.replace('bg-green-500', 'bg-red-500');
                 }
@@ -873,11 +880,13 @@
         function setupCallEvents(call, isVideo) {
             call.on('stream', (remoteStream) => { 
                 if (isVideo) {
-                    document.getElementById('remote-video').srcObject = remoteStream; 
+                    const vid = document.getElementById('remote-video');
+                    vid.srcObject = remoteStream;
+                    vid.play().catch(e => console.error("Play error", e));
                 } else {
                     const audio = new Audio();
                     audio.srcObject = remoteStream;
-                    audio.play();
+                    audio.play().catch(e => console.error("Play error", e));
                 }
                 setCallStatus("Connected");
             });
