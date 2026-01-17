@@ -22,7 +22,7 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0b141a; /* WhatsApp Dark BG */
+            background-color: #0b141a;
             color: #e9edef;
             height: 100dvh; 
             width: 100vw;
@@ -31,7 +31,6 @@
             inset: 0;
         }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #374045; border-radius: 2px; }
@@ -66,7 +65,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Tick Marks Styles */
         .tick-icon { width: 16px; height: 16px; margin-left: 2px; }
         .tick-sending { color: #8696a0; }
         .tick-sent { color: #8696a0; }
@@ -354,19 +352,16 @@
                 if (!fileChunks[sender]) return;
                 const tracker = fileChunks[sender];
                 
-                // Decrypt chunk immediately
                 const key = sharedKeys[sender];
                 try {
                     const decryptedChunk = await CryptoLayer.decryptBin(buffer, key);
-                    tracker.chunks.push(decryptedChunk); // Store decrypted data
-                    tracker.receivedBytes += buffer.byteLength; // count encrypted bytes for progress, or track decrypted logic
+                    tracker.chunks.push(decryptedChunk);
+                    tracker.receivedBytes += buffer.byteLength;
                     
-                    // Sending receipt for chunk might be too much traffic, send periodically or at end
                     if (tracker.receivedBytes >= tracker.totalSize) {
                         const finalBlob = new Blob(tracker.chunks, { type: tracker.mime });
                         const url = URL.createObjectURL(finalBlob);
                         addMessage(sender, "File", 'received-file', { name: tracker.name, size: finalBlob.size, mime: tracker.mime, url });
-                        
                         conn.send({ type: 'receipt', id: tracker.msgId, status: 'delivered' });
                         setTimeout(() => conn.send({ type: 'receipt', id: tracker.msgId, status: 'read' }), 500);
                         delete fileChunks[sender];
@@ -429,43 +424,26 @@
                 
                 document.getElementById('upload-progress').classList.remove('hidden');
                 
-                // Add message bubble immediately
                 addMessage(activeChatId, "File", 'sent-file', { 
                     name: file.name, size: file.size, mime: file.type, url: URL.createObjectURL(file) 
                 }, msgId, 'sending');
 
-                // Read file
                 const ab = await file.arrayBuffer();
                 
-                // Encrypt First (Stream-like logic requires proper chunking of crypto, 
-                // but for simplicity and correctness with standard AES-GCM, we encrypt chunks or whole. 
-                // We will encrypt chunks to prevent RAM spike on sending).
-                // Wait... encrypting chunks requires receiver to know about chunks. 
-                // Revised strategy in handleData matches this: send Encrypted Chunks.
-                
-                conn.send({ type: 'file-start', id: msgId, name: file.name, size: file.size, mime: file.type, encSize: 0 }); // encSize calculated dynamically or estimation
-                
+                // Calculate Overhead
                 const CHUNK_SIZE = 16384; 
-                let offset = 0;
-                let encTotal = 0;
-
-                // We need to tell receiver expected size. Actually, we can just stream until done.
-                // Let's just update the receiver logic to rely on the "End" of stream or just update based on encrypted sizes.
-                // Correction: The receiver needs to know total size to know when it's done.
-                // To do this perfectly with chunked encryption, we pre-calculate size:
-                // Size = NumChunks * (ChunkSize + Overhead).
-                const overhead = 28; // 12 IV + 16 Tag (approx)
+                const overhead = 28; // AES-GCM (12 IV + 16 Tag)
                 const numChunks = Math.ceil(ab.byteLength / CHUNK_SIZE);
                 const totalEncSize = ab.byteLength + (numChunks * overhead);
-                
-                // Resend start with correct size
-                conn.send({ type: 'file-start', id: msgId, name: file.name, size: file.size, mime: file.type, encSize: totalEncSize });
 
+                // Send Start Meta
+                conn.send({ type: 'file-start', id: msgId, name: file.name, size: file.size, mime: file.type, encSize: totalEncSize });
+                
+                let offset = 0;
                 const sendChunk = async () => {
                     if (offset >= ab.byteLength) {
                         document.getElementById('upload-progress').classList.add('hidden');
                         clearFileSelection();
-                        // Update UI to 'sent'
                         const m = messages[activeChatId].find(x => x.id === msgId);
                         if(m) { m.status = 'sent'; renderMessages(activeChatId); }
                         return;
@@ -478,7 +456,7 @@
                     offset += CHUNK_SIZE;
                     
                     if (conn.dataChannel.bufferedAmount > 1024*1024) setTimeout(sendChunk, 10);
-                    else requestAnimationFrame(sendChunk); // Max speed loop
+                    else requestAnimationFrame(sendChunk);
                 };
                 sendChunk();
 
