@@ -66,18 +66,16 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Tick Marks Styles - WhatsApp Colors */
+        /* Tick Marks Styles */
         .tick-icon { width: 16px; height: 16px; margin-left: 2px; }
-        .tick-sending { color: #8696a0; } /* Clock */
-        .tick-sent { color: #8696a0; } /* 1 Gray Tick */
-        .tick-delivered { color: #8696a0; } /* 2 Gray Ticks */
-        .tick-read { color: #53bdeb; } /* 2 Blue Ticks */
+        .tick-sending { color: #8696a0; }
+        .tick-sent { color: #8696a0; }
+        .tick-delivered { color: #8696a0; }
+        .tick-read { color: #53bdeb; }
         
-        /* Message Bubbles */
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; }
         
-        /* Image Overlay Gradient */
         .img-overlay {
             background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
         }
@@ -91,17 +89,14 @@
             <div class="absolute -inset-1 bg-[#00a884] rounded-full opacity-20 blur-xl animate-pulse"></div>
             <i data-lucide="shield" class="w-24 h-24 text-[#00a884] relative z-10"></i>
         </div>
-        
         <h1 class="text-4xl font-bold tracking-tighter mb-2">GhostMesh</h1>
         <p class="text-gray-400 max-w-md mx-auto mb-8">Zero Servers. Max Privacy. Max Speed.</p>
-
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg mb-8">
             <button id="btn-host" class="group relative flex flex-col items-center p-6 bg-[#202c33] hover:bg-[#2a3942] border border-[#2a3942] rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer">
                 <i id="icon-host" data-lucide="wifi" class="w-8 h-8 mb-3 text-[#00a884]"></i>
                 <div id="loader-host" class="hidden mb-3"><div class="loader w-8 h-8"></div></div>
                 <span id="text-host" class="text-lg font-semibold text-white">Host Node</span>
             </button>
-
             <div class="flex flex-col space-y-2">
                 <input id="input-join-id" type="text" placeholder="Paste ID..." class="p-4 bg-[#2a3942] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#00a884] text-center">
                 <button id="btn-join" class="p-4 bg-[#202c33] hover:bg-[#2a3942] border border-[#2a3942] rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2">
@@ -226,7 +221,6 @@
     <div id="video-overlay" class="hidden fixed inset-0 z-[70] bg-[#0b141a] flex flex-col p-4 pb-safe">
         <div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4 shadow-2xl">
             <div id="call-status" class="absolute top-4 left-4 z-10 px-4 py-2 bg-black/60 backdrop-blur rounded-full text-xs font-mono text-white/80">Connecting...</div>
-            
             <div id="audio-call-ui" class="hidden absolute inset-0 flex items-center justify-center z-0">
                 <div class="flex flex-col items-center">
                     <div class="w-32 h-32 bg-[#202c33] rounded-full flex items-center justify-center mb-6 animate-pulse">
@@ -354,38 +348,30 @@
         }
 
         async function handleData(sender, data, conn) {
-            // BINARY (File Chunk)
+            // RAW BINARY (Chunk)
             if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
                 const buffer = data instanceof Uint8Array ? data.buffer : data;
                 if (!fileChunks[sender]) return;
                 const tracker = fileChunks[sender];
-                tracker.receivedBytes += buffer.byteLength;
-                tracker.chunks.push(buffer);
                 
-                if (activeChatId === sender) {
-                    // Could update progress bar
-                }
-
-                if (tracker.receivedBytes >= tracker.totalSize) {
-                    const completeBlob = new Blob(tracker.chunks);
-                    const arrayBuffer = await completeBlob.arrayBuffer();
-                    const key = sharedKeys[sender];
-                    try {
-                        const decrypted = await CryptoLayer.decryptBin(arrayBuffer, key);
-                        const finalBlob = new Blob([decrypted], { type: tracker.mime });
+                // Decrypt chunk immediately
+                const key = sharedKeys[sender];
+                try {
+                    const decryptedChunk = await CryptoLayer.decryptBin(buffer, key);
+                    tracker.chunks.push(decryptedChunk); // Store decrypted data
+                    tracker.receivedBytes += buffer.byteLength; // count encrypted bytes for progress, or track decrypted logic
+                    
+                    // Sending receipt for chunk might be too much traffic, send periodically or at end
+                    if (tracker.receivedBytes >= tracker.totalSize) {
+                        const finalBlob = new Blob(tracker.chunks, { type: tracker.mime });
                         const url = URL.createObjectURL(finalBlob);
-                        addMessage(sender, "File", 'received-file', { name: tracker.name, size: tracker.totalSize, mime: tracker.mime, url });
+                        addMessage(sender, "File", 'received-file', { name: tracker.name, size: finalBlob.size, mime: tracker.mime, url });
                         
-                        // Send Delivered Receipt
                         conn.send({ type: 'receipt', id: tracker.msgId, status: 'delivered' });
-                        // Simulate Read
-                        setTimeout(() => {
-                             conn.send({ type: 'receipt', id: tracker.msgId, status: 'read' });
-                        }, 1000);
-                        
-                    } catch(e) { console.error(e); }
-                    delete fileChunks[sender];
-                }
+                        setTimeout(() => conn.send({ type: 'receipt', id: tracker.msgId, status: 'read' }), 500);
+                        delete fileChunks[sender];
+                    }
+                } catch(e) { console.error("Chunk Decrypt Fail", e); }
                 return;
             }
 
@@ -414,7 +400,7 @@
                 conn.send({ type: 'receipt', id: data.id, status: 'delivered' });
                 setTimeout(() => conn.send({ type: 'receipt', id: data.id, status: 'read' }), 500);
             }
-            else if (data.type === 'file-meta') {
+            else if (data.type === 'file-start') {
                 fileChunks[sender] = {
                     msgId: data.id,
                     name: data.name,
@@ -439,39 +425,60 @@
 
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
-                if(file.size > 50*1024*1024) { alert("File too big (Max 50MB)"); return; }
+                if(file.size > 100*1024*1024) { alert("File > 100MB"); return; }
                 
                 document.getElementById('upload-progress').classList.remove('hidden');
                 
-                const ab = await file.arrayBuffer();
-                const enc = await CryptoLayer.encryptBin(ab, key);
-                
-                // Add message with 'sending' status
+                // Add message bubble immediately
                 addMessage(activeChatId, "File", 'sent-file', { 
                     name: file.name, size: file.size, mime: file.type, url: URL.createObjectURL(file) 
                 }, msgId, 'sending');
 
-                conn.send({ type: 'file-meta', id: msgId, name: file.name, size: file.size, mime: file.type, encSize: enc.byteLength });
+                // Read file
+                const ab = await file.arrayBuffer();
                 
-                // Chunking Loop
-                const CHUNK = 16384; 
+                // Encrypt First (Stream-like logic requires proper chunking of crypto, 
+                // but for simplicity and correctness with standard AES-GCM, we encrypt chunks or whole. 
+                // We will encrypt chunks to prevent RAM spike on sending).
+                // Wait... encrypting chunks requires receiver to know about chunks. 
+                // Revised strategy in handleData matches this: send Encrypted Chunks.
+                
+                conn.send({ type: 'file-start', id: msgId, name: file.name, size: file.size, mime: file.type, encSize: 0 }); // encSize calculated dynamically or estimation
+                
+                const CHUNK_SIZE = 16384; 
                 let offset = 0;
+                let encTotal = 0;
+
+                // We need to tell receiver expected size. Actually, we can just stream until done.
+                // Let's just update the receiver logic to rely on the "End" of stream or just update based on encrypted sizes.
+                // Correction: The receiver needs to know total size to know when it's done.
+                // To do this perfectly with chunked encryption, we pre-calculate size:
+                // Size = NumChunks * (ChunkSize + Overhead).
+                const overhead = 28; // 12 IV + 16 Tag (approx)
+                const numChunks = Math.ceil(ab.byteLength / CHUNK_SIZE);
+                const totalEncSize = ab.byteLength + (numChunks * overhead);
                 
-                const sendChunk = () => {
-                    const chunk = enc.slice(offset, offset + CHUNK);
-                    conn.send(chunk);
-                    offset += CHUNK;
-                    if (offset < enc.byteLength) {
-                        if (conn.dataChannel.bufferedAmount > 1024*1024) setTimeout(sendChunk, 50);
-                        else requestAnimationFrame(sendChunk);
-                    } else {
-                        // Done sending
+                // Resend start with correct size
+                conn.send({ type: 'file-start', id: msgId, name: file.name, size: file.size, mime: file.type, encSize: totalEncSize });
+
+                const sendChunk = async () => {
+                    if (offset >= ab.byteLength) {
                         document.getElementById('upload-progress').classList.add('hidden');
                         clearFileSelection();
-                        // Update status to 'sent' locally (1 tick)
+                        // Update UI to 'sent'
                         const m = messages[activeChatId].find(x => x.id === msgId);
                         if(m) { m.status = 'sent'; renderMessages(activeChatId); }
+                        return;
                     }
+
+                    const chunk = ab.slice(offset, offset + CHUNK_SIZE);
+                    const encChunk = await CryptoLayer.encryptBin(chunk, key);
+                    conn.send(encChunk);
+                    
+                    offset += CHUNK_SIZE;
+                    
+                    if (conn.dataChannel.bufferedAmount > 1024*1024) setTimeout(sendChunk, 10);
+                    else requestAnimationFrame(sendChunk); // Max speed loop
                 };
                 sendChunk();
 
@@ -479,7 +486,6 @@
                 const text = textInput.value.trim();
                 if(!text) return;
                 const content = await CryptoLayer.encryptText(text, key);
-                // Status: sent (1 tick) immediately for text
                 conn.send({ type: 'text', id: msgId, content });
                 addMessage(activeChatId, text, 'sent', null, msgId, 'sent');
                 textInput.value = '';
@@ -532,16 +538,13 @@
                 const align = isMe ? 'justify-end' : 'justify-start';
                 const bg = isMe ? 'msg-sent' : 'msg-received';
                 
-                // Tick Logic
                 let tickHtml = '';
                 if (isMe) {
-                    let icon = 'check'; // sent/delivered
+                    let icon = 'check'; 
                     let color = 'tick-sent';
-                    
                     if (m.status === 'sending') { icon = 'clock'; color = 'tick-sending'; }
                     else if (m.status === 'delivered') { icon = 'check-check'; color = 'tick-delivered'; }
                     else if (m.status === 'read') { icon = 'check-check'; color = 'tick-read'; }
-                    
                     tickHtml = `<i data-lucide="${icon}" class="tick-icon ${color} inline-block"></i>`;
                 }
 
@@ -552,7 +555,7 @@
                 if (m.fileData) {
                     if (m.fileData.mime.startsWith('image/')) {
                         extraClasses = 'p-1';
-                        showTime = false; // Overlay time
+                        showTime = false; 
                         content = `
                             <div class="relative group cursor-pointer" onclick="window.open('${m.fileData.url}')">
                                 <img src="${m.fileData.url}" class="rounded-lg max-w-[260px] max-h-[300px] object-cover" />
@@ -562,14 +565,13 @@
                                 </div>
                             </div>`;
                     } else {
-                        // File Card
                         const sizeStr = (m.fileData.size/1024).toFixed(1) + ' KB';
                         content = `
                             <div class="flex items-center gap-3 min-w-[200px] p-1">
                                 <div class="w-10 h-10 bg-black/20 rounded-lg flex items-center justify-center text-[#00a884]"><i data-lucide="file" class="w-5 h-5"></i></div>
                                 <div class="flex-1 min-w-0">
-                                    <div class="text-sm font-medium truncate text-[#e9edef]">${m.fileData.name}</div>
-                                    <div class="text-[10px] text-[#8696a0]">${sizeStr} • ${m.fileData.mime.split('/')[1].toUpperCase()}</div>
+                                    <div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef]">${m.fileData.name}</div>
+                                    <div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${m.fileData.mime.split('/')[1].toUpperCase().slice(0,4)}</div>
                                 </div>
                                 <a href="${m.fileData.url}" download="${m.fileData.name}" class="p-2 hover:bg-black/10 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></a>
                             </div>
@@ -581,7 +583,7 @@
 
                 return `
                 <div class="flex ${align} mb-1">
-                    <div class="bubble-constraint p-2 ${bg} shadow-sm ${extraClasses} relative group">
+                    <div class="bubble-constraint p-2 ${bg} shadow-sm ${extraClasses} relative group rounded-lg">
                         ${content}
                         ${showTime ? `<div class="flex items-center justify-end space-x-1 mt-1 -mb-1"><span class="text-[10px] text-[#8696a0]">${m.time}</span>${tickHtml}</div>` : ''}
                     </div>
