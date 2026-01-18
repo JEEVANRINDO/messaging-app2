@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- CSP -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
     
@@ -55,28 +54,7 @@
         .bubble-constraint { max-width: 85%; }
         @media (min-width: 768px) { .bubble-constraint { max-width: 60%; } }
         
-        /* Mirror utility for self-view */
         .mirror-x { transform: scaleX(-1); }
-        
-        /* File download progress overlay */
-        .file-download-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; border-radius: 6px; backdrop-filter: blur(2px); }
-        .download-circle { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #00a884; border-top-color: transparent; animation: spin 1s linear infinite; }
-        
-        /* Pulsing animation for new messages */
-        @keyframes gentlePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
-        .new-message { animation: gentlePulse 0.3s ease; }
-        
-        /* QR Code Scanner Styles */
-        #reader video { width: 100%; height: auto; border-radius: 8px; }
-        #reader__dashboard_section_csr { margin-top: 10px; }
-        #reader__scan_region { position: relative; }
-        
-        /* Connection Status */
-        .connection-status { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-        .connection-online { background-color: #00a884; box-shadow: 0 0 8px #00a884; }
-        .connection-offline { background-color: #8696a0; }
-        .connection-connecting { background-color: #f59e0b; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -87,9 +65,9 @@
         <h1 class="text-3xl font-bold tracking-tight mb-2">GhostMesh Secure</h1>
         <p class="text-[#8696a0] max-w-xs mx-auto mb-8">Encrypted Local Storage. Zero Cloud.</p>
         <div class="w-full max-w-sm space-y-4">
-            <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg" maxlength="20">
-            <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg" minlength="6">
-            <button onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg active:scale-95">Initialize Identity</button>
+            <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
+            <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
+            <button id="btn-create-profile" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
         </div>
     </div>
 
@@ -97,8 +75,8 @@
     <div id="login-screen" class="hidden absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
         <i data-lucide="lock" class="w-16 h-16 text-[#00a884] mb-4"></i>
         <h2 class="text-2xl font-bold mb-4">Unlock Identity</h2>
-        <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center" onkeypress="if(event.key === 'Enter') App.login()">
-        <button onclick="App.login()" class="w-full max-w-sm p-4 bg-[#00a884] rounded-xl font-bold active:scale-95">Unlock</button>
+        <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center">
+        <button onclick="App.login()" class="w-full max-w-sm p-4 bg-[#00a884] rounded-xl font-bold">Unlock</button>
         <div id="lockout-msg" class="text-red-400 mt-4 hidden text-sm bg-red-900/20 p-2 rounded border border-red-900"></div>
     </div>
 
@@ -107,20 +85,17 @@
         <!-- Sidebar -->
         <div id="sidebar-panel" class="w-full md:w-96 border-r border-[#2a3942] flex flex-col bg-[#111b21] h-full">
             <div class="p-3 border-b border-[#2a3942] flex justify-between items-center shrink-0 bg-[#202c33]">
-                <div class="flex items-center space-x-3 cursor-pointer min-w-0 overflow-hidden" onclick="UI.copyId()" title="Click to copy your ID">
+                <div class="flex items-center space-x-3 cursor-pointer min-w-0 overflow-hidden" onclick="UI.copyId()">
                     <div class="w-10 h-10 rounded-full bg-[#00a884] flex-shrink-0 flex items-center justify-center text-white font-bold" id="my-avatar">ME</div>
                     <div class="flex flex-col items-start min-w-0 overflow-hidden">
                         <span id="my-display-name" class="font-bold text-[#e9edef] text-sm truncate w-full">Me</span>
-                        <div class="flex items-center text-xs text-[#00a884]">
-                            <span id="connection-status" class="connection-status connection-online"></span>
-                            <span id="connection-text">Online</span>
-                        </div>
+                        <div class="flex items-center text-xs text-[#00a884]"><div class="w-2 h-2 rounded-full bg-[#00a884] mr-1 animate-pulse"></div> Online</div>
                     </div>
                 </div>
                 <div class="flex space-x-1 flex-shrink-0 ml-2">
-                    <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full transition-colors" title="Add Contact"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
-                    <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full transition-colors" title="Scan QR"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
-                    <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full transition-colors" title="My QR"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Add ID"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Scan QR"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full" title="My QR"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
                 </div>
             </div>
             
@@ -129,10 +104,8 @@
             </div>
 
             <div id="new-chat-panel" class="hidden p-2 bg-[#111b21] border-b border-[#2a3942] flex gap-2">
-                <input id="input-peer-id" placeholder="Paste Peer ID or scan QR..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none" onkeypress="if(event.key === 'Enter') Network.connectToInput()">
-                <button onclick="Network.connectToInput()" class="bg-[#00a884] p-2 rounded-lg hover:bg-[#008f6f] transition-colors active:scale-95">
-                    <i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>
-                </button>
+                <input id="input-peer-id" placeholder="Paste Peer ID..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none">
+                <button onclick="Network.connectToInput()" class="bg-[#00a884] p-2 rounded-lg"><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i></button>
             </div>
             <div id="chat-list" class="flex-1 overflow-y-auto"></div>
             
@@ -140,7 +113,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v4.7 Fixed</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v4.8 Fixed</span>
             </div>
         </div>
 
@@ -152,15 +125,12 @@
                 <i data-lucide="ghost" class="w-20 h-20 mb-4 opacity-20"></i>
                 <p class="text-xl font-light mt-4">GhostMesh</p>
                 <p class="text-sm mt-2 opacity-60">End-to-End Encrypted</p>
-                <p class="text-xs mt-4 max-w-xs text-center px-4 text-[#8696a0]">Scan a QR code or enter a Peer ID to start chatting securely</p>
             </div>
 
             <div id="chat-interface" class="hidden flex-1 flex-col h-full w-full relative z-10">
                 <div class="h-16 border-b border-[#2a3942] flex items-center justify-between px-4 bg-[#202c33] shrink-0">
                     <div class="flex items-center space-x-3 cursor-pointer" onclick="UI.showSafetyNumber()">
-                        <button onclick="UI.closeChat()" class="md:hidden p-1 mr-1 text-[#aebac1] hover:bg-[#2a3942] rounded-full transition-colors">
-                            <i data-lucide="arrow-left" class="w-6 h-6"></i>
-                        </button>
+                        <button onclick="UI.closeChat()" class="md:hidden p-1 mr-1 text-[#aebac1]"><i data-lucide="arrow-left" class="w-6 h-6"></i></button>
                         <div id="chat-header-avatar" class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold text-sm">?</div>
                         <div class="flex flex-col">
                             <span id="chat-header-name" class="font-semibold text-sm text-[#e9edef] truncate">Peer</span>
@@ -171,71 +141,50 @@
                         </div>
                     </div>
                     <div class="flex space-x-4 text-[#aebac1]">
-                        <button onclick="Media.startCall(false)" class="hover:text-[#00a884] transition-colors" title="Audio Call">
-                            <i data-lucide="phone" class="w-5 h-5"></i>
-                        </button>
-                        <button onclick="Media.startCall(true)" class="hover:text-[#00a884] transition-colors" title="Video Call">
-                            <i data-lucide="video" class="w-5 h-5"></i>
-                        </button>
+                        <button onclick="Media.startCall(false)"><i data-lucide="phone" class="w-5 h-5"></i></button>
+                        <button onclick="Media.startCall(true)"><i data-lucide="video" class="w-5 h-5"></i></button>
                     </div>
                 </div>
 
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full pb-20"></div>
                 
-                <!-- Upload Progress Bar -->
                 <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
                     <div class="flex justify-between text-xs text-[#00a884] mb-1">
                         <span>Uploading... <button onclick="Network.cancelUpload()" class="ml-2 text-red-400 font-bold hover:underline">CANCEL</button></span>
                         <span id="progress-percent">0%</span>
                     </div>
-                    <div class="w-full bg-[#2a3942] rounded-full h-1">
-                        <div id="progress-bar" class="bg-[#00a884] h-1 rounded-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
+                    <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="progress-bar" class="bg-[#00a884] h-1 rounded-full" style="width: 0%"></div></div>
                 </div>
 
-                <!-- Download Progress Bar -->
                 <div id="download-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
-                    <div class="flex justify-between text-xs text-blue-400 mb-1">
-                        <span id="dl-status-text">Downloading...</span>
-                        <span id="dl-progress-percent">0%</span>
-                    </div>
-                    <div class="w-full bg-[#2a3942] rounded-full h-1">
-                        <div id="dl-progress-bar" class="bg-blue-400 h-1 rounded-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
+                    <div class="flex justify-between text-xs text-blue-400 mb-1"><span>Downloading...</span><span id="dl-progress-percent">0%</span></div>
+                    <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="dl-progress-bar" class="bg-blue-400 h-1 rounded-full" style="width: 0%"></div></div>
                 </div>
 
                 <div class="bg-[#202c33] shrink-0 w-full pb-safe">
                     <div id="recording-ui" class="hidden px-4 py-3 bg-[#202c33] flex items-center gap-4 border-t border-[#2a3942]">
                         <div class="text-red-500 animate-pulse flex-1 font-mono">Recording Audio...</div>
-                        <button onclick="Media.cancelRecord()" class="text-[#8696a0] hover:text-white transition-colors">Cancel</button>
-                        <button onclick="Media.stopRecord()" class="bg-[#00a884] text-white px-4 py-1 rounded-full hover:bg-[#008f6f] transition-colors">Send</button>
+                        <button onclick="Media.cancelRecord()" class="text-[#8696a0]">Cancel</button>
+                        <button onclick="Media.stopRecord()" class="bg-[#00a884] text-white px-4 py-1 rounded-full">Send</button>
                     </div>
 
                     <div id="normal-input-ui">
                         <div id="file-preview-area" class="hidden px-4 py-2 bg-[#2a3942] flex items-center justify-between border-b border-[#111b21]">
                             <span id="file-preview-name" class="text-sm text-[#e9edef] truncate"></span>
-                            <button onclick="UI.clearFile()" class="text-red-400 hover:text-red-300 transition-colors">
-                                <i data-lucide="x" class="w-5 h-5"></i>
-                            </button>
+                            <button onclick="UI.clearFile()" class="text-red-400"><i data-lucide="x" class="w-5 h-5"></i></button>
                         </div>
                         <div class="flex items-end gap-2 p-2">
                             <div class="flex pb-2 gap-1">
-                                <button onclick="document.getElementById('file-input').click()" class="p-2 text-[#8696a0] hover:text-[#e9edef] transition-colors" title="Attach File">
-                                    <i data-lucide="plus" class="w-6 h-6"></i>
-                                </button>
+                                <button onclick="document.getElementById('file-input').click()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="plus" class="w-6 h-6"></i></button>
                                 <input type="file" id="file-input" class="hidden" onchange="UI.handleFileSelect(event)">
-                                <button onclick="Media.openCamera()" class="p-2 text-[#8696a0] hover:text-[#e9edef] transition-colors" title="Camera">
-                                    <i data-lucide="camera" class="w-6 h-6"></i>
-                                </button>
-                                <button onclick="UI.sendLocation()" class="p-2 text-[#8696a0] hover:text-[#e9edef] transition-colors" title="Location">
-                                    <i data-lucide="map-pin" class="w-6 h-6"></i>
-                                </button>
+                                <button onclick="Media.openCamera()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="camera" class="w-6 h-6"></i></button>
+                                <button onclick="UI.sendLocation()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="map-pin" class="w-6 h-6"></i></button>
                             </div>
                             <div class="flex-1 bg-[#2a3942] rounded-lg min-h-[42px] flex items-center px-4 py-2 mb-1">
                                 <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)" oninput="UI.toggleSendIcon()">
                             </div>
                             <div class="pb-1">
-                                <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform hover:bg-[#008f6f]">
+                                <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
                                     <i id="icon-mic" data-lucide="mic" class="w-5 h-5"></i>
                                     <i id="icon-send" data-lucide="send" class="w-5 h-5 pl-0.5 hidden"></i>
                                 </button>
@@ -248,111 +197,20 @@
     </div>
 
     <!-- MODALS -->
-    <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
-        <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center">
-            <h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3>
-            <div class="text-xs text-[#8696a0] mb-2">Scan this QR code with another device</div>
-            <div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit flex justify-center items-center"></div>
-            <div class="text-xs text-[#8696a0] mb-4 break-all font-mono p-2 bg-black/20 rounded" id="qr-id-display"></div>
-            <button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl hover:bg-[#374045] transition-colors">Close</button>
-        </div>
-    </div>
-    
-    <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4">
-        <div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative">
-            <h3 class="text-white font-bold mb-4">Scan Peer QR Code</h3>
-            <div id="reader" class="w-full rounded-lg overflow-hidden bg-black mb-4"></div>
-            <div class="text-xs text-[#8696a0] mb-2">Position the QR code within the frame</div>
-            <button onclick="UI.stopScanner()" class="w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold hover:bg-red-500/30 transition-colors">Cancel</button>
-        </div>
-    </div>
-    
-    <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
-        <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center">
-            <h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3>
-            <p class="text-[#8696a0] text-xs mb-4">Verify this number with your peer to ensure secure connection.</p>
-            <div id="safety-number" class="font-mono-safe text-[#00a884] text-2xl font-bold mb-6 tracking-widest break-all p-4 bg-black/20 rounded"></div>
-            <button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl hover:bg-[#374045] transition-colors">Close</button>
-        </div>
-    </div>
-    
-    <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col">
-        <video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover mirror-x"></video>
-        <div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe">
-            <button onclick="Media.closeCamera()" class="p-4 text-white hover:bg-white/10 rounded-full transition-colors">
-                <i data-lucide="x" class="w-8 h-8"></i>
-            </button>
-            <button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white/40 transition-colors"></button>
-            <button onclick="Media.flipCameraView()" class="p-4 text-white hover:bg-white/10 rounded-full transition-colors">
-                <i data-lucide="flip-horizontal" class="w-8 h-8"></i>
-            </button>
-        </div>
-    </div>
-    
-    <div id="video-overlay" class="hidden fixed inset-0 z-[140] bg-[#0b141a] flex flex-col p-4 pb-safe">
-        <div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4">
-            <video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video>
-            <div class="absolute top-4 right-4 w-28 h-40 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-30">
-                <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover mirror-x"></video>
-            </div>
-        </div>
-        <div class="h-24 flex items-center justify-center">
-            <button onclick="Media.endCall()" class="p-5 bg-red-500 rounded-full text-white shadow-xl hover:bg-red-600 transition-colors">
-                <i data-lucide="phone-off" class="w-8 h-8"></i>
-            </button>
-        </div>
-    </div>
-    
-    <div id="incoming-call-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full">
-            <div class="w-20 h-20 bg-[#2a3942] rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-[#00a884]">
-                <i data-lucide="phone-incoming" class="w-10 h-10 text-[#00a884] animate-pulse"></i>
-            </div>
-            <h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3>
-            <p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4"></p>
-            <div class="flex space-x-8 justify-center">
-                <button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400 hover:text-red-300 transition-colors">
-                    <div class="p-4 bg-red-500/20 rounded-full hover:bg-red-500/30 transition-colors">
-                        <i data-lucide="phone-off" class="w-8 h-8"></i>
-                    </div>
-                    <span class="text-xs">Decline</span>
-                </button>
-                <button id="btn-accept-call" class="flex flex-col items-center gap-2 text-[#00a884] hover:text-[#008f6f] transition-colors">
-                    <div class="p-4 bg-[#00a884]/20 rounded-full hover:bg-[#00a884]/30 transition-colors">
-                        <i data-lucide="phone" class="w-8 h-8"></i>
-                    </div>
-                    <span class="text-xs">Accept</span>
-                </button>
-            </div>
-        </div>
-    </div>
+    <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3><div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit flex justify-center items-center"></div><button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
+    <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><button onclick="UI.stopScanner()" class="mt-4 w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold">Cancel</button></div></div>
+    <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3><p class="text-[#8696a0] text-xs mb-4">Verify this number with your peer.</p><div id="safety-number" class="font-mono-safe text-[#00a884] text-2xl font-bold mb-6 tracking-widest break-all"></div><button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
+    <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col"><video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video><div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe"><button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button><button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button><button onclick="Media.flipCameraView()" class="p-4 text-white"><i data-lucide="flip-horizontal" class="w-8 h-8"></i></button></div></div>
+    <div id="video-overlay" class="hidden fixed inset-0 z-[140] bg-[#0b141a] flex flex-col p-4 pb-safe"><div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4"><video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video><div class="absolute top-4 right-4 w-28 h-40 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-30"><video id="local-video" autoplay playsinline muted class="w-full h-full object-cover mirror-x"></video></div></div><div class="h-24 flex items-center justify-center"><button onclick="Media.endCall()" class="p-5 bg-red-500 rounded-full text-white shadow-xl"><i data-lucide="phone-off" class="w-8 h-8"></i></button></div></div>
+    <div id="incoming-call-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full animate-bounce-slight"><div class="w-20 h-20 bg-[#2a3942] rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-[#00a884]"><i data-lucide="phone-incoming" class="w-10 h-10 text-[#00a884] animate-pulse"></i></div><h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3><p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4"></p><div class="flex space-x-8 justify-center"><button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400"><div class="p-4 bg-red-500/20 rounded-full"><i data-lucide="phone-off" class="w-8 h-8"></i></div><span class="text-xs">Decline</span></button><button id="btn-accept-call" class="flex flex-col items-center gap-2 text-[#00a884]"><div class="p-4 bg-[#00a884]/20 rounded-full"><i data-lucide="phone" class="w-8 h-8"></i></div><span class="text-xs">Accept</span></button></div></div></div>
 
     <script>
-        // Debug mode - set to false for production
-        const DEBUG = true;
-        const log = DEBUG ? console.log.bind(console) : () => {};
-        const error = console.error.bind(console);
-
         const Utils = {
             escapeHTML: str => str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]),
             linkify: str => str.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-blue-400 hover:underline">$1</a>'),
-            blobRegistry: new Map(),
-            addBlob: (id, url) => {
-                log('Adding blob URL:', id, url);
-                Utils.blobRegistry.set(id, url);
-            },
-            revokeBlobs: () => { 
-                log('Revoking blob URLs:', Utils.blobRegistry.size);
-                Utils.blobRegistry.forEach((url, id) => {
-                    try {
-                        URL.revokeObjectURL(url);
-                        log('Revoked blob URL for:', id);
-                    } catch(e) {
-                        error('Error revoking blob URL:', e);
-                    }
-                }); 
-                Utils.blobRegistry.clear(); 
-            },
+            blobRegistry: new Set(),
+            addBlob: (url) => Utils.blobRegistry.add(url),
+            revokeBlobs: () => { Utils.blobRegistry.forEach(u => URL.revokeObjectURL(u)); Utils.blobRegistry.clear(); },
             bufferToHex: (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''),
             formatBytes: (bytes) => {
                 if (bytes === 0) return '0 B';
@@ -366,2232 +224,696 @@
                 else if(status === 'delivered') cl += ' status-delivered';
                 else if(status === 'read') cl += ' status-read';
                 return `<div class="status-orb-container"><div class="${cl}"></div></div>`;
-            },
-            formatTime: (date) => {
-                if (!date) return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                return new Date(date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            },
-            generateId: () => {
-                return 'ghost-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-            },
-            validatePeerId: (id) => {
-                return id && typeof id === 'string' && id.trim().length > 0;
             }
         };
 
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
-                const req = indexedDB.open("GhostMeshSecure", 5);
+                const req = indexedDB.open("GhostMeshSecure", 4); // BUMP VERSION
                 req.onupgradeneeded = e => {
                     const db = e.target.result;
-                    log('Upgrading database to version:', e.newVersion);
-                    if (!db.objectStoreNames.contains("config")) {
-                        db.createObjectStore("config");
-                    }
+                    if (!db.objectStoreNames.contains("config")) db.createObjectStore("config");
                     if (!db.objectStoreNames.contains("messages")) {
                         const store = db.createObjectStore("messages", { keyPath: "id" });
                         store.createIndex("peerId", "peerId", { unique: false });
-                        store.createIndex("status", "status", { unique: false });
                     }
                 };
-                req.onsuccess = (e) => { 
-                    Store.db = e.target.result; 
-                    log('Database initialized successfully');
-                    resolve(); 
-                };
-                req.onerror = (e) => {
-                    error('Database initialization failed:', e.target.error);
-                    reject(e.target.error);
-                };
+                req.onsuccess = () => { Store.db = req.result; resolve(); };
+                req.onerror = reject;
             }),
-            put: async (store, key, val) => new Promise((resolve, reject) => {
+            put: async (store, key, val) => new Promise(r => {
+                if(!Store.db) return r(); // Safety
                 const tx = Store.db.transaction(store, "readwrite");
-                tx.oncomplete = () => {
-                    log('Store operation completed:', store, key);
-                    resolve();
-                };
-                tx.onerror = (e) => {
-                    error('Store operation failed:', e.target.error);
-                    reject(e.target.error);
-                };
-                
                 if(store === "messages") {
-                    tx.objectStore(store).put(val); 
+                     tx.objectStore(store).put(val); 
                 } else {
-                    key ? tx.objectStore(store).put(val, key) : tx.objectStore(store).put(val);
+                     key ? tx.objectStore(store).put(val, key) : tx.objectStore(store).put(val);
                 }
+                tx.oncomplete = r;
             }),
-            get: async (store, key) => new Promise((resolve, reject) => {
-                const tx = Store.db.transaction(store, "readonly");
-                const req = tx.objectStore(store).get(key);
-                req.onsuccess = () => {
-                    log('Store get completed:', store, key, req.result);
-                    resolve(req.result);
-                };
-                req.onerror = (e) => {
-                    error('Store get failed:', e.target.error);
-                    reject(e.target.error);
-                };
+            get: async (store, key) => new Promise(r => {
+                if(!Store.db) return r(null);
+                const req = Store.db.transaction(store, "readonly").objectStore(store).get(key);
+                req.onsuccess = () => r(req.result);
             }),
-            getAllMessages: async () => new Promise((resolve, reject) => {
+            getAllMessages: async () => new Promise(r => {
+                if(!Store.db) return r([]);
+                const req = Store.db.transaction("messages", "readonly").objectStore("messages").getAll();
+                req.onsuccess = () => r(req.result);
+            }),
+            getMessages: async (peerId) => new Promise(r => {
+                if(!Store.db) return r([]);
                 const tx = Store.db.transaction("messages", "readonly");
-                const req = tx.objectStore("messages").getAll();
-                req.onsuccess = () => {
-                    log('Got all messages:', req.result?.length);
-                    resolve(req.result || []);
-                };
-                req.onerror = (e) => {
-                    error('Get all messages failed:', e.target.error);
-                    reject(e.target.error);
-                };
+                const req = tx.objectStore("messages").index("peerId").getAll(peerId);
+                req.onsuccess = () => r(req.result || []);
             }),
-            getMessages: async (peerId) => new Promise((resolve, reject) => {
-                const tx = Store.db.transaction("messages", "readonly");
-                const index = tx.objectStore("messages").index("peerId");
-                const req = index.getAll(peerId);
-                req.onsuccess = () => {
-                    log('Got messages for peer:', peerId, req.result?.length);
-                    resolve(req.result || []);
-                };
-                req.onerror = (e) => {
-                    error('Get messages for peer failed:', e.target.error);
-                    reject(e.target.error);
-                };
-            }),
-            getPendingMessages: async (peerId) => {
-                const messages = await Store.getMessages(peerId);
-                return messages.filter(m => m.status === 'pending');
-            },
-            deleteMessagesForPeer: async (peerId) => new Promise((resolve, reject) => {
+            getPendingMessages: async (peerId) => (await Store.getMessages(peerId)).filter(m => m.status === 'pending'),
+            deleteMessagesForPeer: async (peerId) => new Promise(r => {
                 const tx = Store.db.transaction("messages", "readwrite");
                 const index = tx.objectStore("messages").index("peerId");
-                index.getAllKeys(peerId).onsuccess = e => {
-                    const keys = e.target.result;
-                    log('Deleting messages for peer:', peerId, keys.length);
-                    keys.forEach(k => tx.objectStore("messages").delete(k));
-                };
-                tx.oncomplete = () => resolve();
-                tx.onerror = (e) => {
-                    error('Delete messages failed:', e.target.error);
-                    reject(e.target.error);
-                };
-            }),
-            updateMessageStatus: async (msgId, status) => {
-                const msg = await Store.get('messages', msgId);
-                if (msg) {
-                    msg.status = status;
-                    await Store.put('messages', null, msg);
-                    log('Updated message status:', msgId, status);
-                }
-            }
+                index.getAllKeys(peerId).onsuccess = e => { e.target.result.forEach(k => tx.objectStore("messages").delete(k)); tx.oncomplete = r; };
+            })
         };
 
         const Crypto = {
             keyPair: null,
-            generateIdentity: async () => {
-                log('Generating new identity...');
-                return await window.crypto.subtle.generateKey(
-                    { name: "ECDH", namedCurve: "P-256" },
-                    true,
-                    ["deriveKey", "deriveBits"]
-                );
-            },
+            generateIdentity: async () => window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]),
             deriveKeyFromPassword: async (password, salt) => {
                 const enc = new TextEncoder();
-                const keyMaterial = await window.crypto.subtle.importKey(
-                    "raw",
-                    enc.encode(password),
-                    {name: "PBKDF2"},
-                    false,
-                    ["deriveKey"]
-                );
-                return await window.crypto.subtle.deriveKey(
-                    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
-                    keyMaterial,
-                    { name: "AES-GCM", length: 256 },
-                    true,
-                    ["encrypt", "decrypt"]
-                );
+                const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(password), {name: "PBKDF2"}, false, ["deriveKey"]);
+                return await window.crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
             },
             encryptPrivateKey: async (privKey, password) => {
                 const salt = window.crypto.getRandomValues(new Uint8Array(16));
                 const iv = window.crypto.getRandomValues(new Uint8Array(12));
                 const keyWrapper = await Crypto.deriveKeyFromPassword(password, salt);
                 const jwk = await window.crypto.subtle.exportKey("jwk", privKey);
-                const encrypted = await window.crypto.subtle.encrypt(
-                    { name: "AES-GCM", iv },
-                    keyWrapper,
-                    new TextEncoder().encode(JSON.stringify(jwk))
-                );
-                return {
-                    salt: Array.from(salt),
-                    iv: Array.from(iv),
-                    data: Array.from(new Uint8Array(encrypted))
-                };
+                const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, keyWrapper, new TextEncoder().encode(JSON.stringify(jwk)));
+                return { salt: Array.from(salt), iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) };
             },
             decryptPrivateKey: async (encObj, password) => {
                 try {
-                    const salt = new Uint8Array(encObj.salt);
-                    const iv = new Uint8Array(encObj.iv);
-                    const data = new Uint8Array(encObj.data);
+                    const salt = new Uint8Array(encObj.salt), iv = new Uint8Array(encObj.iv), data = new Uint8Array(encObj.data);
                     const keyWrapper = await Crypto.deriveKeyFromPassword(password, salt);
-                    const decrypted = await window.crypto.subtle.decrypt(
-                        { name: "AES-GCM", iv },
-                        keyWrapper,
-                        data
-                    );
-                    const jwk = JSON.parse(new TextDecoder().decode(decrypted));
-                    return await window.crypto.subtle.importKey(
-                        "jwk",
-                        jwk,
-                        { name: "ECDH", namedCurve: "P-256" },
-                        true,
-                        ["deriveKey", "deriveBits"]
-                    );
-                } catch(e) {
-                    error('Failed to decrypt private key:', e);
-                    throw new Error("Invalid Password");
-                }
+                    const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, keyWrapper, data);
+                    return await window.crypto.subtle.importKey("jwk", JSON.parse(new TextDecoder().decode(decrypted)), { name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]);
+                } catch(e) { throw new Error("Invalid Password"); }
             },
             importKey: async (str) => {
-                try {
-                    const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
-                    return await window.crypto.subtle.importKey(
-                        "spki",
-                        bytes.buffer,
-                        { name: "ECDH", namedCurve: "P-256" },
-                        true,
-                        []
-                    );
-                } catch(e) {
-                    error('Failed to import key:', e);
-                    throw e;
-                }
+                const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
+                return await window.crypto.subtle.importKey("spki", bytes.buffer, { name: "ECDH", namedCurve: "P-256" }, true, []);
             },
-            exportKey: async (key) => {
-                try {
-                    const exported = await window.crypto.subtle.exportKey("spki", key);
-                    return btoa(String.fromCharCode(...new Uint8Array(exported)));
-                } catch(e) {
-                    error('Failed to export key:', e);
-                    throw e;
-                }
-            },
-            deriveShared: async (pub) => {
-                try {
-                    return await window.crypto.subtle.deriveKey(
-                        { name: "ECDH", public: pub },
-                        Crypto.keyPair.privateKey,
-                        { name: "AES-GCM", length: 256 },
-                        true,
-                        ["encrypt", "decrypt"]
-                    );
-                } catch(e) {
-                    error('Failed to derive shared key:', e);
-                    throw e;
-                }
-            },
+            exportKey: async (key) => btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", key)))),
+            deriveShared: async (pub) => window.crypto.subtle.deriveKey({ name: "ECDH", public: pub }, Crypto.keyPair.privateKey, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]),
             generateFingerprint: async (remotePubStr) => {
-                try {
-                    const local = App.state.pubStr;
-                    const combined = local < remotePubStr ? local + remotePubStr : remotePubStr + local;
-                    const hash = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(combined));
-                    return Utils.bufferToHex(hash).substring(0, 12).toUpperCase().match(/.{1,4}/g).join(' ');
-                } catch(e) {
-                    error('Failed to generate fingerprint:', e);
-                    return 'ERROR';
-                }
+                const local = App.state.pubStr, combined = local < remotePubStr ? local + remotePubStr : remotePubStr + local;
+                const hash = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(combined));
+                return Utils.bufferToHex(hash).substring(0, 12).toUpperCase().match(/.{1,4}/g).join(' ');
             },
             encryptPayload: async (dataObj, key) => {
-                try {
-                    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                    const cipher = await window.crypto.subtle.encrypt(
-                        { name: "AES-GCM", iv },
-                        key,
-                        new TextEncoder().encode(JSON.stringify(dataObj))
-                    );
-                    return {
-                        iv: Array.from(iv),
-                        data: Array.from(new Uint8Array(cipher))
-                    };
-                } catch(e) {
-                    error('Failed to encrypt payload:', e);
-                    throw e;
-                }
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(dataObj)));
+                return { iv: Array.from(iv), data: Array.from(new Uint8Array(cipher)) };
             },
             decryptPayload: async (encObj, key) => {
-                try {
-                    const dec = await window.crypto.subtle.decrypt(
-                        { name: "AES-GCM", iv: new Uint8Array(encObj.iv) },
-                        key,
-                        new Uint8Array(encObj.data)
-                    );
-                    return JSON.parse(new TextDecoder().decode(dec));
-                } catch(e) {
-                    error('Failed to decrypt payload:', e);
-                    throw e;
-                }
+                const dec = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(encObj.iv) }, key, new Uint8Array(encObj.data));
+                return JSON.parse(new TextDecoder().decode(dec));
             },
             encryptBin: async (buffer, key) => {
-                try {
-                    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                    const cipher = await window.crypto.subtle.encrypt(
-                        { name: "AES-GCM", iv },
-                        key,
-                        buffer
-                    );
-                    const res = new Uint8Array(iv.length + cipher.byteLength);
-                    res.set(iv, 0);
-                    res.set(new Uint8Array(cipher), 12);
-                    return res.buffer;
-                } catch(e) {
-                    error('Failed to encrypt binary:', e);
-                    throw e;
-                }
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, buffer);
+                const res = new Uint8Array(iv.length + cipher.byteLength);
+                res.set(iv, 0); res.set(new Uint8Array(cipher), 12);
+                return res.buffer;
             },
             decryptBin: async (buffer, key) => {
-                try {
-                    const u8 = new Uint8Array(buffer);
-                    const iv = u8.slice(0, 12);
-                    const data = u8.slice(12);
-                    return await window.crypto.subtle.decrypt(
-                        { name: "AES-GCM", iv },
-                        key,
-                        data
-                    );
-                } catch(e) {
-                    error('Failed to decrypt binary:', e);
-                    throw e;
-                }
+                const u8 = new Uint8Array(buffer), iv = u8.slice(0, 12), data = u8.slice(12);
+                return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
             }
         };
 
         const Network = {
-            peer: null,
-            connections: {},
-            uploadCancelled: false,
-            activeTransfers: {},
-            connectionTimeout: 30000, // 30 seconds
-            
+            peer: null, connections: {}, uploadCancelled: false,
             init: async (id) => {
-                log('Initializing network with ID:', id);
-                if (Network.peer) {
-                    log('Network already initialized');
-                    return;
-                }
-                
-                try {
-                    Network.peer = new Peer(id, {
-                        debug: DEBUG ? 2 : 0,
-                        pingInterval: 5000,
-                        config: {
-                            iceServers: [
-                                { urls: 'stun:stun.l.google.com:19302' },
-                                { urls: 'stun:global.stun.twilio.com:3478' }
-                            ]
-                        }
-                    });
-                    
-                    Network.peer.on('open', (id) => {
-                        log('Peer connection opened with ID:', id);
-                        UI.updateConnectionStatus('online');
-                        UI.updateHeaderStatus(App.state.activeChat, "Online");
-                        UI.showToast("Connected to network");
-                    });
-                    
-                    Network.peer.on('connection', (conn) => {
-                        log('Incoming connection from:', conn.peer);
-                        Network.handleIncomingConnection(conn);
-                    });
-                    
-                    Network.peer.on('call', (call) => {
-                        log('Incoming call from:', call.peer);
-                        Media.handleIncoming(call);
-                    });
-                    
-                    Network.peer.on('disconnected', () => {
-                        log('Peer disconnected');
-                        UI.updateConnectionStatus('offline');
-                        UI.updateHeaderStatus(App.state.activeChat, "Offline");
-                        setTimeout(() => {
-                            if (Network.peer && !Network.peer.destroyed) {
-                                log('Attempting to reconnect...');
-                                Network.peer.reconnect();
-                            }
-                        }, 2000);
-                    });
-                    
-                    Network.peer.on('close', () => {
-                        log('Peer connection closed');
-                        UI.updateConnectionStatus('offline');
-                    });
-                    
-                    Network.peer.on('error', (err) => {
-                        error('Peer error:', err);
-                        if (err.type === 'unavailable-id') {
-                            UI.showToast("ID already in use, generating new ID...");
-                            App.generateNewId();
-                        } else if (err.type === 'network') {
-                            UI.showToast("Network error, check your connection");
-                        }
-                    });
-                    
-                    log('PeerJS initialized successfully');
-                } catch (err) {
-                    error('Failed to initialize PeerJS:', err);
-                    UI.showToast("Failed to initialize network connection");
-                }
+                if(Network.peer) return;
+                Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
+                Network.peer.on('open', () => UI.updateHeaderStatus(App.state.activeChat, "Online"));
+                Network.peer.on('connection', Network.handleConn);
+                Network.peer.on('call', Media.handleIncoming);
+                Network.peer.on('disconnected', () => { UI.updateHeaderStatus(App.state.activeChat, "Offline"); setTimeout(() => !Network.peer.destroyed && Network.peer.reconnect(), 2000); });
             },
-            
             connectToInput: () => {
-                const input = document.getElementById('input-peer-id');
-                const id = input.value.trim();
-                if (!id) {
-                    UI.showToast("Please enter a Peer ID");
-                    return;
-                }
-                
-                if (!Utils.validatePeerId(id)) {
-                    UI.showToast("Invalid Peer ID format");
-                    return;
-                }
-                
-                log('Connecting to input ID:', id);
-                Network.connectWithRetry(id);
-                input.value = '';
+                const id = document.getElementById('input-peer-id').value.trim();
+                if(id) Network.connectWithRetry(id);
             },
-            
-            connectWithRetry: async (id, retries = 0, maxRetries = 3) => {
-                log(`Connecting to ${id}, attempt ${retries + 1}`);
-                
-                if (!Utils.validatePeerId(id)) {
-                    UI.showToast("Invalid Peer ID");
-                    return;
-                }
-                
-                if (Network.connections[id]?.conn?.open) {
-                    log('Already connected to', id);
-                    UI.showToast("Already connected to this peer");
-                    return;
-                }
-                
-                if (retries >= maxRetries) {
-                    UI.showToast("Failed to connect after multiple attempts");
-                    return;
-                }
-                
-                try {
-                    UI.showToast(`Connecting to ${id.substring(0, 10)}...`);
-                    UI.updateConnectionStatus('connecting');
-                    
-                    const conn = Network.peer.connect(id, {
-                        reliable: true,
-                        serialization: 'json',
-                        metadata: {
-                            name: App.state.name,
-                            pubKey: App.state.pubStr,
-                            timestamp: Date.now()
-                        }
-                    });
-                    
-                    if (!conn) {
-                        throw new Error('Failed to create connection');
-                    }
-                    
-                    // Set connection timeout
-                    const timeout = setTimeout(() => {
-                        if (conn.open !== true) {
-                            log('Connection timeout for', id);
-                            conn.close();
-                            if (retries < maxRetries - 1) {
-                                UI.showToast(`Retrying connection... (${retries + 2}/${maxRetries})`);
-                                setTimeout(() => Network.connectWithRetry(id, retries + 1, maxRetries), 2000);
-                            } else {
-                                UI.showToast("Connection timeout");
-                                UI.updateConnectionStatus('online');
-                            }
-                        }
-                    }, Network.connectionTimeout);
-                    
-                    conn.on('open', () => {
-                        log('Connection opened to', id);
-                        clearTimeout(timeout);
-                        UI.updateConnectionStatus('online');
-                        
-                        // Send handshake
-                        conn.send({
-                            type: 'handshake',
-                            key: App.state.pubStr,
-                            name: App.state.name,
-                            id: App.state.id,
-                            timestamp: Date.now()
-                        });
-                        
-                        // Process pending messages
-                        Network.processQueue(id);
-                        
-                        UI.showToast(`Connected to ${id.substring(0, 10)}`);
-                    });
-                    
-                    conn.on('data', (data) => {
-                        Network.handleData(id, data, conn);
-                    });
-                    
-                    conn.on('close', () => {
-                        log('Connection closed to', id);
-                        delete Network.connections[id];
-                        UI.updateHeaderStatus(id, "Offline");
-                        clearTimeout(timeout);
-                        
-                        if (App.state.activeChat === id) {
-                            UI.showToast("Connection lost");
-                        }
-                    });
-                    
-                    conn.on('error', (err) => {
-                        error('Connection error for', id, ':', err);
-                        clearTimeout(timeout);
-                        
-                        if (retries < maxRetries - 1) {
-                            setTimeout(() => Network.connectWithRetry(id, retries + 1, maxRetries), 2000);
-                        } else {
-                            UI.showToast("Failed to establish connection");
-                        }
-                    });
-                    
-                    // Store connection reference
-                    Network.connections[id] = { conn, key: null, seqOut: 0, lastSeq: 0 };
-                    
-                } catch (err) {
-                    error('Connection attempt failed:', err);
-                    if (retries < maxRetries - 1) {
-                        setTimeout(() => Network.connectWithRetry(id, retries + 1, maxRetries), 2000);
-                    } else {
-                        UI.showToast("Connection failed");
-                    }
-                }
+            connectWithRetry: async (id, retries = 0) => {
+                if (Network.connections[id]?.conn?.open) return;
+                const conn = Network.peer.connect(id, { reliable: true });
+                conn.on('open', () => {
+                    // Send Handshake
+                    conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
+                    Network.processQueue(id);
+                });
+                conn.on('error', () => { if (retries < 3) setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000); });
+                Network.handleConn(conn);
             },
-            
-            handleIncomingConnection: (conn) => {
-                log('Handling incoming connection from:', conn.peer);
-                
-                conn.on('data', (data) => {
-                    Network.handleData(conn.peer, data, conn);
-                });
-                
-                conn.on('close', () => {
-                    log('Incoming connection closed from:', conn.peer);
-                    delete Network.connections[conn.peer];
-                    UI.updateHeaderStatus(conn.peer, "Offline");
-                });
-                
-                conn.on('error', (err) => {
-                    error('Incoming connection error:', err);
-                });
-                
-                // Store connection reference
-                Network.connections[conn.peer] = { conn, key: null, seqOut: 0, lastSeq: 0 };
+            handleConn: (conn) => {
+                conn.on('data', data => Network.handleData(conn.peer, data, conn));
+                conn.on('close', () => { delete Network.connections[conn.peer]; UI.updateHeaderStatus(conn.peer, "Offline"); });
             },
-            
             processQueue: async (peerId) => {
-                log('Processing queue for:', peerId);
                 const pending = await Store.getPendingMessages(peerId);
                 const connObj = Network.connections[peerId];
-                
-                if (!connObj?.conn?.open) {
-                    log('Connection not open for', peerId);
-                    return;
-                }
-                
+                if(!connObj?.conn?.open) return;
                 for (const msg of pending) {
                     if (msg.type === 'text') {
-                        try {
-                            const encPayload = await Crypto.encryptPayload({
-                                content: msg.content,
-                                seq: ++connObj.seqOut,
-                                ts: Date.now(),
-                                type: 'text'
-                            }, connObj.key);
-                            
-                            connObj.conn.send({
-                                type: 'msg',
-                                payload: encPayload,
-                                id: msg.id
-                            });
-                            
-                            msg.status = 'sent';
-                            await Store.put('messages', null, msg);
-                            
-                            if (App.state.activeChat === peerId) {
-                                UI.updateMessageTick(msg.id, 'sent');
-                            }
-                        } catch (err) {
-                            error('Failed to send pending message:', err);
-                        }
+                        connObj.conn.send({ type: 'msg', payload: await Crypto.encryptPayload({ content: msg.content, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key), id: msg.id });
                     }
+                    msg.status = 'sent';
+                    await Store.put('messages', null, msg); 
                 }
+                if(App.state.activeChat === peerId) UI.loadChat(peerId);
             },
-            
             handleData: async (sender, data, conn) => {
-                log('Received data from', sender, ':', data?.type || 'binary');
-                
-                const connObj = Network.connections[sender];
-                if (!connObj) {
-                    log('No connection object for', sender);
-                    return;
-                }
-                
-                // Handle handshake
                 if (data.type === 'handshake') {
-                    log('Processing handshake from', sender);
-                    try {
-                        // Import public key
-                        const pub = await Crypto.importKey(data.key);
-                        
-                        // Derive shared secret
-                        const shared = await Crypto.deriveShared(pub);
-                        
-                        // Export public key string for storage
-                        const pubStr = await Crypto.exportKey(pub);
-                        
-                        // Add contact
-                        App.addContact(sender, data.name, pubStr);
-                        
-                        // Update connection object with shared key
-                        connObj.key = shared;
-                        Network.connections[sender] = connObj;
-                        
-                        // Send handshake acknowledgment
-                        conn.send({
-                            type: 'handshake-ack',
-                            key: App.state.pubStr,
-                            name: App.state.name,
-                            id: App.state.id,
-                            timestamp: Date.now()
-                        });
-                        
-                        // Load chat if not already active
-                        if (!App.state.activeChat) {
-                            UI.loadChat(sender);
-                        } else if (App.state.activeChat === sender) {
-                            UI.loadChat(sender);
-                        }
-                        
-                        UI.showToast(`Connected with ${data.name || sender.substring(0, 10)}!`);
-                        log('Handshake completed successfully with', sender);
-                        
-                    } catch (err) {
-                        error('Handshake failed:', err);
-                        UI.showToast("Handshake failed - security error");
-                        conn.close();
-                    }
-                    return;
+                    const pub = await Crypto.importKey(data.key);
+                    const shared = await Crypto.deriveShared(pub);
+                    const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                    App.addContact(sender, data.name, pubStr);
+                    Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                    conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
+                    if (!App.state.activeChat) UI.loadChat(sender);
+                    else if (App.state.activeChat === sender) UI.loadChat(sender);
+                    UI.showToast(`Connected with ${data.name}!`);
                 }
-                
-                // Handle handshake acknowledgment
                 if (data.type === 'handshake-ack') {
-                    log('Processing handshake-ack from', sender);
-                    try {
-                        // Import public key
-                        const pub = await Crypto.importKey(data.key);
-                        
-                        // Derive shared secret
-                        const shared = await Crypto.deriveShared(pub);
-                        
-                        // Export public key string for storage
-                        const pubStr = await Crypto.exportKey(pub);
-                        
-                        // Add contact
-                        App.addContact(sender, data.name, pubStr);
-                        
-                        // Update connection object with shared key
-                        connObj.key = shared;
-                        Network.connections[sender] = connObj;
-                        
-                        // Load chat if needed
-                        if (App.state.activeChat === sender) {
-                            UI.loadChat(sender);
-                        } else if (!App.state.activeChat) {
-                            UI.loadChat(sender);
-                        }
-                        
-                        UI.showToast("Connection secured!");
-                        log('Handshake-ack completed successfully with', sender);
-                        
-                    } catch (err) {
-                        error('Handshake-ack failed:', err);
-                        UI.showToast("Security handshake failed");
-                    }
-                    return;
+                     const pub = await Crypto.importKey(data.key);
+                     const shared = await Crypto.deriveShared(pub);
+                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                     App.addContact(sender, data.name, pubStr);
+                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                     if (App.state.activeChat === sender) UI.loadChat(sender);
+                     else if (!App.state.activeChat) UI.loadChat(sender);
+                     UI.showToast("Connection Secured");
                 }
-                
-                // Handle message receipt
+                const connObj = Network.connections[sender];
+                if (!connObj || !connObj.key) return;
+
                 if (data.type === 'receipt') {
-                    log('Processing receipt from', sender, 'for message:', data.msgId);
+                     const msgs = await Store.getMessages(sender);
+                     const msg = msgs.find(m => m.id === data.msgId);
+                     if (msg) {
+                         msg.status = data.status;
+                         await Store.put('messages', null, msg);
+                         if (App.state.activeChat === sender) UI.updateMessageTick(msg.id, data.status);
+                     }
+                     return;
+                }
+
+                if (data.type === 'msg') {
                     try {
-                        await Store.updateMessageStatus(data.msgId, data.status);
-                        if (App.state.activeChat === sender) {
-                            UI.updateMessageTick(data.msgId, data.status);
+                        const dec = await Crypto.decryptPayload(data.payload, connObj.key);
+                        if(dec.type === 'text') {
+                             App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', data.id || data.payload.id);
+                             conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'delivered' });
+                             if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'read' });
                         }
-                    } catch (err) {
-                        error('Failed to process receipt:', err);
-                    }
-                    return;
+                    } catch(e) {}
                 }
                 
-                // Handle encrypted message
-                if (data.type === 'msg' && data.payload && connObj.key) {
-                    log('Processing encrypted message from', sender);
-                    try {
-                        const decrypted = await Crypto.decryptPayload(data.payload, connObj.key);
-                        
-                        if (decrypted.type === 'text') {
-                            const msgId = data.id || Date.now() + Math.random().toString(36).substr(2, 9);
-                            
-                            // Add message
-                            App.addMessage(
-                                sender,
-                                Utils.escapeHTML(decrypted.content),
-                                'in',
-                                'text',
-                                'read',
-                                msgId
-                            );
-                            
-                            // Send delivery receipt
-                            conn.send({
-                                type: 'receipt',
-                                msgId: msgId,
-                                status: 'delivered'
-                            });
-                            
-                            // Send read receipt if chat is active
-                            if (App.state.activeChat === sender) {
-                                conn.send({
-                                    type: 'receipt',
-                                    msgId: msgId,
-                                    status: 'read'
-                                });
-                            }
-                        }
-                    } catch (err) {
-                        error('Failed to decrypt message:', err);
-                    }
-                    return;
-                }
-                
-                // Handle file transfer start
-                if (data.type === 'file-start' && connObj.key) {
-                    log('Starting file transfer from', sender, ':', data.name);
-                    
-                    // Initialize file transfer tracker
-                    App.fileChunks[sender] = {
-                        ...data,
-                        received: 0,
-                        chunks: [],
-                        msgId: data.id,
-                        startTime: Date.now()
-                    };
-                    
-                    // Create placeholder message
-                    App.addMessage(
-                        sender,
-                        {
-                            name: data.name,
-                            mime: data.mime,
-                            size: data.size || 0,
-                            status: 'receiving'
-                        },
-                        'in',
-                        'file',
-                        'receiving',
-                        data.id
-                    );
-                    
-                    // Show download progress if chat is active
-                    if (App.state.activeChat === sender) {
-                        document.getElementById('download-progress').classList.remove('hidden');
-                        document.getElementById('dl-status-text').textContent = `Receiving ${data.name}...`;
-                    }
-                    return;
-                }
-                
-                // Handle binary data (file chunks)
-                if ((data instanceof ArrayBuffer || data instanceof Uint8Array) && connObj.key) {
+                if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
                     const tracker = App.fileChunks[sender];
-                    if (!tracker) {
-                        log('No tracker for file transfer from', sender);
-                        return;
-                    }
-                    
+                    if (!tracker) return;
                     try {
-                        // Decrypt chunk
-                        const decrypted = await Crypto.decryptBin(data, connObj.key);
-                        tracker.chunks.push(decrypted);
+                        const dec = await Crypto.decryptBin(data, connObj.key);
+                        tracker.chunks.push(dec);
                         tracker.received += data.byteLength;
-                        
-                        // Update progress if chat is active
                         if (App.state.activeChat === sender) {
-                            const percent = Math.round((tracker.received / tracker.encSize) * 100);
-                            document.getElementById('dl-progress-bar').style.width = percent + "%";
-                            document.getElementById('dl-progress-percent').textContent = percent + "%";
-                            
-                            // Calculate speed
-                            const elapsed = (Date.now() - tracker.startTime) / 1000;
-                            if (elapsed > 1) {
-                                const speed = tracker.received / elapsed;
-                                document.getElementById('dl-status-text').textContent =
-                                    `Receiving ${tracker.name} - ${Utils.formatBytes(speed)}/s`;
-                            }
+                            const pct = Math.round((tracker.received / tracker.encSize) * 100);
+                            document.getElementById('download-progress').classList.remove('hidden');
+                            document.getElementById('dl-progress-bar').style.width = pct + "%";
+                            document.getElementById('dl-progress-percent').innerText = pct + "%";
                         }
-                        
-                        // Check if transfer is complete
                         if (tracker.received >= tracker.encSize) {
-                            log('File transfer complete from', sender, ':', tracker.name);
-                            
-                            // Hide progress bar
                             document.getElementById('download-progress').classList.add('hidden');
-                            
-                            // Create blob
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
-                            const url = URL.createObjectURL(blob);
-                            Utils.addBlob(tracker.msgId, url);
                             
-                            // Update message with actual file
-                            const updatedContent = {
-                                name: tracker.name,
-                                url: url,
-                                blob: blob,
-                                mime: tracker.mime,
-                                size: blob.size
-                            };
-                            
-                            // Update in storage
-                            const msg = await Store.get('messages', tracker.msgId);
-                            if (msg) {
-                                msg.content = updatedContent;
-                                msg.type = 'file';
-                                msg.status = 'read';
-                                await Store.put('messages', null, msg);
-                                
-                                // Update UI if chat is active
-                                if (App.state.activeChat === sender) {
-                                    UI.updateFileMessage(tracker.msgId, updatedContent, 'read');
-                                }
-                            }
-                            
-                            // Clean up tracker
+                            // PERSIST FILE AS BLOB
+                            App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
                             delete App.fileChunks[sender];
-                            UI.showToast(`Received ${tracker.name}`);
                         }
-                    } catch (err) {
-                        error('Failed to process file chunk:', err);
-                        if (App.state.activeChat === sender) {
-                            document.getElementById('download-progress').classList.add('hidden');
-                            UI.showToast("Failed to receive file");
-                        }
-                    }
+                    } catch(e){}
+                }
+                if (data.type === 'file-start') {
+                     App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
+                     // Show Receiving Bubble
+                     App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'pending', data.id);
                 }
             },
-            
-            cancelUpload: () => {
-                Network.uploadCancelled = true;
-                document.getElementById('upload-progress').classList.add('hidden');
-                UI.showToast("Upload cancelled");
-            },
-            
+            cancelUpload: () => { Network.uploadCancelled = true; },
             sendMessage: async () => {
-                if (!App.state.activeChat) {
-                    UI.showToast("Select a contact to message");
-                    return;
-                }
+                if (!App.state.activeChat) return;
+                const peerId = App.state.activeChat, input = document.getElementById('message-input'), fileInput = document.getElementById('file-input');
                 
-                const peerId = App.state.activeChat;
-                const input = document.getElementById('message-input');
-                const fileInput = document.getElementById('file-input');
-                
-                // Handle file transfer
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
-                    if (file.size > 50 * 1024 * 1024) {
-                        UI.showToast("File size exceeds 50MB limit");
-                        UI.clearFile();
-                        return;
-                    }
-                    
+                    if (file.size > 50*1024*1024) { alert("File > 50MB"); UI.clearFile(); return; }
                     const connObj = Network.connections[peerId];
-                    if (!connObj?.conn?.open) {
-                        UI.showToast("Peer is offline");
-                        UI.clearFile();
-                        return;
-                    }
-                    
+                    if (!connObj?.conn?.open) return alert("Peer Offline");
+
                     Network.uploadCancelled = false;
-                    const CHUNK_SIZE = 256 * 1024; // 256KB
-                    const overhead = 28; // GCM overhead
-                    const numChunks = Math.ceil(file.size / CHUNK_SIZE);
+                    const CHUNK = 256 * 1024;
+                    const overhead = 28;
+                    const numChunks = Math.ceil(file.size / CHUNK);
                     const totalEncSize = file.size + (numChunks * overhead);
-                    
-                    const msgId = Date.now() + Math.random().toString(36).substr(2, 9);
-                    
-                    // Create optimistic message
-                    App.addMessage(
-                        peerId,
-                        {
-                            name: file.name,
-                            mime: file.type,
-                            size: file.size,
-                            status: 'uploading'
-                        },
-                        'out',
-                        'file',
-                        'pending',
-                        msgId
-                    );
-                    
+
+                    const msgId = Date.now();
+                    // OPTIMISTIC RENDER: Pending
+                    App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
                     UI.clearFile();
-                    
-                    // Send file metadata
-                    connObj.conn.send({
-                        type: 'file-start',
-                        id: msgId,
-                        name: file.name,
-                        mime: file.type,
-                        encSize: totalEncSize,
-                        size: file.size
-                    });
-                    
-                    // Show upload progress
-                    document.getElementById('upload-progress').classList.remove('hidden');
+
+                    connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: file.type, encSize: totalEncSize });
                     
                     let offset = 0;
-                    let startTime = Date.now();
+                    document.getElementById('upload-progress').classList.remove('hidden');
                     
-                    const sendNextChunk = async () => {
-                        if (Network.uploadCancelled || !connObj.conn.open) {
-                            document.getElementById('upload-progress').classList.add('hidden');
-                            UI.showToast("Upload cancelled");
-                            return;
+                    const streamLoop = async () => {
+                        if (Network.uploadCancelled) {
+                             document.getElementById('upload-progress').classList.add('hidden');
+                             return;
                         }
-                        
-                        if (offset >= file.size) {
-                            // Upload complete
-                            document.getElementById('upload-progress').classList.add('hidden');
-                            
-                            // Update message status
-                            await Store.updateMessageStatus(msgId, 'sent');
-                            if (App.state.activeChat === peerId) {
-                                UI.updateFileMessage(msgId, { name: file.name, size: file.size }, 'sent');
-                            }
-                            
-                            UI.showToast("File sent successfully");
-                            return;
+
+                        if(offset >= file.size) {
+                             document.getElementById('upload-progress').classList.add('hidden');
+                             // Update to SENT locally after upload done
+                             const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
+                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                             return;
                         }
-                        
-                        // Check buffer
-                        if (connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) {
-                            setTimeout(sendNextChunk, 100);
-                            return;
-                        }
-                        
-                        const slice = file.slice(offset, Math.min(offset + CHUNK_SIZE, file.size));
-                        const buffer = await slice.arrayBuffer();
-                        
-                        try {
-                            const encrypted = await Crypto.encryptBin(buffer, connObj.key);
-                            connObj.conn.send(encrypted);
-                            
-                            offset += CHUNK_SIZE;
-                            const percent = Math.round((offset / file.size) * 100);
-                            
-                            // Update progress
-                            document.getElementById('progress-bar').style.width = percent + "%";
-                            
-                            // Calculate and display speed
-                            const elapsed = (Date.now() - startTime) / 1000;
-                            const speed = offset / elapsed;
-                            if (elapsed > 1) {
-                                document.getElementById('progress-percent').textContent =
-                                    `${percent}% (${Utils.formatBytes(speed)}/s)`;
-                            } else {
-                                document.getElementById('progress-percent').textContent = `${percent}%`;
-                            }
-                            
-                            // Send next chunk
-                            setTimeout(sendNextChunk, 0);
-                        } catch (err) {
-                            error('Failed to send chunk:', err);
-                            document.getElementById('upload-progress').classList.add('hidden');
-                            UI.showToast("Upload failed");
-                        }
+                        if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
+
+                        const slice = file.slice(offset, offset + CHUNK);
+                        const buf = await slice.arrayBuffer();
+                        const enc = await Crypto.encryptBin(buf, connObj.key);
+                        connObj.conn.send(enc);
+                        offset += CHUNK;
+                        const pct = Math.round((offset/file.size)*100);
+                        document.getElementById('progress-bar').style.width = pct + "%";
+                        document.getElementById('progress-percent').innerText = pct + "%";
+                        requestAnimationFrame(streamLoop);
                     };
-                    
-                    sendNextChunk();
-                }
-                // Handle text message
+                    streamLoop();
+                } 
                 else if (input.value.trim()) {
                     const text = input.value.trim();
                     const connObj = Network.connections[peerId];
-                    const msgId = Date.now() + Math.random().toString(36).substr(2, 9);
+                    const msgId = Date.now();
                     
-                    // Optimistic render
+                    // OPTIMISTIC RENDER: Pending
                     App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
                     input.value = '';
                     UI.toggleSendIcon();
-                    
-                    if (connObj?.conn?.open && connObj.key) {
+
+                    if (connObj?.conn?.open) {
                         try {
-                            const encPayload = await Crypto.encryptPayload({
-                                content: text,
-                                seq: ++connObj.seqOut,
-                                ts: Date.now(),
-                                type: 'text'
-                            }, connObj.key);
-                            
-                            connObj.conn.send({
-                                type: 'msg',
-                                id: msgId,
-                                payload: encPayload
-                            });
-                            
-                            // Update status
-                            await Store.updateMessageStatus(msgId, 'sent');
-                            UI.updateMessageTick(msgId, 'sent');
-                            
-                        } catch (err) {
-                            error('Failed to send message:', err);
-                            UI.showToast("Failed to send message");
-                        }
-                    } else {
-                        UI.showToast("Peer is offline");
+                            const encPayload = await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key);
+                            connObj.conn.send({ type: 'msg', id: msgId, payload: encPayload });
+                            // Update to Sent
+                            const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
+                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                        } catch(e) { console.error("Encryption Failed", e); alert("Encryption Error"); }
                     }
                 }
             }
         };
 
         const Media = {
-            localStream: null,
-            call: null,
-            scanner: null,
-            recording: false,
-            recorder: null,
-            audioChunks: [],
-            
-            openCamera: async () => {
-                document.getElementById('camera-modal').classList.remove('hidden');
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: 'environment' }
-                    });
-                    document.getElementById('camera-preview').srcObject = stream;
-                } catch (err) {
-                    error('Camera access failed:', err);
-                    UI.showToast("Camera access denied");
-                    Media.closeCamera();
-                }
-            },
-            
-            closeCamera: () => {
-                document.getElementById('camera-modal').classList.add('hidden');
-                const video = document.getElementById('camera-preview');
-                if (video.srcObject) {
-                    video.srcObject.getTracks().forEach(track => track.stop());
-                    video.srcObject = null;
-                }
-            },
-            
+            localStream: null, call: null, scanner: null, recording: false, recorder: null, audioChunks: [],
+            openCamera: async () => { document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}}); },
+            closeCamera: () => { document.getElementById('camera-modal').classList.add('hidden'); const v = document.getElementById('camera-preview'); if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop()); },
             takePhoto: () => {
-                const video = document.getElementById('camera-preview');
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                
-                canvas.toBlob(blob => {
-                    const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(file);
-                    document.getElementById('file-input').files = dataTransfer.files;
-                    UI.handleFileSelect({ target: { files: dataTransfer.files } });
+                const v = document.getElementById('camera-preview'); const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0);
+                c.toBlob(b => {
+                    const dt = new DataTransfer(); dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
+                    document.getElementById('file-input').files = dt.files;
+                    UI.handleFileSelect({target: {files: dt.files}});
                     Media.closeCamera();
-                }, 'image/jpeg', 0.9);
+                }, 'image/jpeg');
             },
-            
             toggleRecordUI: () => {
-                const normal = document.getElementById('normal-input-ui');
-                const rec = document.getElementById('recording-ui');
-                if (normal && rec) {
-                    normal.classList.add('hidden');
-                    rec.classList.remove('hidden');
-                    Media.startRecord();
-                }
+                 const normal = document.getElementById('normal-input-ui');
+                 const rec = document.getElementById('recording-ui');
+                 if(normal && rec) {
+                     normal.classList.add('hidden');
+                     rec.classList.remove('hidden');
+                     Media.startRecord();
+                 }
             },
-            
             cancelRecord: () => {
+                if (Media.recorder) Media.recorder.stop();
                 Media.recording = false;
-                if (Media.recorder && Media.recorder.state !== 'inactive') {
-                    Media.recorder.stop();
-                }
-                Media.audioChunks = [];
                 document.getElementById('recording-ui').classList.add('hidden');
                 document.getElementById('normal-input-ui').classList.remove('hidden');
-                document.getElementById('btn-main-action').classList.remove('mic-active');
             },
-            
             startRecord: async () => {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    Media.recorder = new MediaRecorder(stream);
-                    Media.audioChunks = [];
-                    
-                    Media.recorder.ondataavailable = (event) => {
-                        if (event.data.size > 0) {
-                            Media.audioChunks.push(event.data);
-                        }
-                    };
-                    
-                    Media.recorder.onstop = () => {
-                        if (Media.recording && Media.audioChunks.length > 0) {
-                            const blob = new Blob(Media.audioChunks, { type: 'audio/webm' });
-                            const file = new File([blob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
-                            const dataTransfer = new DataTransfer();
-                            dataTransfer.items.add(file);
-                            document.getElementById('file-input').files = dataTransfer.files;
-                            UI.handleFileSelect({ target: { files: dataTransfer.files } });
-                        }
-                        stream.getTracks().forEach(track => track.stop());
-                    };
-                    
-                    Media.recorder.start();
-                    Media.recording = true;
-                    document.getElementById('btn-main-action').classList.add('mic-active');
-                    
-                } catch (err) {
-                    error('Microphone access failed:', err);
-                    UI.showToast("Microphone access denied");
-                    Media.cancelRecord();
-                }
+                 try {
+                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                     Media.recorder = new MediaRecorder(stream);
+                     Media.audioChunks = [];
+                     Media.recorder.ondataavailable = e => Media.audioChunks.push(e.data);
+                     Media.recorder.onstop = () => {
+                         if (Media.recording) {
+                             const blob = new Blob(Media.audioChunks, { type: 'audio/webm' });
+                             const file = new File([blob], `Voice.webm`, { type: 'audio/webm' });
+                             const dt = new DataTransfer(); dt.items.add(file);
+                             document.getElementById('file-input').files = dt.files;
+                             Network.sendMessage();
+                             UI.handleFileSelect({target: {files: dt.files}});
+                         }
+                         stream.getTracks().forEach(t => t.stop());
+                     };
+                     Media.recorder.start();
+                     Media.recording = true;
+                     document.getElementById('btn-main-action').classList.add('mic-active');
+                 } catch(e) { alert("Mic Error"); }
             },
-            
             stopRecord: () => {
-                Media.recording = false;
-                if (Media.recorder && Media.recorder.state !== 'inactive') {
-                    Media.recorder.stop();
-                }
-                document.getElementById('recording-ui').classList.add('hidden');
-                document.getElementById('normal-input-ui').classList.remove('hidden');
-                document.getElementById('btn-main-action').classList.remove('mic-active');
-                
-                // Auto-send the recording
-                setTimeout(() => {
-                    if (Media.audioChunks.length > 0) {
-                        Network.sendMessage();
-                    }
-                }, 300);
+                 if(Media.recorder) Media.recorder.stop();
+                 document.getElementById('recording-ui').classList.add('hidden');
+                 document.getElementById('normal-input-ui').classList.remove('hidden');
             },
-            
             startCall: async (video) => {
-                if (!App.state.activeChat) {
-                    UI.showToast("Select a contact to call");
-                    return;
-                }
-                
+                if(!App.state.activeChat) return;
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: video,
-                        audio: true
-                    });
-                    
+                    const stream = await navigator.mediaDevices.getUserMedia({ video, audio: true });
                     Media.localStream = stream;
-                    if (video) {
-                        document.getElementById('local-video').srcObject = stream;
-                    }
-                    
+                    if(video) document.getElementById('local-video').srcObject = stream;
                     document.getElementById('video-overlay').classList.remove('hidden');
-                    
-                    const call = Network.peer.call(App.state.activeChat, stream, {
-                        metadata: { video: video }
-                    });
-                    
+                    const call = Network.peer.call(App.state.activeChat, stream, { metadata: { video } });
                     Media.setupCall(call, video);
-                    
-                } catch (err) {
-                    error('Call failed:', err);
-                    UI.showToast("Failed to start call");
-                }
+                } catch(e) { alert("Call Error: " + e); }
             },
-            
             handleIncoming: (call) => {
-                const peerName = App.state.contacts[call.peer]?.name || call.peer;
-                
-                // Show incoming call modal
-                document.getElementById('incoming-call-modal').classList.remove('hidden');
-                document.getElementById('caller-id-display').textContent = peerName;
-                document.getElementById('incoming-call-title').textContent =
-                    call.metadata.video ? 'Incoming Video Call' : 'Incoming Audio Call';
-                
-                // Setup buttons
-                document.getElementById('btn-decline-call').onclick = () => {
-                    document.getElementById('incoming-call-modal').classList.add('hidden');
-                    call.close();
-                };
-                
-                document.getElementById('btn-accept-call').onclick = () => {
-                    document.getElementById('incoming-call-modal').classList.add('hidden');
-                    
-                    navigator.mediaDevices.getUserMedia({
-                        video: call.metadata.video,
-                        audio: true
-                    }).then(stream => {
+                if(confirm(`Incoming ${call.metadata.video?'Video':'Audio'} Call`)) {
+                    navigator.mediaDevices.getUserMedia({ video: call.metadata.video, audio: true }).then(stream => {
                         Media.localStream = stream;
-                        if (call.metadata.video) {
-                            document.getElementById('local-video').srcObject = stream;
-                        }
+                        if(call.metadata.video) document.getElementById('local-video').srcObject = stream;
                         document.getElementById('video-overlay').classList.remove('hidden');
                         call.answer(stream);
                         Media.setupCall(call, call.metadata.video);
-                    }).catch(err => {
-                        error('Failed to answer call:', err);
-                        UI.showToast("Failed to answer call");
                     });
-                };
+                } else call.close();
             },
-            
             setupCall: (call, video) => {
                 Media.call = call;
-                
-                call.on('stream', (remoteStream) => {
-                    const remoteVideo = document.getElementById('remote-video');
-                    if (video) {
-                        remoteVideo.srcObject = remoteStream;
-                        remoteVideo.play().catch(console.error);
-                    } else {
-                        const audio = new Audio();
-                        audio.srcObject = remoteStream;
-                        audio.play().catch(console.error);
-                    }
+                call.on('stream', r => {
+                    const v = document.getElementById('remote-video');
+                    if(video) v.srcObject = r; else { const a = new Audio(); a.srcObject = r; a.play(); }
                 });
-                
-                call.on('close', () => {
-                    Media.endCall();
-                });
-                
-                call.on('error', (err) => {
-                    error('Call error:', err);
-                    UI.showToast("Call failed");
-                    Media.endCall();
-                });
+                call.on('close', Media.endCall);
             },
-            
             endCall: () => {
-                if (Media.localStream) {
-                    Media.localStream.getTracks().forEach(track => track.stop());
-                    Media.localStream = null;
-                }
-                
-                if (Media.call) {
-                    Media.call.close();
-                    Media.call = null;
-                }
-                
+                if(Media.localStream) Media.localStream.getTracks().forEach(t=>t.stop());
+                if(Media.call) Media.call.close();
                 document.getElementById('video-overlay').classList.add('hidden');
             },
-            
+            // FLIP Logic
             flipCameraView: () => {
-                const video = document.getElementById('camera-preview');
-                video.classList.toggle('mirror-x');
+                const v = document.getElementById('camera-preview');
+                v.classList.toggle('mirror-x'); // Toggle CSS mirror
+            },
+            toggleScannerMirror: () => {
+                const reader = document.getElementById('reader');
+                // The actual video element is inside reader
+                const video = reader.querySelector('video');
+                if(video) video.classList.toggle('mirror-x');
             }
         };
 
         const App = {
-            state: {
-                id: null,
-                name: null,
-                activeChat: null,
-                contacts: {},
-                pubStr: null
-            },
+            state: { id: null, name: null, activeChat: null, contacts: {}, pubStr: null },
             fileChunks: {},
-            
             init: async () => {
-                log('Initializing application...');
+                lucide.createIcons();
+                
                 try {
-                    // Initialize icons
-                    lucide.createIcons();
-                    
-                    // Initialize database
                     await Store.init();
-                    
-                    // Check for existing profile
                     const name = await Store.get('config', 'name');
                     const id = await Store.get('config', 'id');
                     
                     if (name && id) {
-                        log('Existing profile found:', name, id);
-                        App.state.id = id;
-                        App.state.name = name;
                         document.getElementById('onboarding-screen').classList.add('hidden');
                         document.getElementById('login-screen').classList.remove('hidden');
-                    } else {
-                        log('No existing profile found');
+                        App.state.id = id;
+                        App.state.name = name;
                     }
-                } catch (err) {
-                    error('Initialization failed:', err);
-                    UI.showToast("Initialization failed");
+                } catch(e) {
+                    console.error("DB Init Fail", e);
+                    // Just proceed to onboarding if DB fails first time (fresh)
                 }
             },
-            
             createProfile: async () => {
-                const name = document.getElementById('setup-name').value.trim();
-                const password = document.getElementById('setup-password').value;
+                const name = document.getElementById('setup-name').value;
+                const pass = document.getElementById('setup-password').value;
+                if(!name || !pass) return alert("Required");
                 
-                if (!name || name.length < 2) {
-                    UI.showToast("Name must be at least 2 characters");
-                    return;
-                }
-                
-                if (!password || password.length < 6) {
-                    UI.showToast("Password must be at least 6 characters");
-                    return;
-                }
-                
+                const btn = document.getElementById('btn-create-profile');
+                btn.innerText = "Generating ID...";
+                btn.disabled = true;
+
                 try {
-                    // Generate unique ID
-                    const id = Utils.generateId();
+                    // Ensure DB is ready
+                    if(!Store.db) await Store.init();
                     
-                    // Generate cryptographic identity
-                    const keyPair = await Crypto.generateIdentity();
+                    const id = 'ghost-' + Math.floor(Math.random() * 1000000);
+                    const kp = await Crypto.generateIdentity();
+                    const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass);
+                    const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey);
                     
-                    // Encrypt private key
-                    const encryptedPrivateKey = await Crypto.encryptPrivateKey(keyPair.privateKey, password);
-                    
-                    // Export public key
-                    const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
-                    
-                    // Store everything
-                    await Store.put('config', 'name', name);
+                    await Store.put('config', 'name', name); 
                     await Store.put('config', 'id', id);
-                    await Store.put('config', 'encPrivateKey', encryptedPrivateKey);
-                    await Store.put('config', 'publicKey', publicKey);
+                    await Store.put('config', 'encPrivateKey', encPriv); 
+                    await Store.put('config', 'publicKey', pubJWK);
                     
-                    // Load main interface
-                    App.loadMain(id, name, keyPair.privateKey, keyPair.publicKey);
-                    
-                } catch (err) {
-                    error('Failed to create profile:', err);
-                    UI.showToast("Failed to create profile");
+                    App.loadMain(id, name, kp.privateKey, kp.publicKey);
+                } catch(e) {
+                    alert("Creation Failed: " + e.message);
+                    btn.innerText = "Initialize Identity";
+                    btn.disabled = false;
                 }
             },
-            
-            generateNewId: async () => {
-                try {
-                    const newId = Utils.generateId();
-                    App.state.id = newId;
-                    await Store.put('config', 'id', newId);
-                    
-                    // Reinitialize network with new ID
-                    if (Network.peer) {
-                        Network.peer.destroy();
-                        Network.peer = null;
-                    }
-                    
-                    await Network.init(newId);
-                    UI.showToast("New ID generated");
-                    
-                } catch (err) {
-                    error('Failed to generate new ID:', err);
-                    UI.showToast("Failed to generate new ID");
-                }
-            },
-            
             login: async () => {
-                const password = document.getElementById('login-password').value;
-                
-                if (!password) {
-                    UI.showToast("Please enter password");
-                    return;
-                }
-                
+                const pass = document.getElementById('login-password').value;
                 try {
-                    // Decrypt private key
-                    const encryptedPrivateKey = await Store.get('config', 'encPrivateKey');
-                    const privateKey = await Crypto.decryptPrivateKey(encryptedPrivateKey, password);
-                    
-                    // Import public key
-                    const publicKey = await window.crypto.subtle.importKey(
-                        "spki",
-                        await Store.get('config', 'publicKey'),
-                        { name: "ECDH", namedCurve: "P-256" },
-                        true,
-                        []
-                    );
-                    
-                    // Load main interface
-                    App.loadMain(App.state.id, App.state.name, privateKey, publicKey);
-                    
-                } catch (err) {
-                    error('Login failed:', err);
-                    UI.showToast("Invalid password");
-                }
+                    const priv = await Crypto.decryptPrivateKey(await Store.get('config', 'encPrivateKey'), pass);
+                    const pub = await window.crypto.subtle.importKey("spki", await Store.get('config', 'publicKey'), {name:"ECDH",namedCurve:"P-256"}, true, []);
+                    App.loadMain(App.state.id, App.state.name, priv, pub);
+                } catch(e) { alert("Wrong Password"); }
             },
-            
-            loadMain: async (id, name, privateKey, publicKey) => {
-                try {
-                    // Set up cryptographic key pair
-                    Crypto.keyPair = {
-                        privateKey: privateKey,
-                        publicKey: publicKey
-                    };
-                    
-                    // Export public key string
-                    App.state.pubStr = await Crypto.exportKey(publicKey);
-                    
-                    // Update state
-                    App.state.id = id;
-                    App.state.name = name;
-                    
-                    // Load contacts
-                    App.state.contacts = await Store.get('config', 'contacts') || {};
-                    
-                    // Switch to main interface
-                    document.getElementById('onboarding-screen').classList.add('hidden');
-                    document.getElementById('login-screen').classList.add('hidden');
-                    document.getElementById('app-layout').classList.remove('hidden');
-                    
-                    // Update UI
-                    UI.updateSelf(name);
-                    UI.renderContacts();
-                    
-                    // Initialize network
-                    await Network.init(id);
-                    
-                    log('Main interface loaded successfully');
-                    UI.showToast(`Welcome back, ${name}!`);
-                    
-                } catch (err) {
-                    error('Failed to load main interface:', err);
-                    UI.showToast("Failed to load interface");
-                }
+            loadMain: async (id, name, priv, pub) => {
+                Crypto.keyPair = { privateKey: priv, publicKey: pub };
+                App.state.pubStr = await Crypto.exportKey(pub);
+                document.getElementById('onboarding-screen').classList.add('hidden');
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-layout').classList.remove('hidden');
+                App.state.contacts = await Store.get('config', 'contacts') || {};
+                UI.renderContacts(); UI.updateSelf(name); Network.init(id);
             },
-            
             addContact: (id, name, pubKey) => {
-                if (App.state.contacts[id]) {
-                    log('Contact already exists:', id);
-                    return;
-                }
-                
-                App.state.contacts[id] = {
-                    id: id,
-                    name: name || "Unknown",
-                    pubKey: pubKey
-                };
-                
-                Store.put('config', 'contacts', App.state.contacts).then(() => {
-                    log('Contact added:', id, name);
-                    UI.renderContacts();
-                }).catch(err => {
-                    error('Failed to save contact:', err);
-                });
+                App.state.contacts[id] = { id, name: name || "Unknown", pubKey: pubKey || App.state.contacts[id]?.pubKey };
+                Store.put('config', 'contacts', App.state.contacts);
+                UI.renderContacts();
             },
-            
             deleteContact: async (id) => {
-                if (!confirm(`Delete contact ${App.state.contacts[id]?.name} and all messages?`)) {
-                    return;
-                }
-                
+                if(!confirm("Delete contact and all messages?")) return;
                 delete App.state.contacts[id];
-                
-                try {
-                    await Store.put('config', 'contacts', App.state.contacts);
-                    await Store.deleteMessagesForPeer(id);
-                    
-                    if (Network.connections[id]) {
-                        Network.connections[id].conn.close();
-                        delete Network.connections[id];
-                    }
-                    
-                    if (App.state.activeChat === id) {
-                        UI.closeChat();
-                    }
-                    
-                    UI.renderContacts();
-                    UI.showToast("Contact deleted");
-                    
-                } catch (err) {
-                    error('Failed to delete contact:', err);
-                    UI.showToast("Failed to delete contact");
-                }
+                await Store.put('config', 'contacts', App.state.contacts);
+                await Store.deleteMessagesForPeer(id);
+                if(Network.connections[id]) Network.connections[id].conn.close();
+                delete Network.connections[id];
+                if(App.state.activeChat === id) UI.closeChat();
+                UI.renderContacts();
             },
-            
-            addMessage: (peerId, content, direction, type, status, id) => {
-                const message = {
-                    id: id || Date.now() + Math.random().toString(36).substr(2, 9),
-                    peerId: peerId,
-                    content: content,
-                    dir: direction,
-                    type: type,
-                    status: status,
-                    time: new Date().toISOString()
-                };
-                
-                // Create blob URL for files
-                if ((type === 'file' || type === 'voice') && content.blob && !content.url) {
-                    const url = URL.createObjectURL(content.blob);
-                    content.url = url;
-                    Utils.addBlob(message.id, url);
+            addMessage: (peerId, content, dir, type, status, id) => {
+                const msg = { id: id || Date.now(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
+                // 10MB limit for IDB blobs to prevent crash
+                if (type === 'file' && content.blob && content.size > 10 * 1024 * 1024) {
+                     content.blob = null; // Don't store huge blob
                 }
-                
-                Store.put('messages', null, message).then(() => {
-                    if (App.state.activeChat === peerId) {
-                        UI.renderMessage(message);
-                    }
-                }).catch(err => {
-                    error('Failed to save message:', err);
-                });
+                Store.put('messages', null, msg);
+                if(App.state.activeChat === peerId) UI.renderMessage(msg);
             },
-            
             exportIdentity: async () => {
-                try {
-                    const data = {
-                        id: App.state.id,
-                        name: App.state.name,
-                        priv: await Store.get('config', 'encPrivateKey'),
-                        contacts: App.state.contacts,
-                        messages: await Store.getAllMessages(),
-                        exportDate: new Date().toISOString()
-                    };
-                    
-                    const blob = new Blob([JSON.stringify(data, null, 2)], {
-                        type: "application/json"
-                    });
-                    
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `ghostmesh_backup_${new Date().toISOString().split('T')[0]}.json`;
-                    a.click();
-                    
-                    setTimeout(() => URL.revokeObjectURL(url), 1000);
-                    UI.showToast("Backup downloaded");
-                    
-                } catch (err) {
-                    error('Failed to export identity:', err);
-                    UI.showToast("Failed to create backup");
-                }
+                const data = {
+                    id: App.state.id, name: App.state.name,
+                    priv: await Store.get('config', 'encPrivateKey'),
+                    contacts: App.state.contacts, msgs: await Store.getAllMessages()
+                };
+                const url = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: "application/json"}));
+                const a = document.createElement('a'); a.href = url; a.download = "ghost_backup.json"; a.click();
             }
         };
 
         const UI = {
-            updateSelf: (name) => {
-                document.getElementById('my-display-name').textContent = name;
-                document.getElementById('my-avatar').textContent = name.charAt(0).toUpperCase();
-            },
-            
-            updateConnectionStatus: (status) => {
-                const statusElement = document.getElementById('connection-status');
-                const textElement = document.getElementById('connection-text');
-                
-                statusElement.className = 'connection-status';
-                switch (status) {
-                    case 'online':
-                        statusElement.classList.add('connection-online');
-                        textElement.textContent = 'Online';
-                        break;
-                    case 'offline':
-                        statusElement.classList.add('connection-offline');
-                        textElement.textContent = 'Offline';
-                        break;
-                    case 'connecting':
-                        statusElement.classList.add('connection-connecting');
-                        textElement.textContent = 'Connecting...';
-                        break;
-                }
-            },
-            
-            copyId: () => {
-                if (!App.state.id) return;
-                
-                navigator.clipboard.writeText(App.state.id).then(() => {
-                    UI.showToast("ID copied to clipboard");
-                }).catch(err => {
-                    error('Failed to copy ID:', err);
-                    UI.showToast("Failed to copy ID");
-                });
-            },
-            
-            toggleAddContact: () => {
-                const panel = document.getElementById('new-chat-panel');
-                panel.classList.toggle('hidden');
-                
-                if (!panel.classList.contains('hidden')) {
-                    setTimeout(() => {
-                        document.getElementById('input-peer-id').focus();
-                    }, 100);
-                }
-            },
-            
+            updateSelf: (name) => { document.getElementById('my-display-name').innerText = name; document.getElementById('my-avatar').innerText = name[0]; },
+            setStatus: (s) => document.getElementById('status-indicator').className = `w-3 h-3 rounded-full ${s==='online'?'bg-green-500':'bg-red-500'}`,
+            copyId: () => { navigator.clipboard.writeText(App.state.id); alert("ID Copied"); },
+            toggleAddContact: () => document.getElementById('new-chat-panel').classList.toggle('hidden'),
             showQR: () => {
-                if (!App.state.id) {
-                    UI.showToast("No ID available");
-                    return;
-                }
-                
+                if(!App.state.id) return;
                 document.getElementById('qr-modal').classList.remove('hidden');
-                document.getElementById('qr-id-display').textContent = App.state.id;
-                
-                // Clear existing QR code
-                const container = document.getElementById('qrcode-container');
-                container.innerHTML = '';
-                
-                // Generate new QR code
-                setTimeout(() => {
-                    try {
-                        new QRCode(container, {
-                            text: App.state.id,
-                            width: 200,
-                            height: 200,
-                            colorDark: "#000000",
-                            colorLight: "#ffffff",
-                            correctLevel: QRCode.CorrectLevel.H
-                        });
-                    } catch (err) {
-                        error('Failed to generate QR code:', err);
-                        UI.showToast("Failed to generate QR code");
-                    }
+                document.getElementById('qrcode-container').innerHTML = '';
+                setTimeout(() => { 
+                    try { new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 }); }
+                    catch(e) { console.error("QR Error", e); }
                 }, 100);
             },
-            
             startScanner: () => {
-                log('Starting QR scanner...');
                 document.getElementById('scanner-modal').classList.remove('hidden');
-                
-                // Clear previous scanner instance
-                if (Media.scanner) {
-                    Media.scanner.clear();
-                    Media.scanner = null;
-                }
-                
-                try {
-                    Media.scanner = new Html5Qrcode("reader");
-                    
-                    const config = {
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 },
-                        aspectRatio: 1.0
-                    };
-                    
-                    Media.scanner.start(
-                        { facingMode: "environment" },
-                        config,
-                        (decodedText) => {
-                            log('QR code scanned:', decodedText);
-                            UI.stopScanner();
-                            
-                            const id = decodedText.trim();
-                            if (id && Utils.validatePeerId(id)) {
-                                UI.showToast("Connecting...");
-                                Network.connectWithRetry(id);
-                            } else {
-                                UI.showToast("Invalid QR code");
-                            }
-                        }
-                    ).catch(err => {
-                        error('Scanner start failed:', err);
-                        
-                        // Try user camera if environment fails
-                        if (err && err.message && err.message.includes('environment')) {
-                            Media.scanner.start(
-                                { facingMode: "user" },
-                                config,
-                                (decodedText) => {
-                                    log('QR code scanned with user camera:', decodedText);
-                                    UI.stopScanner();
-                                    
-                                    const id = decodedText.trim();
-                                    if (id && Utils.validatePeerId(id)) {
-                                        UI.showToast("Connecting...");
-                                        Network.connectWithRetry(id);
-                                    } else {
-                                        UI.showToast("Invalid QR code");
-                                    }
-                                }
-                            ).catch(err2 => {
-                                error('User camera also failed:', err2);
-                                UI.stopScanner();
-                                UI.showToast("Camera access denied");
-                            });
-                        } else {
-                            UI.stopScanner();
-                            UI.showToast("Camera access denied");
-                        }
-                    });
-                    
-                } catch (err) {
-                    error('Scanner initialization failed:', err);
-                    UI.stopScanner();
-                    UI.showToast("Scanner initialization failed");
-                }
+                if(!Media.scanner) Media.scanner = new Html5Qrcode("reader");
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                Media.scanner.start({ facingMode: "environment" }, config, (decodedText) => {
+                    Media.scanner.stop();
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                    const id = decodedText.trim();
+                    if(id) Network.connectWithRetry(id);
+                }).catch(err => {
+                    console.error("Scanner Error", err);
+                    alert("Camera access failed or not supported.");
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                });
             },
-            
             stopScanner: () => {
-                if (Media.scanner) {
+                if(Media.scanner) {
                     Media.scanner.stop().then(() => {
-                        log('Scanner stopped');
-                        Media.scanner.clear();
-                        Media.scanner = null;
-                        document.getElementById('scanner-modal').classList.add('hidden');
-                    }).catch(err => {
-                        error('Scanner stop failed:', err);
-                        Media.scanner = null;
-                        document.getElementById('scanner-modal').classList.add('hidden');
-                    });
+                         document.getElementById('scanner-modal').classList.add('hidden');
+                    }).catch(console.error);
                 } else {
                     document.getElementById('scanner-modal').classList.add('hidden');
                 }
             },
-            
+            // Toggle Logic for Buttons
+            toggleScannerMirror: Media.toggleScannerMirror, 
             toggleSendIcon: () => {
-                const input = document.getElementById('message-input');
-                const hasFile = document.getElementById('file-input').files.length > 0;
-                
-                if (input.value.trim() || hasFile) {
-                    document.getElementById('icon-mic').classList.add('hidden');
-                    document.getElementById('icon-send').classList.remove('hidden');
-                } else {
-                    document.getElementById('icon-mic').classList.remove('hidden');
-                    document.getElementById('icon-send').classList.add('hidden');
-                }
+                 const val = document.getElementById('message-input').value.trim();
+                 if(val) { document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); }
+                 else { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); }
             },
-            
             showSafetyNumber: async () => {
-                if (!App.state.activeChat) return;
-                
-                const contact = App.state.contacts[App.state.activeChat];
-                if (contact && contact.pubKey) {
-                    try {
-                        const fingerprint = await Crypto.generateFingerprint(contact.pubKey);
-                        document.getElementById('safety-number').textContent = fingerprint;
-                        document.getElementById('safety-modal').classList.remove('hidden');
-                    } catch (err) {
-                        error('Failed to generate fingerprint:', err);
-                        UI.showToast("Failed to generate safety number");
-                    }
+                if(!App.state.activeChat) return;
+                const c = App.state.contacts[App.state.activeChat];
+                if(c && c.pubKey) {
+                    document.getElementById('safety-number').innerText = await Crypto.generateFingerprint(c.pubKey);
+                    document.getElementById('safety-modal').classList.remove('hidden');
                 }
             },
-            
-            showToast: (message) => {
-                log('Toast:', message);
-                
-                // Remove existing toasts
-                const existingToasts = document.querySelectorAll('.toast-message');
-                existingToasts.forEach(toast => toast.remove());
-                
-                // Create new toast
-                const toast = document.createElement('div');
-                toast.className = 'toast-message fixed top-4 right-4 bg-[#202c33] text-white px-4 py-3 rounded-lg shadow-lg animate-fade-in z-[150] border border-[#2a3942] max-w-xs';
-                toast.textContent = message;
-                toast.style.backdropFilter = 'blur(10px)';
-                
-                document.body.appendChild(toast);
-                
-                // Remove toast after 3 seconds
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
-                        setTimeout(() => toast.remove(), 300);
-                    }
-                }, 3000);
+            showToast: (msg) => {
+                const t = document.createElement('div');
+                t.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade-in z-[150]";
+                t.innerText = msg;
+                document.body.appendChild(t);
+                setTimeout(() => t.remove(), 3000);
             },
-            
             renderContacts: () => {
-                const contacts = Object.values(App.state.contacts);
-                const chatList = document.getElementById('chat-list');
-                
-                if (contacts.length === 0) {
-                    chatList.innerHTML = `
-                        <div class="p-8 text-center text-[#8696a0]">
-                            <i data-lucide="users" class="w-12 h-12 mx-auto mb-4 opacity-30"></i>
-                            <p>No contacts yet</p>
-                            <p class="text-sm mt-2">Scan a QR code or enter a Peer ID to add contacts</p>
-                        </div>
-                    `;
-                } else {
-                    chatList.innerHTML = contacts.map(contact => {
-                        const isOnline = Network.connections[contact.id]?.conn?.open;
-                        const lastMessage = ''; // You could fetch the last message here
-                        
-                        return `
-                            <div onclick="UI.loadChat('${contact.id}')" 
-                                 class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3 transition-colors active:scale-[0.98]">
-                                <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold flex-shrink-0">
-                                    ${contact.name.charAt(0).toUpperCase()}
-                                </div>
-                                <div class="flex-1 overflow-hidden min-w-0">
-                                    <div class="font-medium text-[#e9edef] truncate">${contact.name}</div>
-                                    <div class="text-sm text-[#8696a0] truncate flex items-center">
-                                        <span class="w-2 h-2 rounded-full mr-2 ${isOnline ? 'bg-green-500' : 'bg-gray-500'}"></span>
-                                        ${isOnline ? 'Online' : 'Offline'}
-                                    </div>
-                                </div>
-                                <button onclick="event.stopPropagation(); App.deleteContact('${contact.id}')" 
-                                        class="p-2 text-gray-500 hover:text-red-500 rounded-full transition-colors">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        `;
-                    }).join('');
-                }
-                
+                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `
+                    <div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div>
+                        <div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div>
+                        <button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                `).join('');
                 lucide.createIcons();
             },
-            
             filterContacts: () => {
-                const searchTerm = document.getElementById('search-contacts').value.toLowerCase();
-                const contacts = Object.values(App.state.contacts);
-                const filteredContacts = contacts.filter(contact =>
-                    contact.name.toLowerCase().includes(searchTerm) ||
-                    contact.id.toLowerCase().includes(searchTerm)
-                );
-                
-                const chatList = document.getElementById('chat-list');
-                
-                if (filteredContacts.length === 0) {
-                    chatList.innerHTML = `
-                        <div class="p-8 text-center text-[#8696a0]">
-                            <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-30"></i>
-                            <p>No contacts found</p>
-                            ${searchTerm ? `<p class="text-sm mt-2">No results for "${searchTerm}"</p>` : ''}
-                        </div>
-                    `;
-                } else {
-                    chatList.innerHTML = filteredContacts.map(contact => {
-                        const isOnline = Network.connections[contact.id]?.conn?.open;
-                        
-                        return `
-                            <div onclick="UI.loadChat('${contact.id}')" 
-                                 class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">
-                                    ${contact.name.charAt(0).toUpperCase()}
-                                </div>
-                                <div class="flex-1 overflow-hidden">
-                                    <div class="font-medium text-[#e9edef] truncate">${contact.name}</div>
-                                    <div class="text-sm text-[#8696a0] truncate">${isOnline ? 'Online' : 'Offline'}</div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                }
-                
+                const term = document.getElementById('search-contacts').value.toLowerCase();
+                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts)
+                    .filter(c => c.name.toLowerCase().includes(term) || c.id.includes(term))
+                    .map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join('');
                 lucide.createIcons();
             },
-            
             loadChat: async (id) => {
-                log('Loading chat with:', id);
+                Utils.revokeBlobs(); App.state.activeChat = id; const c = App.state.contacts[id];
+                if(window.innerWidth < 768) { document.getElementById('sidebar-panel').classList.add('hidden'); document.getElementById('chat-area').classList.remove('hidden'); document.getElementById('chat-area').classList.add('flex'); }
+                document.getElementById('chat-empty-state').classList.add('hidden'); document.getElementById('chat-interface').classList.remove('hidden'); document.getElementById('chat-interface').classList.add('flex');
                 
-                if (!id || !App.state.contacts[id]) {
-                    log('Invalid contact ID:', id);
-                    return;
-                }
+                document.getElementById('chat-header-name').innerText = c.name; 
+                const status = Network.connections[id] ? "Online" : "Offline";
+                document.getElementById('chat-header-status').innerText = status;
                 
-                // Clean up old blob URLs
-                Utils.revokeBlobs();
-                
-                // Update active chat
-                App.state.activeChat = id;
-                const contact = App.state.contacts[id];
-                
-                // Mobile responsive handling
-                if (window.innerWidth < 768) {
-                    document.getElementById('sidebar-panel').classList.add('hidden');
-                    document.getElementById('chat-area').classList.remove('hidden');
-                    document.getElementById('chat-area').classList.add('flex');
-                }
-                
-                // Show chat interface
-                document.getElementById('chat-empty-state').classList.add('hidden');
-                document.getElementById('chat-interface').classList.remove('hidden');
-                document.getElementById('chat-interface').classList.add('flex');
-                
-                // Update header
-                document.getElementById('chat-header-name').textContent = contact.name;
-                document.getElementById('chat-header-avatar').textContent = contact.name.charAt(0).toUpperCase();
-                
-                const isOnline = Network.connections[id]?.conn?.open;
-                document.getElementById('chat-header-status').textContent = isOnline ? 'Online' : 'Offline';
-                
-                // Load messages
-                const messages = await Store.getMessages(id);
-                const container = document.getElementById('messages-container');
-                container.innerHTML = '';
-                
-                messages.forEach(message => {
-                    UI.renderMessage(message);
-                });
-                
-                // Mark messages as read
-                messages
-                    .filter(msg => msg.dir === 'in' && msg.status !== 'read')
-                    .forEach(async msg => {
-                        msg.status = 'read';
-                        await Store.put('messages', null, msg);
-                        UI.updateMessageTick(msg.id, 'read');
-                        
-                        // Send read receipt if connected
-                        const connObj = Network.connections[id];
-                        if (connObj?.conn?.open) {
-                            connObj.conn.send({
-                                type: 'receipt',
-                                msgId: msg.id,
-                                status: 'read'
-                            });
-                        }
-                    });
-                
-                // Scroll to bottom
-                setTimeout(() => {
-                    container.scrollTop = container.scrollHeight;
-                }, 100);
-                
-                log('Chat loaded successfully');
+                document.getElementById('chat-header-avatar').innerText = c.name[0];
+                const msgs = await Store.getMessages(id); document.getElementById('messages-container').innerHTML = ''; msgs.forEach(UI.renderMessage);
             },
-            
-            closeChat: () => {
-                document.getElementById('chat-area').classList.add('hidden');
-                document.getElementById('sidebar-panel').classList.remove('hidden');
-                App.state.activeChat = null;
-            },
-            
-            handleFileSelect: (event) => {
-                if (event.target.files && event.target.files[0]) {
-                    const file = event.target.files[0];
-                    document.getElementById('file-preview-area').classList.remove('hidden');
-                    document.getElementById('file-preview-name').textContent = 
-                        `${file.name} (${Utils.formatBytes(file.size)})`;
-                    
-                    // Show send icon
+            closeChat: () => { document.getElementById('chat-area').classList.add('hidden'); document.getElementById('sidebar-panel').classList.remove('hidden'); },
+            handleFileSelect: (e) => { 
+                if(e.target.files[0]) { 
+                    document.getElementById('file-preview-area').classList.remove('hidden'); 
+                    document.getElementById('file-preview-name').innerText = e.target.files[0].name; 
+                    // Force Show Send
                     document.getElementById('icon-mic').classList.add('hidden');
                     document.getElementById('icon-send').classList.remove('hidden');
-                }
+                } 
             },
-            
-            clearFile: () => {
-                document.getElementById('file-input').value = '';
-                document.getElementById('file-preview-area').classList.add('hidden');
-                UI.toggleSendIcon();
+            clearFile: () => { 
+                document.getElementById('file-input').value = ''; 
+                document.getElementById('file-preview-area').classList.add('hidden'); 
+                // Reset Icon
+                const val = document.getElementById('message-input').value.trim();
+                if(!val) { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); }
             },
-            
-            handleInputKey: (event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    Network.sendMessage();
-                }
-                UI.toggleSendIcon();
+            handleInputKey: (e) => { 
+                const val = document.getElementById('message-input').value.trim();
+                if(val) { document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); }
+                else { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); }
+                if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Network.sendMessage(); }
             },
-            
             handleMainAction: () => {
-                const input = document.getElementById('message-input');
-                const hasFile = document.getElementById('file-input').files.length > 0;
+                const val = document.getElementById('message-input').value.trim();
+                const file = document.getElementById('file-input').files.length > 0;
+                if(val || file) Network.sendMessage();
+                else Media.toggleRecordUI();
+            },
+            updateHeaderStatus: (id, s) => { if(App.state.activeChat === id) document.getElementById('chat-header-status').innerText = s; },
+            updateMessageTick: (id, status) => {
+                 const el = document.getElementById(`msg-${id}`);
+                 if(el) {
+                     const tickContainer = el.querySelector('.tick-container');
+                     if(tickContainer) {
+                        let html = Utils.getStatusHtml(status);
+                        // Preserve time, just update icon
+                        const time = el.dataset.time;
+                        tickContainer.innerHTML = `${time} ${html}`;
+                     }
+                 }
+            },
+            renderMessage: (msg) => {
+                const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
                 
-                if (input.value.trim() || hasFile) {
-                    Network.sendMessage();
-                } else {
-                    Media.toggleRecordUI();
+                let content = '';
+                // Hydrate Blob URLs from DB Blobs
+                if ((msg.type === 'file' || msg.type === 'voice') && msg.content.blob && !msg.content.url) {
+                     msg.content.url = URL.createObjectURL(msg.content.blob);
                 }
-            },
-            
-            updateHeaderStatus: (id, status) => {
-                if (App.state.activeChat === id) {
-                    document.getElementById('chat-header-status').textContent = status;
+
+                // Placeholder for incoming file stream
+                if (msg.type === 'file-receiving') {
+                     content = `<div class="file-card-inner"><div class="file-icon-box bg-gray-600"><i data-lucide="loader" class="animate-spin w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0]">Receiving...</div></div></div>`;
                 }
-            },
-            
-            updateMessageTick: (msgId, status) => {
-                const messageElement = document.getElementById(`msg-${msgId}`);
-                if (messageElement) {
-                    const tickContainer = messageElement.querySelector('.tick-container');
-                    if (tickContainer) {
-                        const timeElement = tickContainer.querySelector('.message-time');
-                        const time = timeElement ? timeElement.textContent : Utils.formatTime();
-                        tickContainer.innerHTML = `
-                            <span class="message-time">${time}</span>
-                            ${Utils.getStatusHtml(status)}
-                        `;
-                    }
-                }
-            },
-            
-            updateFileMessage: (msgId, content, status) => {
-                const messageElement = document.getElementById(`msg-${msgId}`);
-                if (!messageElement) return;
-                
-                const isMe = messageElement.classList.contains('justify-end');
-                const bubbleHTML = UI.createFileBubble(content, isMe, status, status === 'uploading' || status === 'receiving');
-                
-                messageElement.innerHTML = bubbleHTML;
-                lucide.createIcons();
-            },
-            
-            createFileBubble: (content, isMe, status, showOverlay = false) {
-                const background = isMe ? 'msg-sent' : 'msg-received';
-                const alignment = isMe ? 'justify-end' : 'justify-start';
-                const time = Utils.formatTime();
-                const statusIcon = isMe ? Utils.getStatusHtml(status) : '';
-                
-                // Image files
-                if (content.mime && content.mime.startsWith('image/')) {
-                    if (showOverlay) {
-                        return `
-                            <div class="flex ${alignment} animate-fade-in mb-1">
-                                <div class="p-1 ${background} rounded-lg shadow relative group">
-                                    <div class="relative">
-                                        <div class="w-48 h-48 bg-gray-800 rounded-lg flex items-center justify-center">
-                                            <div class="download-circle"></div>
-                                        </div>
-                                        <div class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-                                            <div class="text-white text-sm">${status === 'uploading' ? 'Uploading...' : 'Receiving...'}</div>
-                                        </div>
-                                    </div>
-                                    <div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container">
-                                        <span class="text-[10px] text-white/90 message-time">${time}</span>${statusIcon}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                else if (msg.type === 'text') { content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`; }
+                else if (msg.type === 'voice') { content = `<div class="audio-card"><div class="audio-play-btn" onclick="this.nextElementSibling.play()"><i data-lucide="play" class="w-4 h-4 text-white"></i></div><audio src="${msg.content.url}" class="hidden" onended="this.previousElementSibling.innerHTML='<svg...><path d=\\'M5 3l14 9-14 9V3z\\'/></svg>'"></audio><div class="waveform"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>`; }
+                else if (msg.type === 'file') {
+                    const sizeStr = Utils.formatBytes(msg.content.size);
+                    if (msg.content.mime.startsWith('image')) {
+                         content = `<div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')"><img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy"></div>`;
+                         const icon = isMe ? Utils.getStatusHtml(msg.status) : '';
+                         const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
+                         div.innerHTML = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
+                         c.appendChild(div); c.scrollTop = c.scrollHeight; return;
                     } else {
-                        return `
-                            <div class="flex ${alignment} animate-fade-in mb-1">
-                                <div class="p-1 ${background} rounded-lg shadow relative group">
-                                    <img src="${content.url || ''}" 
-                                         class="rounded-lg max-w-[240px] max-h-[300px] object-cover cursor-pointer" 
-                                         onclick="window.open('${content.url || ''}')" 
-                                         alt="${content.name}" 
-                                         loading="lazy">
-                                    <div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container">
-                                        <span class="text-[10px] text-white/90 message-time">${time}</span>${statusIcon}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                        // Styled File Card
+                        const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
+                        let iconName = 'file'; let colorClass = 'bg-[#00a884]';
+                        if(msg.content.mime.includes('pdf')) { iconName = 'file-text'; colorClass = 'bg-red-500'; }
+                        else if(msg.content.mime.includes('word')) { iconName = 'file-text'; colorClass = 'bg-blue-500'; }
+                        else if(msg.content.mime.startsWith('video/')) { iconName = 'video'; colorClass = 'bg-purple-600'; }
+                        content = `<div class="file-card-inner cursor-pointer" onclick="window.open('${msg.content.url}')"><div class="file-icon-box" style="background-color: ${colorClass.replace('bg-','')}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${msg.content.name}</div><div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,3)}</div></div><div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></div></div>`;
                     }
                 }
+
+                let icon = isMe ? Utils.getStatusHtml(msg.status) : '';
+                const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
                 
-                // Other files
-                const fileSize = content.size ? Utils.formatBytes(content.size) : 'Unknown size';
-                let iconName = 'file';
-                let color = '#00a884';
+                // Smart Update: Replace if existing
+                const existing = document.getElementById(`msg-${msg.id}`);
+                const inner = `<div class="p-2 ${bg} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">${content}<div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">${msg.time} ${icon}</div></div>`;
                 
-                if (content.mime) {
-                    if (content.mime.includes('pdf')) {
-                        iconName = 'file-text';
-                        color = '#ef4444';
-                    } else if (content.mime.includes('word') || content.mime.includes('document')) {
-                        iconName = 'file-text';
-                        color = '#3b82f6';
-                    } else if (content.mime.startsWith('video/')) {
-                        iconName = 'video';
-                        color = '#8b5cf6';
-                    } else if (content.mime.startsWith('audio/')) {
-                        iconName = 'music';
-                        color = '#10b981';
-                    }
-                }
-                
-                if (showOverlay) {
-                    return `
-                        <div class="flex ${alignment} animate-fade-in mb-1">
-                            <div class="p-2 ${background} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">
-                                <div class="file-card-inner relative">
-                                    <div class="file-icon-box" style="background-color: ${color}">
-                                        <i data-lucide="${iconName}" class="w-5 h-5"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${content.name}</div>
-                                        <div class="text-[10px] text-[#8696a0] mt-0.5">${fileSize}</div>
-                                    </div>
-                                    <div class="download-circle"></div>
-                                </div>
-                                <div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">
-                                    <span class="message-time">${time}</span>${statusIcon}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    return `
-                        <div class="flex ${alignment} animate-fade-in mb-1">
-                            <div class="p-2 ${background} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">
-                                <div class="file-card-inner cursor-pointer" onclick="window.open('${content.url || '#'}')">
-                                    <div class="file-icon-box" style="background-color: ${color}">
-                                        <i data-lucide="${iconName}" class="w-5 h-5"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${content.name}</div>
-                                        <div class="text-[10px] text-[#8696a0] mt-0.5">${fileSize}</div>
-                                    </div>
-                                    <div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0]">
-                                        <i data-lucide="download" class="w-5 h-5"></i>
-                                    </div>
-                                </div>
-                                <div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">
-                                    <span class="message-time">${time}</span>${statusIcon}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-            },
-            
-            renderMessage: (message) {
-                const container = document.getElementById('messages-container');
-                if (!container) return;
-                
-                const isMe = message.dir === 'out';
-                const background = isMe ? 'msg-sent' : 'msg-received';
-                const alignment = isMe ? 'justify-end' : 'justify-start';
-                const time = Utils.formatTime(message.time);
-                const statusIcon = isMe ? Utils.getStatusHtml(message.status) : '';
-                
-                let contentHTML = '';
-                
-                switch (message.type) {
-                    case 'text':
-                        contentHTML = `
-                            <div class="text-sm whitespace-pre-wrap">${Utils.linkify(Utils.escapeHTML(message.content))}</div>
-                            <div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">
-                                <span class="message-time">${time}</span>${statusIcon}
-                            </div>
-                        `;
-                        break;
-                        
-                    case 'file':
-                    case 'voice':
-                        const showOverlay = message.status === 'uploading' || message.status === 'receiving';
-                        contentHTML = UI.createFileBubble(message.content, isMe, message.status, showOverlay);
-                        break;
-                        
-                    default:
-                        contentHTML = `
-                            <div class="text-sm">${Utils.escapeHTML(String(message.content))}</div>
-                            <div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">
-                                <span class="message-time">${time}</span>${statusIcon}
-                            </div>
-                        `;
-                }
-                
-                if (message.type === 'file' || message.type === 'voice') {
-                    // File messages are already wrapped in container
-                    const div = document.createElement('div');
-                    div.id = `msg-${message.id}`;
-                    div.innerHTML = contentHTML;
-                    container.appendChild(div);
-                } else {
-                    const div = document.createElement('div');
-                    div.id = `msg-${message.id}`;
-                    div.className = `flex ${alignment} animate-fade-in mb-1 new-message`;
-                    div.innerHTML = `
-                        <div class="p-2 ${background} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">
-                            ${contentHTML}
-                        </div>
-                    `;
-                    container.appendChild(div);
-                }
-                
-                // Scroll to bottom
-                setTimeout(() => {
-                    container.scrollTop = container.scrollHeight;
-                }, 50);
-                
+                if(existing) { existing.innerHTML = inner; }
+                else { div.innerHTML = inner; c.appendChild(div); c.scrollTop = c.scrollHeight; }
                 lucide.createIcons();
-            },
-            
-            sendLocation: () => {
-                if (!navigator.geolocation) {
-                    UI.showToast("Geolocation not supported");
-                    return;
-                }
-                
-                UI.showToast("Getting location...");
-                
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        const locationUrl = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=15`;
-                        const message = `📍 My Location: ${locationUrl}`;
-                        
-                        document.getElementById('message-input').value = message;
-                        UI.toggleSendIcon();
-                        document.getElementById('message-input').focus();
-                        UI.showToast("Location ready to send");
-                    },
-                    (error) => {
-                        error('Geolocation error:', error);
-                        UI.showToast("Failed to get location");
-                    },
-                    { timeout: 10000 }
-                );
             }
         };
 
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', () => {
-            log('DOM loaded, initializing app...');
-            App.init().catch(err => {
-                error('App initialization failed:', err);
-            });
-        });
-
-        // Clean up on page unload
-        window.addEventListener('beforeunload', () => {
-            log('Page unloading, cleaning up...');
-            
-            // Clean up blobs
-            Utils.revokeBlobs();
-            
-            // Stop scanner if active
-            if (Media.scanner) {
-                Media.scanner.stop().catch(() => {});
-            }
-            
-            // Close peer connection
-            if (Network.peer) {
-                Network.peer.destroy();
-            }
-            
-            // Stop media streams
-            if (Media.localStream) {
-                Media.localStream.getTracks().forEach(track => track.stop());
-            }
-        });
-
-        // Handle page visibility change
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && App.state.activeChat) {
-                // Mark messages as read when page becomes visible
-                Store.getMessages(App.state.activeChat).then(messages => {
-                    messages
-                        .filter(msg => msg.dir === 'in' && msg.status !== 'read')
-                        .forEach(async msg => {
-                            msg.status = 'read';
-                            await Store.put('messages', null, msg);
-                            UI.updateMessageTick(msg.id, 'read');
-                        });
-                });
-            }
-        });
-
-        // Handle offline/online events
-        window.addEventListener('online', () => {
-            log('Network online');
-            UI.updateConnectionStatus('online');
-            UI.showToast("Back online");
-        });
-
-        window.addEventListener('offline', () => {
-            log('Network offline');
-            UI.updateConnectionStatus('offline');
-            UI.showToast("Network connection lost");
-        });
+        App.init();
     </script>
 </body>
 </html>
