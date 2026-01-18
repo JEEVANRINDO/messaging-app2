@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- CSP Update: Added Unpkg for html5-qrcode -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- Added QR Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0b141a; color: #e9edef; height: 100dvh; width: 100vw; overflow: hidden; position: fixed; inset: 0; }
@@ -63,19 +60,19 @@
         <!-- Sidebar -->
         <div id="sidebar-panel" class="w-full md:w-96 border-r border-[#2a3942] flex flex-col bg-[#111b21] h-full">
             <div class="p-4 border-b border-[#2a3942] flex justify-between items-center shrink-0 bg-[#202c33]">
-                <div class="flex items-center space-x-3 cursor-pointer" onclick="UI.copyId()">
-                    <div class="w-10 h-10 rounded-full bg-[#00a884] flex items-center justify-center text-white font-bold" id="my-avatar">ME</div>
-                    <div class="flex flex-col items-start">
-                        <span id="my-display-name" class="font-bold text-[#e9edef] text-sm">Me</span>
+                <!-- User Info: Flex shrink allowed to prevent overflow -->
+                <div class="flex items-center space-x-3 cursor-pointer min-w-0 overflow-hidden" onclick="UI.copyId()">
+                    <div class="w-10 h-10 rounded-full bg-[#00a884] flex-shrink-0 flex items-center justify-center text-white font-bold" id="my-avatar">ME</div>
+                    <div class="flex flex-col items-start min-w-0 overflow-hidden">
+                        <span id="my-display-name" class="font-bold text-[#e9edef] text-sm truncate w-full">Me</span>
                         <div class="flex items-center text-xs text-[#00a884]"><div class="w-2 h-2 rounded-full bg-[#00a884] mr-1 animate-pulse"></div> Online</div>
                     </div>
                 </div>
-                <div class="flex space-x-2">
-                    <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
-                    <!-- Scan Button -->
+                <!-- Header Buttons -->
+                <div class="flex space-x-1 flex-shrink-0 ml-2">
+                    <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Add ID"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Scan QR"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
-                    <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
-                    <button onclick="App.exportIdentity()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Backup"><i data-lucide="download-cloud" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full" title="My QR"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
                 </div>
             </div>
             
@@ -90,6 +87,14 @@
                 <button onclick="Network.connectToInput()" class="bg-[#00a884] p-2 rounded-lg"><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i></button>
             </div>
             <div id="chat-list" class="flex-1 overflow-y-auto"></div>
+            
+            <!-- Footer: Backup Button Moved Here -->
+            <div class="p-3 bg-[#111b21] border-t border-[#2a3942] flex justify-between items-center pb-safe shrink-0">
+                <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
+                    <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
+                </button>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v1.2 Secure</span>
+            </div>
         </div>
 
         <!-- Chat Area -->
@@ -122,7 +127,6 @@
 
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full pb-20"></div>
                 
-                <!-- Upload Progress -->
                 <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
                     <div class="flex justify-between text-xs text-[#00a884] mb-1">
                         <span>Uploading... <button onclick="Network.cancelUpload()" class="ml-2 text-red-400 font-bold hover:underline">CANCEL</button></span>
@@ -131,7 +135,6 @@
                     <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="progress-bar" class="bg-[#00a884] h-1 rounded-full" style="width: 0%"></div></div>
                 </div>
 
-                <!-- Download Progress -->
                 <div id="download-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
                     <div class="flex justify-between text-xs text-blue-400 mb-1">
                         <span>Downloading...</span>
@@ -165,7 +168,6 @@
     </div>
 
     <!-- 4. MODALS -->
-    <!-- QR Display Modal -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
         <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center">
             <h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3>
@@ -174,7 +176,6 @@
         </div>
     </div>
 
-    <!-- Scanner Modal -->
     <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4">
         <div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative">
             <h3 class="text-white font-bold mb-4">Scan Peer QR</h3>
@@ -360,8 +361,30 @@
                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
                     App.addContact(sender, data.name, pubStr);
                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                    
+                    // FIXED: Send Handshake Back if I didn't initiate
+                    if (!Network.connections[sender].conn.open) { 
+                       // Wait, if I received handshake, conn is open. 
+                       // But the *other side* needs MY key. 
+                       // Simple logic: Always reply handshake if we just set it up and haven't sent one recently? 
+                       // Better: Just send one back always. It's idempotent.
+                       conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name });
+                    }
+
                     if (App.state.activeChat === sender) UI.loadChat(sender);
+                    alert(`Connected with ${data.name}!`); // Alert Connection
                 }
+                
+                // Handle handshake ack (same as handshake but don't reply loops)
+                if (data.type === 'handshake-ack') {
+                     const pub = await Crypto.importKey(data.key);
+                     const shared = await Crypto.deriveShared(pub);
+                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                     App.addContact(sender, data.name, pubStr);
+                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                     if (App.state.activeChat === sender) UI.loadChat(sender);
+                }
+
                 const connObj = Network.connections[sender];
                 if (!connObj || !connObj.key) return;
 
