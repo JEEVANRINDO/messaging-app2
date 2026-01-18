@@ -29,11 +29,46 @@
         .file-card-inner { background-color: rgba(0, 0, 0, 0.15); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; }
         .file-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
         
-        .tick-icon { width: 16px; height: 16px; margin-left: 4px; display: inline-block; vertical-align: bottom; }
-        .tick-pending { color: #8696a0; opacity: 0.6; }
-        .tick-sent { color: #8696a0; }
-        .tick-delivered { color: #8696a0; }
-        .tick-read { color: #53bdeb; }
+        /* --- SPECTRAL ORB STATUS SYSTEM --- */
+        .status-orb { 
+            width: 10px; 
+            height: 10px; 
+            margin-left: 4px; 
+            display: inline-block; 
+            vertical-align: middle; 
+            border-radius: 50%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 1. Uploading/Pending: Spinning Broken Ring */
+        .status-pending {
+            border: 2px solid #8696a0;
+            border-top-color: transparent;
+            background: transparent;
+            opacity: 0.7;
+            animation: spinOrb 1s linear infinite;
+        }
+
+        /* 2. Sent: Hollow Ring */
+        .status-sent {
+            border: 1.5px solid #aebac1;
+            background: transparent;
+        }
+
+        /* 3. Delivered: Filled Grey */
+        .status-delivered {
+            border: 1.5px solid #8696a0;
+            background: #8696a0;
+        }
+
+        /* 4. Read: Glowing Cyan Orb */
+        .status-read {
+            border: 1.5px solid #53bdeb; /* Cyan Blue */
+            background-color: #53bdeb;
+            box-shadow: 0 0 5px rgba(83, 189, 235, 0.6); /* Neon Glow */
+        }
+
+        @keyframes spinOrb { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
         .mic-active { animation: pulseRed 1.5s infinite; background-color: #ef4444 !important; }
@@ -102,7 +137,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v3.2 MirrorFix</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v3.3 Stable</span>
             </div>
         </div>
 
@@ -170,7 +205,7 @@
                                 <button onclick="UI.sendLocation()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="map-pin" class="w-6 h-6"></i></button>
                             </div>
                             <div class="flex-1 bg-[#2a3942] rounded-lg min-h-[42px] flex items-center px-4 py-2 mb-1">
-                                <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)">
+                                <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)" oninput="UI.toggleSendIcon()">
                             </div>
                             <div class="pb-1">
                                 <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
@@ -188,7 +223,6 @@
     <!-- MODALS -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3><div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit flex justify-center items-center"></div><button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
     
-    <!-- SCANNER MODAL with FLIP Button -->
     <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4">
         <div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative">
             <h3 class="text-white font-bold mb-4">Scan Peer QR</h3>
@@ -202,7 +236,6 @@
     
     <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3><p class="text-[#8696a0] text-xs mb-4">Verify this number with your peer.</p><div id="safety-number" class="font-mono-safe text-[#00a884] text-2xl font-bold mb-6 tracking-widest break-all"></div><button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
     
-    <!-- CAMERA MODAL with FLIP Button -->
     <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col">
         <video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video>
         <div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe">
@@ -228,12 +261,14 @@
                 const k=1024, i=Math.floor(Math.log(bytes)/Math.log(k));
                 return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + ['B','KB','MB','GB'][i];
             },
-            getTickIcon: (status) => {
-                if (status === 'pending') return `<svg class="tick-icon tick-pending" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 14A6 6 0 118 2a6 6 0 010 12zm.5-6.5V4h-1v4.2l3.2 1.9.5-.8-2.7-1.3z"/></svg>`;
-                if (status === 'sent') return `<svg class="tick-icon tick-sent" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/></svg>`;
-                if (status === 'delivered') return `<svg class="tick-icon tick-delivered" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
-                if (status === 'read') return `<svg class="tick-icon tick-read" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
-                return '';
+            // ORB STATUS HTML GENERATOR
+            getTickHtml: (status) => {
+                let cl = 'status-orb';
+                if(status === 'pending') cl += ' status-pending';
+                else if(status === 'sent') cl += ' status-sent';
+                else if(status === 'delivered') cl += ' status-delivered';
+                else if(status === 'read') cl += ' status-read';
+                return `<div class="${cl}"></div>`;
             }
         };
 
@@ -386,18 +421,13 @@
                     const pub = await Crypto.importKey(data.key);
                     const shared = await Crypto.deriveShared(pub);
                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                    
                     App.addContact(sender, data.name, pubStr);
                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
-                    
                     conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-
                     if (!App.state.activeChat) UI.loadChat(sender);
                     else if (App.state.activeChat === sender) UI.loadChat(sender);
-
                     UI.showToast(`Connected with ${data.name}!`);
                 }
-                
                 if (data.type === 'handshake-ack') {
                      const pub = await Crypto.importKey(data.key);
                      const shared = await Crypto.deriveShared(pub);
@@ -405,6 +435,7 @@
                      App.addContact(sender, data.name, pubStr);
                      Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
                      if (App.state.activeChat === sender) UI.loadChat(sender);
+                     else if (!App.state.activeChat) UI.loadChat(sender);
                      UI.showToast("Connection Secured");
                 }
                 const connObj = Network.connections[sender];
@@ -488,7 +519,8 @@
                         }
                         if(offset >= file.size) {
                              document.getElementById('upload-progress').classList.add('hidden');
-                             // PERSIST FILE AS BLOB
+                             const url = URL.createObjectURL(file);
+                             Utils.addBlob(url);
                              const msgId = Date.now();
                              App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'sent', msgId);
                              UI.clearFile();
@@ -742,7 +774,11 @@
             },
             // Toggle Logic for Buttons
             toggleScannerMirror: Media.toggleScannerMirror, 
-            
+            toggleSendIcon: () => {
+                 const val = document.getElementById('message-input').value.trim();
+                 if(val) { document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); }
+                 else { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); }
+            },
             showSafetyNumber: async () => {
                 if(!App.state.activeChat) return;
                 const c = App.state.contacts[App.state.activeChat];
@@ -822,10 +858,10 @@
                  if(el) {
                      const tickContainer = el.querySelector('.tick-container');
                      if(tickContainer) {
-                        let svg = Utils.getTickIcon(status);
+                        let html = Utils.getTickHtml(status);
                         // Preserve time, just update icon
                         const time = el.dataset.time;
-                        tickContainer.innerHTML = `${time} ${svg}`;
+                        tickContainer.innerHTML = `${time} ${html}`;
                      }
                  }
             },
@@ -833,7 +869,6 @@
                 const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
                 
                 let content = '';
-                // Hydrate Blob URLs from DB Blobs
                 if ((msg.type === 'file' || msg.type === 'voice') && msg.content.blob && !msg.content.url) {
                      msg.content.url = URL.createObjectURL(msg.content.blob);
                 }
@@ -857,7 +892,7 @@
                                 <img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy">
                             </div>
                          `;
-                         const icon = isMe ? Utils.getTickIcon(msg.status) : '';
+                         const icon = isMe ? Utils.getTickHtml(msg.status) : '';
                          const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
                          div.innerHTML = `
                             <div class="p-1 ${bg} rounded-lg shadow relative group">
@@ -889,10 +924,15 @@
                     }
                 }
 
-                let icon = isMe ? Utils.getTickIcon(msg.status) : '';
+                // Placeholder for incoming file stream
+                if (msg.type === 'file-receiving') {
+                     content = `<div class="file-card-inner"><div class="file-icon-box bg-gray-600"><i data-lucide="loader" class="animate-spin w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0]">Receiving...</div></div></div>`;
+                }
+
+                let icon = isMe ? Utils.getTickHtml(msg.status) : '';
                 const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
                 
-                // Smart Update: Replace if existing (prevents duplication on file complete)
+                // Smart Update: Replace if existing
                 const existing = document.getElementById(`msg-${msg.id}`);
                 const inner = `<div class="p-2 ${bg} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">${content}<div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">${msg.time} ${icon}</div></div>`;
                 
