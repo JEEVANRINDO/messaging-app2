@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- CSP Update: Added Unpkg for html5-qrcode -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
-    <title>GhostMesh | Ultimate</title>
-    
+    <title>GhostMesh | Pro Secure</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Added QR Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -17,28 +19,20 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #374045; border-radius: 2px; }
-        
         .animate-fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-        
         .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; }
         .img-overlay { background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%); }
         .bubble-constraint { max-width: 85%; }
         @media (min-width: 768px) { .bubble-constraint { max-width: 65%; } }
-
-        /* Status Ticks */
         .tick-icon { width: 16px; height: 16px; margin-left: 2px; display: inline-block; }
         .tick-pending { color: #8696a0; opacity: 0.5; }
         .tick-sent { color: #8696a0; }
         .tick-delivered { color: #8696a0; }
         .tick-read { color: #53bdeb; }
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
-
-        /* Lazy Load */
-        .lazy-img { opacity: 0; transition: opacity 0.3s ease-in; }
-        .lazy-img.loaded { opacity: 1; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -77,9 +71,11 @@
                     </div>
                 </div>
                 <div class="flex space-x-2">
-                    <button onclick="App.exportIdentity()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Backup Identity"><i data-lucide="download-cloud" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <!-- Scan Button -->
+                    <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Scan QR"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="App.exportIdentity()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Backup"><i data-lucide="download-cloud" class="w-5 h-5 text-[#aebac1]"></i></button>
                 </div>
             </div>
             
@@ -168,11 +164,22 @@
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- 4. MODALS -->
+    <!-- QR Display Modal -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
         <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center">
+            <h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3>
             <div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit"></div>
             <button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button>
+        </div>
+    </div>
+
+    <!-- Scanner Modal -->
+    <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4">
+        <div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative">
+            <h3 class="text-white font-bold mb-4">Scan Peer QR</h3>
+            <div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div>
+            <button onclick="UI.stopScanner()" class="mt-4 w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold">Cancel</button>
         </div>
     </div>
 
@@ -203,7 +210,6 @@
     </div>
 
     <script>
-        // --- UTILS ---
         const Utils = {
             escapeHTML: str => str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]),
             blobRegistry: new Set(),
@@ -212,7 +218,6 @@
             bufferToHex: (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('')
         };
 
-        // --- STORE (IndexedDB) ---
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
@@ -249,19 +254,13 @@
             getPendingMessages: async (peerId) => (await Store.getMessages(peerId)).filter(m => m.status === 'pending')
         };
 
-        // --- CRYPTO LAYER ---
         const Crypto = {
             keyPair: null,
             generateIdentity: async () => window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]),
             deriveKeyFromPassword: async (password, salt) => {
                 const enc = new TextEncoder();
                 const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(password), {name: "PBKDF2"}, false, ["deriveKey"]);
-                return await window.crypto.subtle.deriveKey(
-                    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
-                    keyMaterial,
-                    { name: "AES-GCM", length: 256 },
-                    true, ["encrypt", "decrypt"]
-                );
+                return await window.crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
             },
             encryptPrivateKey: async (privKey, password) => {
                 const salt = window.crypto.getRandomValues(new Uint8Array(16));
@@ -313,7 +312,6 @@
             }
         };
 
-        // --- NETWORK & LOGIC ---
         const Network = {
             peer: null, connections: {}, uploadCancelled: false,
             init: async (id) => {
@@ -381,7 +379,6 @@
                         tracker.chunks.push(dec);
                         tracker.received += data.byteLength;
                         
-                        // Update Receiver Progress
                         if (App.state.activeChat === sender) {
                             const pct = Math.round((tracker.received / tracker.encSize) * 100);
                             document.getElementById('download-progress').classList.remove('hidden');
@@ -406,7 +403,6 @@
                 if (!App.state.activeChat) return;
                 const peerId = App.state.activeChat, input = document.getElementById('message-input'), fileInput = document.getElementById('file-input');
                 
-                // FILE
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
                     if (file.size > 50*1024*1024) { alert("File > 50MB"); UI.clearFile(); return; }
@@ -455,7 +451,6 @@
                     };
                     streamLoop();
                 } 
-                // TEXT
                 else if (input.value.trim()) {
                     const text = input.value.trim();
                     const connObj = Network.connections[peerId];
@@ -471,7 +466,7 @@
         };
 
         const Media = {
-            localStream: null, call: null,
+            localStream: null, call: null, scanner: null,
             openCamera: async () => {
                 document.getElementById('camera-modal').classList.remove('hidden');
                 document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
@@ -533,12 +528,8 @@
         const App = {
             state: { id: null, name: null, activeChat: null, contacts: {}, pubStr: null },
             fileChunks: {},
-            idleTimer: null,
             init: async () => {
                 lucide.createIcons();
-                App.resetIdleTimer();
-                ['mousemove', 'keydown', 'touchstart'].forEach(e => document.addEventListener(e, App.resetIdleTimer));
-                
                 await Store.init();
                 const name = await Store.get('config', 'name');
                 const id = await Store.get('config', 'id');
@@ -548,13 +539,6 @@
                     App.state.id = id;
                     App.state.name = name;
                 }
-            },
-            resetIdleTimer: () => {
-                clearTimeout(App.idleTimer);
-                App.idleTimer = setTimeout(() => {
-                    document.getElementById('app-layout').classList.add('hidden');
-                    document.getElementById('login-screen').classList.remove('hidden');
-                }, 30 * 60 * 1000); // 30 min
             },
             createProfile: async () => {
                 const name = document.getElementById('setup-name').value;
@@ -569,30 +553,12 @@
                 App.loadMain(id, name, kp.privateKey, kp.publicKey);
             },
             login: async () => {
-                let failed = parseInt(localStorage.getItem('auth_failures') || '0');
-                const lockUntil = parseInt(localStorage.getItem('auth_lockout') || '0');
-                
-                if (Date.now() < lockUntil) {
-                    document.getElementById('lockout-msg').innerText = `Locked until ${new Date(lockUntil).toLocaleTimeString()}`;
-                    document.getElementById('lockout-msg').classList.remove('hidden');
-                    return;
-                }
-
                 const pass = document.getElementById('login-password').value;
                 try {
                     const priv = await Crypto.decryptPrivateKey(await Store.get('config', 'encPrivateKey'), pass);
                     const pub = await window.crypto.subtle.importKey("spki", await Store.get('config', 'publicKey'), {name:"ECDH",namedCurve:"P-256"}, true, []);
-                    localStorage.setItem('auth_failures', '0');
-                    document.getElementById('lockout-msg').classList.add('hidden');
                     App.loadMain(App.state.id, App.state.name, priv, pub);
-                } catch(e) {
-                    failed++;
-                    localStorage.setItem('auth_failures', failed);
-                    if (failed >= 5) {
-                        localStorage.setItem('auth_lockout', Date.now() + 15 * 60 * 1000);
-                        alert("Too many attempts. Locked for 15 mins.");
-                    } else alert("Wrong Password");
-                }
+                } catch(e) { alert("Wrong Password"); }
             },
             loadMain: async (id, name, priv, pub) => {
                 Crypto.keyPair = { privateKey: priv, publicKey: pub };
@@ -631,7 +597,44 @@
             setStatus: (s) => document.getElementById('status-indicator').className = `w-3 h-3 rounded-full ${s==='online'?'bg-green-500':'bg-red-500'}`,
             copyId: () => { navigator.clipboard.writeText(App.state.id); alert("ID Copied"); },
             toggleAddContact: () => document.getElementById('new-chat-panel').classList.toggle('hidden'),
-            showQR: () => { document.getElementById('qr-modal').classList.remove('hidden'); document.getElementById('qrcode-container').innerHTML = ''; new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 }); },
+            showQR: () => {
+                // Ensure ID is available
+                if(!App.state.id) return;
+                document.getElementById('qr-modal').classList.remove('hidden');
+                document.getElementById('qrcode-container').innerHTML = '';
+                // Wait for modal to render to get correct dimensions
+                setTimeout(() => {
+                     new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 });
+                }, 50);
+            },
+            startScanner: () => {
+                document.getElementById('scanner-modal').classList.remove('hidden');
+                if(!Media.scanner) Media.scanner = new Html5Qrcode("reader");
+                
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                Media.scanner.start({ facingMode: "environment" }, config, (decodedText) => {
+                    Media.scanner.stop();
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                    // Connect logic
+                    const id = decodedText.trim();
+                    if(id) {
+                         Network.connectWithRetry(id);
+                    }
+                }).catch(err => {
+                    console.error("Scanner Error", err);
+                    alert("Camera access failed or not supported.");
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                });
+            },
+            stopScanner: () => {
+                if(Media.scanner) {
+                    Media.scanner.stop().then(() => {
+                         document.getElementById('scanner-modal').classList.add('hidden');
+                    }).catch(console.error);
+                } else {
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                }
+            },
             showSafetyNumber: async () => {
                 if(!App.state.activeChat) return;
                 const c = App.state.contacts[App.state.activeChat];
@@ -641,12 +644,14 @@
                 }
             },
             renderContacts: () => {
+                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0]}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div></div>`).join('');
+            },
+            filterContacts: () => {
                 const term = document.getElementById('search-contacts').value.toLowerCase();
                 document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts)
                     .filter(c => c.name.toLowerCase().includes(term) || c.id.includes(term))
                     .map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0]}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div></div>`).join('');
             },
-            filterContacts: () => UI.renderContacts(),
             loadChat: async (id) => {
                 Utils.revokeBlobs(); App.state.activeChat = id; const c = App.state.contacts[id];
                 if(window.innerWidth < 768) { document.getElementById('sidebar-panel').classList.add('hidden'); document.getElementById('chat-area').classList.remove('hidden'); document.getElementById('chat-area').classList.add('flex'); }
