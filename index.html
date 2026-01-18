@@ -67,7 +67,7 @@
         <div class="w-full max-w-sm space-y-4">
             <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
             <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <button id="btn-create-profile" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
+            <button onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
         </div>
     </div>
 
@@ -113,7 +113,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v4.8 Fixed</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v4.9 Fix</span>
             </div>
         </div>
 
@@ -223,14 +223,14 @@
                 else if(status === 'sent') cl += ' status-sent';
                 else if(status === 'delivered') cl += ' status-delivered';
                 else if(status === 'read') cl += ' status-read';
-                return `<div class="status-orb-container"><div class="${cl}"></div></div>`;
+                return `<div class="status-container"><div class="${cl}"></div></div>`;
             }
         };
 
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
-                const req = indexedDB.open("GhostMeshSecure", 4); // BUMP VERSION
+                const req = indexedDB.open("GhostMeshSecure", 3);
                 req.onupgradeneeded = e => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains("config")) db.createObjectStore("config");
@@ -243,7 +243,6 @@
                 req.onerror = reject;
             }),
             put: async (store, key, val) => new Promise(r => {
-                if(!Store.db) return r(); // Safety
                 const tx = Store.db.transaction(store, "readwrite");
                 if(store === "messages") {
                      tx.objectStore(store).put(val); 
@@ -253,17 +252,14 @@
                 tx.oncomplete = r;
             }),
             get: async (store, key) => new Promise(r => {
-                if(!Store.db) return r(null);
                 const req = Store.db.transaction(store, "readonly").objectStore(store).get(key);
                 req.onsuccess = () => r(req.result);
             }),
             getAllMessages: async () => new Promise(r => {
-                if(!Store.db) return r([]);
                 const req = Store.db.transaction("messages", "readonly").objectStore("messages").getAll();
                 req.onsuccess = () => r(req.result);
             }),
             getMessages: async (peerId) => new Promise(r => {
-                if(!Store.db) return r([]);
                 const tx = Store.db.transaction("messages", "readonly");
                 const req = tx.objectStore("messages").index("peerId").getAll(peerId);
                 req.onsuccess = () => r(req.result || []);
@@ -439,7 +435,10 @@
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             
-                            // PERSIST FILE AS BLOB
+                            // *** CRITICAL FIX: Add "Receiving" Bubble NOW if not already present ***
+                            // Note: We normally add it at file-start, but if user reloaded, they might miss it.
+                            // However, we need to UPDATE it here.
+                            
                             App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
                             delete App.fileChunks[sender];
                         }
@@ -468,12 +467,7 @@
                     const numChunks = Math.ceil(file.size / CHUNK);
                     const totalEncSize = file.size + (numChunks * overhead);
 
-                    const msgId = Date.now();
-                    // OPTIMISTIC RENDER: Pending
-                    App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
-                    UI.clearFile();
-
-                    connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: file.type, encSize: totalEncSize });
+                    connObj.conn.send({ type: 'file-start', name: file.name, mime: file.type, encSize: totalEncSize });
                     
                     let offset = 0;
                     document.getElementById('upload-progress').classList.remove('hidden');
@@ -481,14 +475,16 @@
                     const streamLoop = async () => {
                         if (Network.uploadCancelled) {
                              document.getElementById('upload-progress').classList.add('hidden');
+                             UI.clearFile();
                              return;
                         }
 
                         if(offset >= file.size) {
                              document.getElementById('upload-progress').classList.add('hidden');
-                             // Update to SENT locally after upload done
-                             const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
-                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                             // PERSIST FILE AS BLOB (Not just URL)
+                             const msgId = Date.now();
+                             App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'sent', msgId);
+                             UI.clearFile();
                              return;
                         }
                         if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
@@ -509,21 +505,14 @@
                     const text = input.value.trim();
                     const connObj = Network.connections[peerId];
                     const msgId = Date.now();
-                    
-                    // OPTIMISTIC RENDER: Pending
-                    App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
-                    input.value = '';
-                    UI.toggleSendIcon();
-
                     if (connObj?.conn?.open) {
-                        try {
-                            const encPayload = await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key);
-                            connObj.conn.send({ type: 'msg', id: msgId, payload: encPayload });
-                            // Update to Sent
-                            const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
-                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
-                        } catch(e) { console.error("Encryption Failed", e); alert("Encryption Error"); }
+                        connObj.conn.send({ type: 'msg', id: msgId, payload: await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key) });
+                        App.addMessage(peerId, text, 'out', 'text', 'sent', msgId);
+                    } else {
+                        App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
                     }
+                    input.value = '';
+                    UI.handleInputKey({key:'a'});
                 }
             }
         };
@@ -636,52 +625,27 @@
             fileChunks: {},
             init: async () => {
                 lucide.createIcons();
-                
-                try {
-                    await Store.init();
-                    const name = await Store.get('config', 'name');
-                    const id = await Store.get('config', 'id');
-                    
-                    if (name && id) {
-                        document.getElementById('onboarding-screen').classList.add('hidden');
-                        document.getElementById('login-screen').classList.remove('hidden');
-                        App.state.id = id;
-                        App.state.name = name;
-                    }
-                } catch(e) {
-                    console.error("DB Init Fail", e);
-                    // Just proceed to onboarding if DB fails first time (fresh)
+                await Store.init();
+                const name = await Store.get('config', 'name');
+                const id = await Store.get('config', 'id');
+                if (name && id) {
+                    document.getElementById('onboarding-screen').classList.add('hidden');
+                    document.getElementById('login-screen').classList.remove('hidden');
+                    App.state.id = id;
+                    App.state.name = name;
                 }
             },
             createProfile: async () => {
                 const name = document.getElementById('setup-name').value;
                 const pass = document.getElementById('setup-password').value;
                 if(!name || !pass) return alert("Required");
-                
-                const btn = document.getElementById('btn-create-profile');
-                btn.innerText = "Generating ID...";
-                btn.disabled = true;
-
-                try {
-                    // Ensure DB is ready
-                    if(!Store.db) await Store.init();
-                    
-                    const id = 'ghost-' + Math.floor(Math.random() * 1000000);
-                    const kp = await Crypto.generateIdentity();
-                    const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass);
-                    const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey);
-                    
-                    await Store.put('config', 'name', name); 
-                    await Store.put('config', 'id', id);
-                    await Store.put('config', 'encPrivateKey', encPriv); 
-                    await Store.put('config', 'publicKey', pubJWK);
-                    
-                    App.loadMain(id, name, kp.privateKey, kp.publicKey);
-                } catch(e) {
-                    alert("Creation Failed: " + e.message);
-                    btn.innerText = "Initialize Identity";
-                    btn.disabled = false;
-                }
+                const id = 'ghost-' + Math.floor(Math.random() * 1000000);
+                const kp = await Crypto.generateIdentity();
+                const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass);
+                const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey);
+                await Store.put('config', 'name', name); await Store.put('config', 'id', id);
+                await Store.put('config', 'encPrivateKey', encPriv); await Store.put('config', 'publicKey', pubJWK);
+                App.loadMain(id, name, kp.privateKey, kp.publicKey);
             },
             login: async () => {
                 const pass = document.getElementById('login-password').value;
@@ -717,11 +681,8 @@
             },
             addMessage: (peerId, content, dir, type, status, id) => {
                 const msg = { id: id || Date.now(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
-                // 10MB limit for IDB blobs to prevent crash
-                if (type === 'file' && content.blob && content.size > 10 * 1024 * 1024) {
-                     content.blob = null; // Don't store huge blob
-                }
-                Store.put('messages', null, msg);
+                // Persist the actual Blob object in IDB, not just the URL
+                Store.put('messages', null, msg); // Use null key for IDB keyPath
                 if(App.state.activeChat === peerId) UI.renderMessage(msg);
             },
             exportIdentity: async () => {
@@ -772,13 +733,6 @@
                 } else {
                     document.getElementById('scanner-modal').classList.add('hidden');
                 }
-            },
-            // Toggle Logic for Buttons
-            toggleScannerMirror: Media.toggleScannerMirror, 
-            toggleSendIcon: () => {
-                 const val = document.getElementById('message-input').value.trim();
-                 if(val) { document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); }
-                 else { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); }
             },
             showSafetyNumber: async () => {
                 if(!App.state.activeChat) return;
