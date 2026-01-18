@@ -45,6 +45,7 @@
         .playing .bar { animation: soundWave 0.8s ease-in-out infinite alternate; }
         .playing .bar:nth-child(odd) { animation-duration: 0.6s; }
         .playing .bar:nth-child(2n) { animation-duration: 0.9s; }
+        .playing .bar:nth-child(3n) { animation-duration: 1.1s; }
         @keyframes soundWave { 0% { height: 20%; opacity: 0.5; } 100% { height: 100%; opacity: 1; } }
 
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
@@ -111,7 +112,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v7.0 Fixed</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v8.1 Final</span>
             </div>
         </div>
 
@@ -429,17 +430,19 @@
                         const dec = await Crypto.decryptBin(data, connObj.key);
                         tracker.chunks.push(dec);
                         tracker.received += data.byteLength;
+                        
                         if (App.state.activeChat === sender) {
                             const pct = Math.round((tracker.received / tracker.encSize) * 100);
                             document.getElementById('download-progress').classList.remove('hidden');
                             document.getElementById('dl-progress-bar').style.width = pct + "%";
                             document.getElementById('dl-progress-percent').innerText = pct + "%";
                         }
+
                         if (tracker.received >= tracker.encSize) {
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             
-                            // *** CRITICAL: Force REPLACE using msgId from tracker ***
+                            // *** CRITICAL: Fix "Double Bubble" by passing MsgID to Update ***
                             App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
                             delete App.fileChunks[sender];
                         }
