@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- CSP: Allow data/blob/media -->
+    <!-- CSP -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
     
@@ -29,56 +29,20 @@
         .file-card-inner { background-color: rgba(0, 0, 0, 0.15); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; }
         .file-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
         
-        /* --- SPECTRAL ORB STATUS SYSTEM --- */
-        .status-orb { 
-            width: 10px; 
-            height: 10px; 
-            margin-left: 4px; 
-            display: inline-block; 
-            vertical-align: middle; 
-            border-radius: 50%;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* 1. Uploading/Pending: Spinning Broken Ring */
-        .status-pending {
-            border: 2px solid #8696a0;
-            border-top-color: transparent;
-            background: transparent;
-            opacity: 0.7;
-            animation: spinOrb 1s linear infinite;
-        }
-
-        /* 2. Sent: Hollow Ring */
-        .status-sent {
-            border: 1.5px solid #aebac1;
-            background: transparent;
-        }
-
-        /* 3. Delivered: Filled Grey */
-        .status-delivered {
-            border: 1.5px solid #8696a0;
-            background: #8696a0;
-        }
-
-        /* 4. Read: Glowing Cyan Orb */
-        .status-read {
-            border: 1.5px solid #53bdeb; /* Cyan Blue */
-            background-color: #53bdeb;
-            box-shadow: 0 0 5px rgba(83, 189, 235, 0.6); /* Neon Glow */
-        }
-
-        @keyframes spinOrb { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Status Orbs */
+        .status-orb { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-left: 4px; transition: all 0.3s ease; }
+        .status-pending { border: 2px solid #8696a0; border-top-color: transparent; animation: spin 1s linear infinite; }
+        .status-sent { border: 1.5px solid #8696a0; background: transparent; }
+        .status-delivered { border: 1.5px solid #8696a0; background: #8696a0; }
+        .status-read { border: 1.5px solid #53bdeb; background: #53bdeb; box-shadow: 0 0 4px #53bdeb; }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
         .mic-active { animation: pulseRed 1.5s infinite; background-color: #ef4444 !important; }
         @keyframes pulseRed { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .bubble-constraint { max-width: 85%; }
         @media (min-width: 768px) { .bubble-constraint { max-width: 60%; } }
-
-        /* Video Mirroring Utilities */
-        .mirror-x { transform: scaleX(-1); }
-        .no-mirror { transform: scaleX(1); }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -137,7 +101,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v3.3 Stable</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v3.4 Stable</span>
             </div>
         </div>
 
@@ -222,29 +186,9 @@
 
     <!-- MODALS -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3><div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit flex justify-center items-center"></div><button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
-    
-    <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4">
-        <div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative">
-            <h3 class="text-white font-bold mb-4">Scan Peer QR</h3>
-            <div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div>
-            <div class="flex gap-2 mt-4">
-                <button onclick="UI.toggleScannerMirror()" class="flex-1 py-3 bg-blue-500/20 text-blue-400 rounded-xl font-bold border border-blue-500/50"><i data-lucide="flip-horizontal" class="inline-block mr-2 w-4 h-4"></i>Flip View</button>
-                <button onclick="UI.stopScanner()" class="flex-1 py-3 bg-red-500/20 text-red-400 rounded-xl font-bold border border-red-500/50">Cancel</button>
-            </div>
-        </div>
-    </div>
-    
+    <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><button onclick="UI.stopScanner()" class="mt-4 w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold">Cancel</button></div></div>
     <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3><p class="text-[#8696a0] text-xs mb-4">Verify this number with your peer.</p><div id="safety-number" class="font-mono-safe text-[#00a884] text-2xl font-bold mb-6 tracking-widest break-all"></div><button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
-    
-    <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col">
-        <video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video>
-        <div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe">
-            <button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button>
-            <button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button>
-            <button onclick="Media.flipCameraView()" class="p-4 text-white" title="Flip Mirror"><i data-lucide="flip-horizontal" class="w-8 h-8"></i></button>
-        </div>
-    </div>
-    
+    <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col"><video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video><div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe"><button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button><button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button><button onclick="Media.flipCameraView()" class="p-4 text-white"><i data-lucide="flip-horizontal" class="w-8 h-8"></i></button></div></div>
     <div id="video-overlay" class="hidden fixed inset-0 z-[140] bg-[#0b141a] flex flex-col p-4 pb-safe"><div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4"><video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video><div class="absolute top-4 right-4 w-28 h-40 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-30"><video id="local-video" autoplay playsinline muted class="w-full h-full object-cover"></video></div></div><div class="h-24 flex items-center justify-center"><button onclick="Media.endCall()" class="p-5 bg-red-500 rounded-full text-white shadow-xl"><i data-lucide="phone-off" class="w-8 h-8"></i></button></div></div>
     <div id="incoming-call-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full animate-bounce-slight"><div class="w-20 h-20 bg-[#2a3942] rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-[#00a884]"><i data-lucide="phone-incoming" class="w-10 h-10 text-[#00a884] animate-pulse"></i></div><h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3><p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4"></p><div class="flex space-x-8 justify-center"><button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400"><div class="p-4 bg-red-500/20 rounded-full"><i data-lucide="phone-off" class="w-8 h-8"></i></div><span class="text-xs">Decline</span></button><button id="btn-accept-call" class="flex flex-col items-center gap-2 text-[#00a884]"><div class="p-4 bg-[#00a884]/20 rounded-full"><i data-lucide="phone" class="w-8 h-8"></i></div><span class="text-xs">Accept</span></button></div></div></div>
 
@@ -261,8 +205,7 @@
                 const k=1024, i=Math.floor(Math.log(bytes)/Math.log(k));
                 return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + ['B','KB','MB','GB'][i];
             },
-            // ORB STATUS HTML GENERATOR
-            getTickHtml: (status) => {
+            getStatusHtml: (status) => {
                 let cl = 'status-orb';
                 if(status === 'pending') cl += ' status-pending';
                 else if(status === 'sent') cl += ' status-sent';
@@ -378,7 +321,17 @@
             peer: null, connections: {}, uploadCancelled: false,
             init: async (id) => {
                 if(Network.peer) return;
-                Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
+                Network.peer = new Peer(id, { 
+                    pingInterval: 5000, 
+                    config: { 
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' }, 
+                            { urls: 'stun:global.stun.twilio.com:3478' },
+                            { urls: 'stun:stun1.l.google.com:19302' },
+                            { urls: 'stun:stun2.l.google.com:19302' }
+                        ] 
+                    } 
+                });
                 Network.peer.on('open', () => UI.updateHeaderStatus(App.state.activeChat, "Online"));
                 Network.peer.on('connection', Network.handleConn);
                 Network.peer.on('call', Media.handleIncoming);
@@ -417,16 +370,19 @@
                 if(App.state.activeChat === peerId) UI.loadChat(peerId);
             },
             handleData: async (sender, data, conn) => {
+                // Handshake Logic
                 if (data.type === 'handshake') {
-                    const pub = await Crypto.importKey(data.key);
-                    const shared = await Crypto.deriveShared(pub);
-                    const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                    App.addContact(sender, data.name, pubStr);
-                    Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
-                    conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-                    if (!App.state.activeChat) UI.loadChat(sender);
-                    else if (App.state.activeChat === sender) UI.loadChat(sender);
-                    UI.showToast(`Connected with ${data.name}!`);
+                    try {
+                        const pub = await Crypto.importKey(data.key);
+                        const shared = await Crypto.deriveShared(pub);
+                        const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                        App.addContact(sender, data.name, pubStr);
+                        Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                        conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
+                        if (!App.state.activeChat) UI.loadChat(sender);
+                        else if (App.state.activeChat === sender) UI.loadChat(sender);
+                        UI.showToast(`Connected with ${data.name}!`);
+                    } catch(e) { console.error("Handshake Fail", e); }
                 }
                 if (data.type === 'handshake-ack') {
                      const pub = await Crypto.importKey(data.key);
@@ -482,12 +438,18 @@
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             
-                            App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read');
+                            // *** PERSISTENCE FIX: Save Blob to DB ***
+                            App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
+                            
                             delete App.fileChunks[sender];
                         }
                     } catch(e){}
                 }
-                if (data.type === 'file-start') App.fileChunks[sender] = { ...data, received: 0, chunks: [] };
+                if (data.type === 'file-start') {
+                     App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
+                     // Show Receiving Bubble
+                     App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'pending', data.id);
+                }
             },
             cancelUpload: () => { Network.uploadCancelled = true; },
             sendMessage: async () => {
@@ -506,39 +468,43 @@
                     const numChunks = Math.ceil(file.size / CHUNK);
                     const totalEncSize = file.size + (numChunks * overhead);
 
-                    connObj.conn.send({ type: 'file-start', name: file.name, mime: file.type, encSize: totalEncSize });
+                    const msgId = Date.now();
+                    // *** PERSISTENCE FIX: Save Blob to DB (outbound) ***
+                    App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
+                    UI.clearFile();
+
+                    connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: file.type, encSize: totalEncSize });
                     
                     let offset = 0;
                     document.getElementById('upload-progress').classList.remove('hidden');
                     
-                    const streamLoop = async () => {
-                        if (Network.uploadCancelled) {
-                             document.getElementById('upload-progress').classList.add('hidden');
-                             UI.clearFile();
-                             return;
-                        }
-                        if(offset >= file.size) {
-                             document.getElementById('upload-progress').classList.add('hidden');
-                             const url = URL.createObjectURL(file);
-                             Utils.addBlob(url);
-                             const msgId = Date.now();
-                             App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'sent', msgId);
-                             UI.clearFile();
-                             return;
-                        }
-                        if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
+                    // Delay slightly to allow receiver to prep for stream
+                    setTimeout(() => {
+                        const streamLoop = async () => {
+                            if (Network.uploadCancelled) {
+                                 document.getElementById('upload-progress').classList.add('hidden');
+                                 return;
+                            }
+                            if(offset >= file.size) {
+                                 document.getElementById('upload-progress').classList.add('hidden');
+                                 const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
+                                 if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                                 return;
+                            }
+                            if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
 
-                        const slice = file.slice(offset, offset + CHUNK);
-                        const buf = await slice.arrayBuffer();
-                        const enc = await Crypto.encryptBin(buf, connObj.key);
-                        connObj.conn.send(enc);
-                        offset += CHUNK;
-                        const pct = Math.round((offset/file.size)*100);
-                        document.getElementById('progress-bar').style.width = pct + "%";
-                        document.getElementById('progress-percent').innerText = pct + "%";
-                        requestAnimationFrame(streamLoop);
-                    };
-                    streamLoop();
+                            const slice = file.slice(offset, offset + CHUNK);
+                            const buf = await slice.arrayBuffer();
+                            const enc = await Crypto.encryptBin(buf, connObj.key);
+                            connObj.conn.send(enc);
+                            offset += CHUNK;
+                            const pct = Math.round((offset/file.size)*100);
+                            document.getElementById('progress-bar').style.width = pct + "%";
+                            document.getElementById('progress-percent').innerText = pct + "%";
+                            requestAnimationFrame(streamLoop);
+                        };
+                        streamLoop();
+                    }, 500); // 500ms safety
                 } 
                 else if (input.value.trim()) {
                     const text = input.value.trim();
@@ -869,66 +835,34 @@
                 const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
                 
                 let content = '';
+                // Hydrate Blob URLs from DB Blobs
                 if ((msg.type === 'file' || msg.type === 'voice') && msg.content.blob && !msg.content.url) {
                      msg.content.url = URL.createObjectURL(msg.content.blob);
-                }
-
-                if (msg.type === 'text') {
-                    content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`;
-                } else if (msg.type === 'voice') {
-                     // Custom Player HTML
-                     content = `
-                        <div class="audio-player">
-                             <div class="play-btn" onclick="this.nextElementSibling.play()"><i data-lucide="play" class="w-4 h-4 text-white"></i></div>
-                             <audio src="${msg.content.url}" class="hidden" ontimeupdate="this.nextElementSibling.style.width=(this.currentTime/this.duration)*100+'%'"></audio>
-                             <div class="audio-track"><div class="audio-fill"></div></div>
-                        </div>
-                     `;
-                } else if (msg.type === 'file') {
-                    const sizeStr = Utils.formatBytes(msg.content.size);
-                    if (msg.content.mime.startsWith('image')) {
-                         content = `
-                            <div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')">
-                                <img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy">
-                            </div>
-                         `;
-                         const icon = isMe ? Utils.getTickHtml(msg.status) : '';
-                         const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
-                         div.innerHTML = `
-                            <div class="p-1 ${bg} rounded-lg shadow relative group">
-                                ${content}
-                                <div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container">
-                                    <span class="text-[10px] text-white/90">${msg.time}</span>
-                                    ${icon}
-                                </div>
-                            </div>`;
-                         c.appendChild(div); c.scrollTop = c.scrollHeight; 
-                         return;
-                    } else {
-                        // Styled File Card
-                        const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
-                        let iconName = 'file'; let colorClass = 'bg-[#00a884]';
-                        if(msg.content.mime.includes('pdf')) { iconName = 'file-text'; colorClass = 'bg-red-500'; }
-                        else if(msg.content.mime.includes('word')) { iconName = 'file-text'; colorClass = 'bg-blue-500'; }
-                        
-                        content = `
-                            <div class="file-card-inner cursor-pointer" onclick="window.open('${msg.content.url}')">
-                                <div class="file-icon-box ${colorClass}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${msg.content.name}</div>
-                                    <div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,3)}</div>
-                                </div>
-                                <div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></div>
-                            </div>
-                        `;
-                    }
                 }
 
                 // Placeholder for incoming file stream
                 if (msg.type === 'file-receiving') {
                      content = `<div class="file-card-inner"><div class="file-icon-box bg-gray-600"><i data-lucide="loader" class="animate-spin w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0]">Receiving...</div></div></div>`;
                 }
-
+                else if (msg.type === 'text') { content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`; }
+                else if (msg.type === 'voice') { content = `<div class="audio-player"><div class="play-btn" onclick="this.nextElementSibling.play()"><i data-lucide="play" class="w-4 h-4 text-white"></i></div><audio src="${msg.content.url}" class="hidden"></audio><div class="audio-track"><div class="audio-fill"></div></div></div>`; }
+                else if (msg.type === 'file') {
+                    const sizeStr = Utils.formatBytes(msg.content.size);
+                    if (msg.content.mime.startsWith('image')) {
+                         content = `<div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')"><img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy"></div>`;
+                         const icon = isMe ? Utils.getTickHtml(msg.status) : '';
+                         const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
+                         div.innerHTML = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
+                         c.appendChild(div); c.scrollTop = c.scrollHeight; return;
+                    } else {
+                        const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
+                        let iconName = 'file'; let cardColor = 'bg-[#00a884]';
+                        if(msg.content.mime.includes('pdf')) { iconName = 'file-text'; cardColor = 'bg-[#ef4444]'; }
+                        else if(msg.content.mime.includes('word')) { iconName = 'file-text'; cardColor = 'bg-[#3b82f6]'; }
+                        else if(msg.content.mime.startsWith('video/')) { iconName = 'video'; cardColor = 'bg-[#a855f7]'; }
+                        content = `<div class="file-card-inner cursor-pointer" onclick="window.open('${msg.content.url}')"><div class="file-icon-box ${cardColor}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${msg.content.name}</div><div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,3)}</div></div><div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></div></div>`;
+                    }
+                }
                 let icon = isMe ? Utils.getTickHtml(msg.status) : '';
                 const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
                 
