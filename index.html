@@ -7,13 +7,10 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
     
-    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- QR Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- QR Scanner -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
@@ -29,7 +26,7 @@
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; }
         
-        .tick-icon { width: 16px; height: 16px; margin-left: 4px; display: inline-block; vertical-align: bottom; }
+        .tick-icon { width: 16px; height: 16px; margin-left: 2px; display: inline-block; vertical-align: middle; }
         .tick-pending { color: #8696a0; opacity: 0.6; }
         .tick-sent { color: #8696a0; }
         .tick-delivered { color: #8696a0; }
@@ -38,6 +35,9 @@
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
         .mic-active { animation: pulseRed 1.5s infinite; background-color: #ef4444 !important; }
         @keyframes pulseRed { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Custom Audio Player Style */
+        audio { height: 36px; border-radius: 20px; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -76,31 +76,27 @@
                     </div>
                 </div>
                 <div class="flex space-x-1 flex-shrink-0 ml-2">
-                    <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Add Contact"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Add ID"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Scan QR"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
-                    <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full" title="My QR Code"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full" title="My QR"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
                 </div>
             </div>
             
-            <!-- Search -->
             <div class="p-2 bg-[#111b21] border-b border-[#2a3942]">
                 <input id="search-contacts" onkeyup="UI.filterContacts()" placeholder="Search contacts..." class="w-full bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none placeholder-[#8696a0]">
             </div>
 
-            <!-- New Chat Panel -->
             <div id="new-chat-panel" class="hidden p-2 bg-[#111b21] border-b border-[#2a3942] flex gap-2">
                 <input id="input-peer-id" placeholder="Paste Peer ID..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none">
                 <button onclick="Network.connectToInput()" class="bg-[#00a884] p-2 rounded-lg"><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i></button>
             </div>
-            
-            <!-- Contact List -->
             <div id="chat-list" class="flex-1 overflow-y-auto"></div>
             
             <div class="p-3 bg-[#111b21] border-t border-[#2a3942] flex justify-between items-center pb-safe shrink-0">
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v2.1 Stable</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v2.6 Media</span>
             </div>
         </div>
 
@@ -150,7 +146,7 @@
 
                 <div class="bg-[#202c33] shrink-0 w-full pb-safe">
                     <div id="recording-ui" class="hidden px-4 py-3 bg-[#202c33] flex items-center gap-4 border-t border-[#2a3942]">
-                        <div class="text-red-500 animate-pulse flex-1">Recording Audio...</div>
+                        <div class="text-red-500 animate-pulse flex-1 font-mono">Recording Audio...</div>
                         <button onclick="Media.cancelRecord()" class="text-[#8696a0]">Cancel</button>
                         <button onclick="Media.stopRecord()" class="bg-[#00a884] text-white px-4 py-1 rounded-full">Send</button>
                     </div>
@@ -184,7 +180,6 @@
     </div>
 
     <!-- MODALS -->
-    <!-- QR Display -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
         <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center">
             <h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3>
@@ -194,7 +189,6 @@
         </div>
     </div>
 
-    <!-- QR Scanner -->
     <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4">
         <div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative">
             <h3 class="text-white font-bold mb-4">Scan Peer QR</h3>
@@ -203,7 +197,6 @@
         </div>
     </div>
 
-    <!-- Safety Number -->
     <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
         <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center">
             <h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3>
@@ -213,7 +206,6 @@
         </div>
     </div>
 
-    <!-- Camera -->
     <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col">
         <video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video>
         <div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe">
@@ -223,7 +215,6 @@
         </div>
     </div>
 
-    <!-- Call Overlay -->
     <div id="video-overlay" class="hidden fixed inset-0 z-[140] bg-[#0b141a] flex flex-col p-4 pb-safe">
         <div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4">
             <video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video>
@@ -263,6 +254,17 @@
                 if (status === 'delivered') return `<svg class="tick-icon tick-delivered" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
                 if (status === 'read') return `<svg class="tick-icon tick-read" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
                 return '';
+            },
+            renderFileCard: (iconName, bgClass, name, sizeStr, ext, url) => {
+                return `
+                <div class="flex items-center gap-3 min-w-[220px] p-1 cursor-pointer" onclick="window.open('${url}')">
+                    <div class="file-icon-box ${bgClass}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${name}</div>
+                        <div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${ext}</div>
+                    </div>
+                    <div class="p-2 hover:bg-black/10 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></div>
+                </div>`;
             }
         };
 
@@ -283,7 +285,11 @@
             }),
             put: async (store, key, val) => new Promise(r => {
                 const tx = Store.db.transaction(store, "readwrite");
-                key ? tx.objectStore(store).put(val, key) : tx.objectStore(store).put(val);
+                if(store === "messages") {
+                     tx.objectStore(store).put(val); 
+                } else {
+                     key ? tx.objectStore(store).put(val, key) : tx.objectStore(store).put(val);
+                }
                 tx.oncomplete = r;
             }),
             get: async (store, key) => new Promise(r => {
@@ -303,8 +309,7 @@
             deleteMessagesForPeer: async (peerId) => new Promise(r => {
                 const tx = Store.db.transaction("messages", "readwrite");
                 const index = tx.objectStore("messages").index("peerId");
-                const req = index.getAllKeys(peerId);
-                req.onsuccess = () => { req.result.forEach(k => tx.objectStore("messages").delete(k)); tx.oncomplete = r; };
+                index.getAllKeys(peerId).onsuccess = e => { e.target.result.forEach(k => tx.objectStore("messages").delete(k)); tx.oncomplete = r; };
             })
         };
 
@@ -402,7 +407,7 @@
                         connObj.conn.send({ type: 'msg', payload: await Crypto.encryptPayload({ content: msg.content, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key), id: msg.id });
                     }
                     msg.status = 'sent';
-                    await Store.put('messages', msg.id, msg);
+                    await Store.put('messages', null, msg); 
                 }
                 if(App.state.activeChat === peerId) UI.loadChat(peerId);
             },
@@ -411,6 +416,7 @@
                     const pub = await Crypto.importKey(data.key);
                     const shared = await Crypto.deriveShared(pub);
                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                    
                     App.addContact(sender, data.name, pubStr);
                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
                     conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
@@ -428,14 +434,14 @@
                      UI.showToast("Connection Secured");
                 }
                 const connObj = Network.connections[sender];
-                if (!connObj) return;
+                if (!connObj || !connObj.key) return;
 
                 if (data.type === 'receipt') {
                      const msgs = await Store.getMessages(sender);
                      const msg = msgs.find(m => m.id === data.msgId);
                      if (msg) {
                          msg.status = data.status;
-                         await Store.put('messages', msg.id, msg);
+                         await Store.put('messages', null, msg);
                          if (App.state.activeChat === sender) UI.updateMessageTick(msg.id, data.status);
                      }
                      return;
@@ -451,6 +457,7 @@
                         }
                     } catch(e) {}
                 }
+                
                 if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
                     const tracker = App.fileChunks[sender];
                     if (!tracker) return;
@@ -458,18 +465,21 @@
                         const dec = await Crypto.decryptBin(data, connObj.key);
                         tracker.chunks.push(dec);
                         tracker.received += data.byteLength;
+                        
                         if (App.state.activeChat === sender) {
                             const pct = Math.round((tracker.received / tracker.encSize) * 100);
                             document.getElementById('download-progress').classList.remove('hidden');
                             document.getElementById('dl-progress-bar').style.width = pct + "%";
                             document.getElementById('dl-progress-percent').innerText = pct + "%";
                         }
+
                         if (tracker.received >= tracker.encSize) {
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
-                            const url = URL.createObjectURL(blob);
-                            Utils.addBlob(url);
-                            App.addMessage(sender, { name: tracker.name, url, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read');
+                            
+                            // PERSIST FILE AS BLOB
+                            App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read');
+                            
                             delete App.fileChunks[sender];
                         }
                     } catch(e){}
@@ -504,12 +514,13 @@
                              UI.clearFile();
                              return;
                         }
+
                         if(offset >= file.size) {
                              document.getElementById('upload-progress').classList.add('hidden');
                              const url = URL.createObjectURL(file);
                              Utils.addBlob(url);
                              const msgId = Date.now();
-                             App.addMessage(peerId, { name: file.name, url, mime: file.type, size: file.size }, 'out', 'file', 'sent', msgId);
+                             App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'sent', msgId);
                              UI.clearFile();
                              return;
                         }
@@ -696,7 +707,8 @@
             },
             addMessage: (peerId, content, dir, type, status, id) => {
                 const msg = { id: id || Date.now(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
-                Store.put('messages', msg.id, msg);
+                // Persist the actual Blob object in IDB, not just the URL
+                Store.put('messages', null, msg); // Use null key for IDB keyPath
                 if(App.state.activeChat === peerId) UI.renderMessage(msg);
             },
             exportIdentity: async () => {
@@ -838,6 +850,11 @@
                 const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
                 
                 let content = '';
+                // Hydrate Blob URLs from DB Blobs
+                if ((msg.type === 'file' || msg.type === 'voice') && msg.content.blob && !msg.content.url) {
+                     msg.content.url = URL.createObjectURL(msg.content.blob);
+                }
+
                 if (msg.type === 'text') {
                     content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`;
                 } else if (msg.type === 'voice') {
@@ -864,16 +881,40 @@
                          return;
                     } else {
                         const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
-                        content = `
-                            <div class="flex items-center gap-3 min-w-[200px] p-1">
-                                <div class="w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center text-[#e9edef]"><i data-lucide="file" class="w-5 h-5"></i></div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef]">${msg.content.name}</div>
-                                    <div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,4)}</div>
+                        // Icon mapping
+                        let iconName = 'file';
+                        let cardColor = iconBg;
+                        if(msg.content.mime.includes('pdf')) { iconName = 'file-text'; cardColor = 'bg-red-500'; }
+                        else if(msg.content.mime.includes('sheet') || msg.content.mime.includes('excel')) { iconName = 'table-2'; cardColor = 'bg-green-600'; }
+                        else if(msg.content.mime.includes('word')) { iconName = 'file-text'; cardColor = 'bg-blue-600'; }
+                        else if(msg.content.mime.startsWith('audio/')) { iconName = 'headphones'; cardColor = 'bg-orange-500'; }
+                        else if(msg.content.mime.startsWith('video/')) { iconName = 'video'; cardColor = 'bg-purple-600'; }
+
+                        // Special Video Inline Player
+                        if (msg.content.mime.startsWith('video/')) {
+                            content = `
+                                <div class="max-w-[280px]">
+                                    <video src="${msg.content.url}" controls class="rounded-lg w-full mb-1"></video>
+                                    <div class="text-xs opacity-70">${msg.content.name} • ${sizeStr}</div>
                                 </div>
-                                <a href="${msg.content.url}" download="${msg.content.name}" class="p-2 hover:bg-black/10 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></a>
-                            </div>
-                        `;
+                            `;
+                        } else {
+                            // Elegant File Card
+                            content = `
+                                <div class="file-card-inner cursor-pointer" onclick="window.open('${msg.content.url}')">
+                                    <div class="file-icon-box ${cardColor}">
+                                        <i data-lucide="${iconName}" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${msg.content.name}</div>
+                                        <div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,4)}</div>
+                                    </div>
+                                    <div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0]">
+                                        <i data-lucide="download" class="w-5 h-5"></i>
+                                    </div>
+                                </div>
+                            `;
+                        }
                     }
                 }
 
