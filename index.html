@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- CSP: Allow data/blob for images/files -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
-    <title>GhostMesh | Pro Secure</title>
-    
+    <title>GhostMesh | Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -15,7 +13,7 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #111b21; color: #e9edef; height: 100dvh; width: 100vw; overflow: hidden; position: fixed; inset: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: #0b141a; color: #e9edef; height: 100dvh; width: 100vw; overflow: hidden; position: fixed; inset: 0; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #374045; border-radius: 2px; }
@@ -23,49 +21,52 @@
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
         .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
         
+        /* Message Bubbles */
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; }
-        .img-overlay { background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%); }
+        
+        /* File Card UI */
+        .file-card { background-color: rgba(0, 0, 0, 0.2); border-radius: 6px; padding: 10px; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; }
+        .file-icon-box { background-color: #ea5045; /* PDF Red default */ width: 40px; height: 40px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 10px; text-transform: uppercase; color: white; }
+        
+        /* Ticks */
+        .tick-svg { width: 16px; height: 11px; display: inline-block; vertical-align: bottom; margin-left: 2px; }
+        .status-pending path { fill: #8696a0; opacity: 0.6; } /* Clock like */
+        .status-sent path { fill: #8696a0; } /* 1 Check */
+        .status-delivered path { fill: #8696a0; } /* 2 Checks */
+        .status-read path { fill: #53bdeb; } /* 2 Blue Checks */
+        
         .bubble-constraint { max-width: 85%; }
         @media (min-width: 768px) { .bubble-constraint { max-width: 65%; } }
         
-        .tick-icon { width: 16px; height: 16px; margin-left: 2px; display: inline-block; vertical-align: middle; }
-        .tick-pending { color: #8696a0; opacity: 0.6; }
-        .tick-sent { color: #8696a0; }
-        .tick-delivered { color: #8696a0; }
-        .tick-read { color: #53bdeb; }
-        
-        .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
-        .mic-active { animation: pulseRed 1.5s infinite; background-color: #ef4444 !important; }
-        @keyframes pulseRed { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .mic-active { background-color: #ef4444 !important; animation: pulseRed 1s infinite; }
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.7); } 70% { box-shadow: 0 0 0 10px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
 
-    <!-- 1. ONBOARDING -->
+    <!-- ONBOARDING -->
     <div id="onboarding-screen" class="absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in overflow-y-auto">
         <div class="relative mb-8"><div class="absolute -inset-1 bg-[#00a884] rounded-full opacity-20 blur-xl animate-pulse"></div><i data-lucide="shield-check" class="w-24 h-24 text-[#00a884] relative z-10"></i></div>
         <h1 class="text-3xl font-bold tracking-tight mb-2">GhostMesh Secure</h1>
         <p class="text-[#8696a0] max-w-xs mx-auto mb-8">Encrypted Local Storage. Zero Cloud.</p>
         <div class="w-full max-w-sm space-y-4">
             <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <button onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
+            <input id="setup-password" type="password" placeholder="Set Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
+            <button onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize</button>
         </div>
     </div>
 
-    <!-- 2. LOGIN -->
+    <!-- LOGIN -->
     <div id="login-screen" class="hidden absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
         <i data-lucide="lock" class="w-16 h-16 text-[#00a884] mb-4"></i>
         <h2 class="text-2xl font-bold mb-4">Unlock Identity</h2>
-        <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center">
+        <input id="login-password" type="password" placeholder="Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center">
         <button onclick="App.login()" class="w-full max-w-sm p-4 bg-[#00a884] rounded-xl font-bold">Unlock</button>
-        <div id="lockout-msg" class="text-red-400 mt-4 hidden text-sm bg-red-900/20 p-2 rounded border border-red-900"></div>
     </div>
 
-    <!-- 3. MAIN UI -->
+    <!-- MAIN UI -->
     <div id="app-layout" class="hidden w-full h-full flex flex-col md:flex-row relative">
-        <!-- Sidebar -->
         <div id="sidebar-panel" class="w-full md:w-96 border-r border-[#2a3942] flex flex-col bg-[#111b21] h-full">
             <div class="p-3 border-b border-[#2a3942] flex justify-between items-center shrink-0 bg-[#202c33]">
                 <div class="flex items-center space-x-3 cursor-pointer min-w-0 overflow-hidden" onclick="UI.copyId()">
@@ -76,38 +77,27 @@
                     </div>
                 </div>
                 <div class="flex space-x-1 flex-shrink-0 ml-2">
-                    <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Add ID"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
-                    <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Scan QR"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
-                    <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full" title="My QR"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
                 </div>
             </div>
             
-            <div class="p-2 bg-[#111b21] border-b border-[#2a3942]">
-                <input id="search-contacts" onkeyup="UI.filterContacts()" placeholder="Search contacts..." class="w-full bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none placeholder-[#8696a0]">
-            </div>
-
             <div id="new-chat-panel" class="hidden p-2 bg-[#111b21] border-b border-[#2a3942] flex gap-2">
                 <input id="input-peer-id" placeholder="Paste Peer ID..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none">
                 <button onclick="Network.connectToInput()" class="bg-[#00a884] p-2 rounded-lg"><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i></button>
             </div>
             <div id="chat-list" class="flex-1 overflow-y-auto"></div>
-            
             <div class="p-3 bg-[#111b21] border-t border-[#2a3942] flex justify-between items-center pb-safe shrink-0">
-                <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
-                    <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup
-                </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v1.6 Final</span>
+                <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors"><i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup</button>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v2.1 Fast</span>
             </div>
         </div>
 
-        <!-- Chat Area -->
         <div id="chat-area" class="hidden md:flex flex-1 flex-col h-full relative bg-[#0b141a]">
             <div class="absolute inset-0 opacity-[0.06] pointer-events-none" style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-repeat: repeat;"></div>
-            
             <div id="chat-empty-state" class="flex-1 flex flex-col items-center justify-center text-[#8696a0] relative z-10">
                 <i data-lucide="ghost" class="w-20 h-20 mb-4 opacity-20"></i>
-                <p class="text-xl font-light mt-4">GhostMesh</p>
-                <p class="text-sm mt-2 opacity-60">End-to-End Encrypted</p>
+                <p>GhostMesh Secured</p>
             </div>
 
             <div id="chat-interface" class="hidden flex-1 flex-col h-full w-full relative z-10">
@@ -117,10 +107,7 @@
                         <div id="chat-header-avatar" class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold text-sm">?</div>
                         <div class="flex flex-col">
                             <span id="chat-header-name" class="font-semibold text-sm text-[#e9edef] truncate">Peer</span>
-                            <div class="flex items-center text-xs text-[#8696a0]">
-                                <i data-lucide="shield-check" class="w-3 h-3 mr-1 text-[#00a884]"></i>
-                                <span id="chat-header-status" class="truncate w-24">Offline</span>
-                            </div>
+                            <span id="chat-header-status" class="text-xs text-[#8696a0] truncate w-24">Offline</span>
                         </div>
                     </div>
                     <div class="flex space-x-4 text-[#aebac1]">
@@ -132,38 +119,38 @@
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full pb-20"></div>
                 
                 <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
-                    <div class="flex justify-between text-xs text-[#00a884] mb-1">
-                        <span>Uploading... <button onclick="Network.cancelUpload()" class="ml-2 text-red-400 font-bold hover:underline">CANCEL</button></span>
-                        <span id="progress-percent">0%</span>
-                    </div>
+                    <div class="flex justify-between text-xs text-[#00a884] mb-1"><span>Transferring...</span><span id="progress-percent">0%</span></div>
                     <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="progress-bar" class="bg-[#00a884] h-1 rounded-full" style="width: 0%"></div></div>
                 </div>
 
-                <div id="download-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
-                    <div class="flex justify-between text-xs text-blue-400 mb-1"><span>Downloading...</span><span id="dl-progress-percent">0%</span></div>
-                    <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="dl-progress-bar" class="bg-blue-400 h-1 rounded-full" style="width: 0%"></div></div>
-                </div>
-
                 <div class="bg-[#202c33] shrink-0 w-full pb-safe">
-                    <div id="file-preview-area" class="hidden px-4 py-2 bg-[#2a3942] flex items-center justify-between border-b border-[#111b21]">
-                        <span id="file-preview-name" class="text-sm text-[#e9edef] truncate"></span>
-                        <button onclick="UI.clearFile()" class="text-red-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    <div id="recording-ui" class="hidden px-4 py-3 bg-[#202c33] flex items-center gap-4 border-t border-[#2a3942]">
+                        <div class="text-red-500 animate-pulse flex-1">Recording Audio...</div>
+                        <button onclick="Media.cancelRecord()" class="text-[#8696a0]">Cancel</button>
+                        <button onclick="Media.stopRecord()" class="bg-[#00a884] text-white px-4 py-1 rounded-full">Send</button>
                     </div>
-                    <div class="flex items-end gap-2 p-2">
-                        <div class="flex pb-2 gap-1">
-                            <button onclick="document.getElementById('file-input').click()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="plus" class="w-6 h-6"></i></button>
-                            <input type="file" id="file-input" class="hidden" onchange="UI.handleFileSelect(event)">
-                            <button onclick="Media.openCamera()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="camera" class="w-6 h-6"></i></button>
-                            <button onclick="UI.sendLocation()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="map-pin" class="w-6 h-6"></i></button>
+
+                    <div id="normal-input-ui">
+                        <div id="file-preview-area" class="hidden px-4 py-2 bg-[#2a3942] flex items-center justify-between border-b border-[#111b21]">
+                            <span id="file-preview-name" class="text-sm text-[#e9edef] truncate"></span>
+                            <button onclick="UI.clearFile()" class="text-red-400"><i data-lucide="x" class="w-5 h-5"></i></button>
                         </div>
-                        <div class="flex-1 bg-[#2a3942] rounded-lg min-h-[42px] flex items-center px-4 py-2 mb-1">
-                            <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)">
-                        </div>
-                        <div class="pb-1">
-                            <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
-                                <i id="icon-mic" data-lucide="mic" class="w-5 h-5"></i>
-                                <i id="icon-send" data-lucide="send" class="w-5 h-5 pl-0.5 hidden"></i>
-                            </button>
+                        <div class="flex items-end gap-2 p-2">
+                            <div class="flex pb-2 gap-1">
+                                <button onclick="document.getElementById('file-input').click()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="plus" class="w-6 h-6"></i></button>
+                                <input type="file" id="file-input" class="hidden" onchange="UI.handleFileSelect(event)">
+                                <button onclick="Media.openCamera()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="camera" class="w-6 h-6"></i></button>
+                                <button onclick="UI.sendLocation()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="map-pin" class="w-6 h-6"></i></button>
+                            </div>
+                            <div class="flex-1 bg-[#2a3942] rounded-lg min-h-[42px] flex items-center px-4 py-2 mb-1">
+                                <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)">
+                            </div>
+                            <div class="pb-1">
+                                <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
+                                    <i id="icon-mic" data-lucide="mic" class="w-5 h-5"></i>
+                                    <i id="icon-send" data-lucide="send" class="w-5 h-5 pl-0.5 hidden"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -171,7 +158,7 @@
         </div>
     </div>
 
-    <!-- MODALS -->
+    <!-- Modals -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
         <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center">
             <h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3>
@@ -179,7 +166,6 @@
             <button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button>
         </div>
     </div>
-
     <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4">
         <div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative">
             <h3 class="text-white font-bold mb-4">Scan Peer QR</h3>
@@ -187,7 +173,6 @@
             <button onclick="UI.stopScanner()" class="mt-4 w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold">Cancel</button>
         </div>
     </div>
-
     <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
         <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center">
             <h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3>
@@ -196,7 +181,6 @@
             <button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button>
         </div>
     </div>
-
     <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col">
         <video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video>
         <div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe">
@@ -205,13 +189,23 @@
             <div class="w-16"></div>
         </div>
     </div>
-
     <div id="video-overlay" class="hidden fixed inset-0 z-[140] bg-[#0b141a] flex flex-col p-4 pb-safe">
         <div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4">
             <video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video>
             <div class="absolute top-4 right-4 w-28 h-40 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-30"><video id="local-video" autoplay playsinline muted class="w-full h-full object-cover"></video></div>
         </div>
         <div class="h-24 flex items-center justify-center"><button onclick="Media.endCall()" class="p-5 bg-red-500 rounded-full text-white shadow-xl"><i data-lucide="phone-off" class="w-8 h-8"></i></button></div>
+    </div>
+    <div id="incoming-call-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full animate-bounce-slight">
+            <div class="w-20 h-20 bg-[#2a3942] rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-[#00a884]"><i data-lucide="phone-incoming" class="w-10 h-10 text-[#00a884] animate-pulse"></i></div>
+            <h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3>
+            <p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4"></p>
+            <div class="flex space-x-8 justify-center">
+                <button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400"><div class="p-4 bg-red-500/20 rounded-full"><i data-lucide="phone-off" class="w-8 h-8"></i></div><span class="text-xs">Decline</span></button>
+                <button id="btn-accept-call" class="flex flex-col items-center gap-2 text-[#00a884]"><div class="p-4 bg-[#00a884]/20 rounded-full"><i data-lucide="phone" class="w-8 h-8"></i></div><span class="text-xs">Accept</span></button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -226,6 +220,14 @@
                 if (bytes === 0) return '0 B';
                 const k=1024, i=Math.floor(Math.log(bytes)/Math.log(k));
                 return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + ['B','KB','MB','GB'][i];
+            },
+            getTickIcon: (status) => {
+                // Return SVG string based on status
+                if (status === 'pending') return `<svg class="tick-icon status-pending" viewBox="0 0 16 16"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 14A6 6 0 118 2a6 6 0 010 12zm.5-6.5V4h-1v4.2l3.2 1.9.5-.8-2.7-1.3z"/></svg>`; // Clock
+                if (status === 'sent') return `<svg class="tick-icon status-sent" viewBox="0 0 16 15"><path d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/></svg>`; // Single Check
+                if (status === 'delivered') return `<svg class="tick-icon status-delivered" viewBox="0 0 16 15"><path d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`; // Double Check Grey
+                if (status === 'read') return `<svg class="tick-icon status-read" viewBox="0 0 16 15"><path d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`; // Double Check Blue (Note: Simplified paths for demo)
+                return '✓';
             }
         };
 
@@ -266,7 +268,8 @@
             deleteMessagesForPeer: async (peerId) => new Promise(r => {
                 const tx = Store.db.transaction("messages", "readwrite");
                 const index = tx.objectStore("messages").index("peerId");
-                index.getAllKeys(peerId).onsuccess = e => { e.target.result.forEach(k => tx.objectStore("messages").delete(k)); tx.oncomplete = r; };
+                const req = index.getAllKeys(peerId);
+                req.onsuccess = () => { req.result.forEach(k => tx.objectStore("messages").delete(k)); tx.oncomplete = r; };
             })
         };
 
@@ -345,7 +348,6 @@
                 if (Network.connections[id]?.conn?.open) return;
                 const conn = Network.peer.connect(id, { reliable: true });
                 conn.on('open', () => {
-                    // Send Handshake
                     conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
                     Network.processQueue(id);
                 });
@@ -374,37 +376,25 @@
                     const pub = await Crypto.importKey(data.key);
                     const shared = await Crypto.deriveShared(pub);
                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                    
                     App.addContact(sender, data.name, pubStr);
-                    
                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
-                    
-                    // FIXED: Auto-Reply Handshake Ack
                     conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-
                     if (!App.state.activeChat) UI.loadChat(sender);
                     else if (App.state.activeChat === sender) UI.loadChat(sender);
-
                     UI.showToast(`Connected with ${data.name}!`);
                 }
-                
                 if (data.type === 'handshake-ack') {
                      const pub = await Crypto.importKey(data.key);
                      const shared = await Crypto.deriveShared(pub);
                      const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                     
                      App.addContact(sender, data.name, pubStr);
                      Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
-                     
                      if (App.state.activeChat === sender) UI.loadChat(sender);
-                     else if (!App.state.activeChat) UI.loadChat(sender);
                      UI.showToast("Connection Secured");
                 }
-
                 const connObj = Network.connections[sender];
-                if (!connObj || !connObj.key) return;
+                if (!connObj) return;
 
-                // Handle Receipt
                 if (data.type === 'receipt') {
                      const msgs = await Store.getMessages(sender);
                      const msg = msgs.find(m => m.id === data.msgId);
@@ -426,7 +416,6 @@
                         }
                     } catch(e) {}
                 }
-                
                 if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
                     const tracker = App.fileChunks[sender];
                     if (!tracker) return;
@@ -434,14 +423,12 @@
                         const dec = await Crypto.decryptBin(data, connObj.key);
                         tracker.chunks.push(dec);
                         tracker.received += data.byteLength;
-                        
                         if (App.state.activeChat === sender) {
                             const pct = Math.round((tracker.received / tracker.encSize) * 100);
                             document.getElementById('download-progress').classList.remove('hidden');
                             document.getElementById('dl-progress-bar').style.width = pct + "%";
                             document.getElementById('dl-progress-percent').innerText = pct + "%";
                         }
-
                         if (tracker.received >= tracker.encSize) {
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
@@ -461,12 +448,12 @@
                 
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
-                    if (file.size > 50*1024*1024) { alert("File > 50MB"); UI.clearFile(); return; }
+                    if (file.size > 100*1024*1024) { alert("File > 100MB"); UI.clearFile(); return; }
                     const connObj = Network.connections[peerId];
                     if (!connObj?.conn?.open) return alert("Peer Offline");
 
                     Network.uploadCancelled = false;
-                    const CHUNK = 64 * 1024;
+                    const CHUNK = 256 * 1024; // 256KB for faster speeds
                     const overhead = 28;
                     const numChunks = Math.ceil(file.size / CHUNK);
                     const totalEncSize = file.size + (numChunks * overhead);
@@ -482,7 +469,6 @@
                              UI.clearFile();
                              return;
                         }
-
                         if(offset >= file.size) {
                              document.getElementById('upload-progress').classList.add('hidden');
                              const url = URL.createObjectURL(file);
@@ -492,7 +478,8 @@
                              UI.clearFile();
                              return;
                         }
-                        if(connObj.conn.dataChannel.bufferedAmount > 16 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
+                        // Increase Buffer limit for speed
+                        if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
 
                         const slice = file.slice(offset, offset + CHUNK);
                         const buf = await slice.arrayBuffer();
@@ -524,22 +511,12 @@
 
         const Media = {
             localStream: null, call: null, scanner: null, recording: false, recorder: null, audioChunks: [],
-            openCamera: async () => {
-                document.getElementById('camera-modal').classList.remove('hidden');
-                document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
-            },
-            closeCamera: () => {
-                document.getElementById('camera-modal').classList.add('hidden');
-                const v = document.getElementById('camera-preview');
-                if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop());
-            },
+            openCamera: async () => { document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}}); },
+            closeCamera: () => { document.getElementById('camera-modal').classList.add('hidden'); const v = document.getElementById('camera-preview'); if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop()); },
             takePhoto: () => {
-                const v = document.getElementById('camera-preview');
-                const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
-                c.getContext('2d').drawImage(v,0,0);
+                const v = document.getElementById('camera-preview'); const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0);
                 c.toBlob(b => {
-                    const dt = new DataTransfer(); 
-                    dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
+                    const dt = new DataTransfer(); dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
                     document.getElementById('file-input').files = dt.files;
                     UI.handleFileSelect({target: {files: dt.files}});
                     Media.closeCamera();
@@ -567,7 +544,7 @@
                      Media.audioChunks = [];
                      Media.recorder.ondataavailable = e => Media.audioChunks.push(e.data);
                      Media.recorder.onstop = () => {
-                         if (Media.recording) { // If not cancelled
+                         if (Media.recording) {
                              const blob = new Blob(Media.audioChunks, { type: 'audio/webm' });
                              const file = new File([blob], `Voice.webm`, { type: 'audio/webm' });
                              const dt = new DataTransfer(); dt.items.add(file);
@@ -583,7 +560,6 @@
                  } catch(e) { alert("Mic Error"); }
             },
             stopRecord: () => {
-                 // Trigger stop, save flag true
                  if(Media.recorder) Media.recorder.stop();
                  document.getElementById('recording-ui').classList.add('hidden');
                  document.getElementById('normal-input-ui').classList.remove('hidden');
@@ -706,14 +682,10 @@
             copyId: () => { navigator.clipboard.writeText(App.state.id); alert("ID Copied"); },
             toggleAddContact: () => document.getElementById('new-chat-panel').classList.toggle('hidden'),
             showQR: () => {
-                // Ensure ID is available
                 if(!App.state.id) return;
                 document.getElementById('qr-modal').classList.remove('hidden');
                 document.getElementById('qrcode-container').innerHTML = '';
-                // Wait for modal to render to get correct dimensions
-                setTimeout(() => {
-                     new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 });
-                }, 50);
+                setTimeout(() => { new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 }); }, 50);
             },
             startScanner: () => {
                 document.getElementById('scanner-modal').classList.remove('hidden');
@@ -818,13 +790,10 @@
                  if(el) {
                      const tickContainer = el.querySelector('.tick-container');
                      if(tickContainer) {
-                        let icon = 'check', color = 'tick-sent';
-                        if (status === 'delivered') { icon = 'check-check'; color = 'tick-delivered'; }
-                        if (status === 'read') { icon = 'check-check'; color = 'tick-read'; }
-                        // Update Icon safely
+                        let svg = Utils.getTickIcon(status);
+                        // Preserve time, just update icon
                         const time = el.dataset.time;
-                        tickContainer.innerHTML = `${time} <i data-lucide="${icon}" class="tick-icon ${color} inline-block"></i>`;
-                        lucide.createIcons();
+                        tickContainer.innerHTML = `${time} ${svg}`;
                      }
                  }
             },
@@ -839,24 +808,39 @@
                 } else if (msg.type === 'file') {
                     const sizeStr = Utils.formatBytes(msg.content.size);
                     if (msg.content.mime.startsWith('image')) {
-                         content = `<div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')"><img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy"></div>`;
-                         const icon = isMe ? (msg.status === 'pending' ? '<i data-lucide="clock" class="tick-icon tick-pending"></i>' : (msg.status === 'sent' ? '<i data-lucide="check" class="tick-icon tick-sent"></i>' : (msg.status === 'delivered' ? '<i data-lucide="check-check" class="tick-icon tick-delivered"></i>' : '<i data-lucide="check-check" class="tick-icon tick-read"></i>'))) : '';
+                         content = `
+                            <div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')">
+                                <img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy">
+                            </div>
+                         `;
+                         const icon = isMe ? Utils.getTickIcon(msg.status) : '';
                          const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
-                         div.innerHTML = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
-                         c.appendChild(div); c.scrollTop = c.scrollHeight; lucide.createIcons();
+                         div.innerHTML = `
+                            <div class="p-1 ${bg} rounded-lg shadow relative group">
+                                ${content}
+                                <div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container">
+                                    <span class="text-[10px] text-white/90">${msg.time}</span>
+                                    ${icon}
+                                </div>
+                            </div>`;
+                         c.appendChild(div); c.scrollTop = c.scrollHeight; 
                          return;
                     } else {
                         const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
-                        content = `<div class="flex items-center gap-3 min-w-[200px] p-1"><div class="w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center text-[#e9edef]"><i data-lucide="file" class="w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,4)}</div></div><a href="${msg.content.url}" download="${msg.content.name}" class="p-2 hover:bg-black/10 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></a></div>`;
+                        content = `
+                            <div class="flex items-center gap-3 min-w-[200px] p-1">
+                                <div class="w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center text-[#e9edef]"><i data-lucide="file" class="w-5 h-5"></i></div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef]">${msg.content.name}</div>
+                                    <div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,4)}</div>
+                                </div>
+                                <a href="${msg.content.url}" download="${msg.content.name}" class="p-2 hover:bg-black/10 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></a>
+                            </div>
+                        `;
                     }
                 }
-                let icon = '';
-                if (isMe) {
-                    if(msg.status === 'pending') icon = '<i data-lucide="clock" class="tick-icon tick-pending"></i>';
-                    else if(msg.status === 'sent') icon = '<i data-lucide="check" class="tick-icon tick-sent"></i>';
-                    else if(msg.status === 'delivered') icon = '<i data-lucide="check-check" class="tick-icon tick-delivered"></i>';
-                    else if(msg.status === 'read') icon = '<i data-lucide="check-check" class="tick-icon tick-read"></i>';
-                }
+
+                let icon = isMe ? Utils.getTickIcon(msg.status) : '';
                 const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
                 div.innerHTML = `<div class="p-2 ${bg} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">${content}<div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">${msg.time} ${icon}</div></div>`;
                 c.appendChild(div); c.scrollTop = c.scrollHeight; lucide.createIcons();
