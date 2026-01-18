@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- CSP: Allow data/blob for images/files -->
+    <!-- CSP -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
     
@@ -25,17 +25,17 @@
         
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; }
-        .img-overlay { background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%); }
-        .bubble-constraint { max-width: 85%; }
-        @media (min-width: 768px) { .bubble-constraint { max-width: 65%; } }
         
-        .tick-icon { width: 16px; height: 16px; margin-left: 2px; display: inline-block; vertical-align: middle; }
-        .tick-pending { color: #8696a0; opacity: 0.6; }
+        .tick-icon { width: 16px; height: 16px; margin-left: 4px; display: inline-block; vertical-align: bottom; }
+        .tick-pending { color: #8696a0; }
         .tick-sent { color: #8696a0; }
         .tick-delivered { color: #8696a0; }
-        .tick-read { color: #53bdeb; }
+        .tick-read { color: #53bdeb; } /* WhatsApp Blue */
         
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
+        
+        .mic-active { animation: pulseRed 1s infinite; background-color: #ef4444 !important; }
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -58,7 +58,6 @@
         <h2 class="text-2xl font-bold mb-4">Unlock Identity</h2>
         <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center">
         <button onclick="App.login()" class="w-full max-w-sm p-4 bg-[#00a884] rounded-xl font-bold">Unlock</button>
-        <div id="lockout-msg" class="text-red-400 mt-4 hidden text-sm bg-red-900/20 p-2 rounded border border-red-900"></div>
     </div>
 
     <!-- 3. MAIN UI -->
@@ -94,7 +93,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v1.5 Stable</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v2.0 Pro</span>
             </div>
         </div>
 
@@ -129,19 +128,14 @@
 
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full pb-20"></div>
                 
+                <!-- Progress Bars -->
                 <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
-                    <div class="flex justify-between text-xs text-[#00a884] mb-1">
-                        <span>Uploading... <button onclick="Network.cancelUpload()" class="ml-2 text-red-400 font-bold hover:underline">CANCEL</button></span>
-                        <span id="progress-percent">0%</span>
-                    </div>
+                    <div class="flex justify-between text-xs text-[#00a884] mb-1"><span>Uploading... <button onclick="Network.cancelUpload()" class="ml-2 text-red-400 font-bold hover:underline">CANCEL</button></span><span id="progress-percent">0%</span></div>
                     <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="progress-bar" class="bg-[#00a884] h-1 rounded-full" style="width: 0%"></div></div>
                 </div>
 
                 <div id="download-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
-                    <div class="flex justify-between text-xs text-blue-400 mb-1">
-                        <span>Downloading...</span>
-                        <span id="dl-progress-percent">0%</span>
-                    </div>
+                    <div class="flex justify-between text-xs text-blue-400 mb-1"><span>Downloading...</span><span id="dl-progress-percent">0%</span></div>
                     <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="dl-progress-bar" class="bg-blue-400 h-1 rounded-full" style="width: 0%"></div></div>
                 </div>
 
@@ -161,7 +155,11 @@
                             <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)">
                         </div>
                         <div class="pb-1">
-                            <button onclick="Network.sendMessage()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform"><i data-lucide="send" class="w-5 h-5 pl-0.5"></i></button>
+                            <!-- Mic / Send Toggle -->
+                            <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
+                                <i id="icon-mic" data-lucide="mic" class="w-5 h-5"></i>
+                                <i id="icon-send" data-lucide="send" class="w-5 h-5 pl-0.5 hidden"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -169,7 +167,7 @@
         </div>
     </div>
 
-    <!-- MODALS -->
+    <!-- 4. MODALS (QR, Scanner, Safety, Camera, Video) -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
         <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center">
             <h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3>
@@ -215,6 +213,7 @@
     <script>
         const Utils = {
             escapeHTML: str => str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]),
+            linkify: str => str.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-blue-400 hover:underline">$1</a>'),
             blobRegistry: new Set(),
             addBlob: (url) => Utils.blobRegistry.add(url),
             revokeBlobs: () => { Utils.blobRegistry.forEach(u => URL.revokeObjectURL(u)); Utils.blobRegistry.clear(); },
@@ -222,10 +221,8 @@
             formatBytes: (bytes, decimals = 1) => {
                 if (bytes === 0) return '0 Bytes';
                 const k = 1024;
-                const dm = decimals < 0 ? 0 : decimals;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
                 const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + ['Bytes', 'KB', 'MB', 'GB'][i];
             }
         };
 
@@ -343,9 +340,7 @@
                 if(id) Network.connectWithRetry(id);
             },
             connectWithRetry: async (id, retries = 0) => {
-                // Safe check: Only return if connection exists AND is open
                 if (Network.connections[id]?.conn?.open) return;
-                
                 const conn = Network.peer.connect(id, { reliable: true });
                 conn.on('open', () => {
                     conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
@@ -357,7 +352,6 @@
             handleConn: (conn) => {
                 conn.on('data', data => Network.handleData(conn.peer, data, conn));
                 conn.on('close', () => { delete Network.connections[conn.peer]; UI.updateHeaderStatus(conn.peer, "Offline"); });
-                // If this is incoming, wait for data
             },
             processQueue: async (peerId) => {
                 const pending = await Store.getPendingMessages(peerId);
@@ -377,17 +371,12 @@
                     const pub = await Crypto.importKey(data.key);
                     const shared = await Crypto.deriveShared(pub);
                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                    
                     App.addContact(sender, data.name, pubStr);
-                    
                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
                     
-                    // FIXED: Auto-Reply Handshake Ack
                     conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-
                     if (!App.state.activeChat) UI.loadChat(sender);
                     else if (App.state.activeChat === sender) UI.loadChat(sender);
-
                     UI.showToast(`Connected with ${data.name}!`);
                 }
                 
@@ -395,26 +384,22 @@
                      const pub = await Crypto.importKey(data.key);
                      const shared = await Crypto.deriveShared(pub);
                      const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                     
                      App.addContact(sender, data.name, pubStr);
                      Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
-                     
                      if (App.state.activeChat === sender) UI.loadChat(sender);
-                     else if (!App.state.activeChat) UI.loadChat(sender);
                      UI.showToast("Connection Secured");
                 }
 
                 const connObj = Network.connections[sender];
                 if (!connObj || !connObj.key) return;
 
-                // Handle Receipt
                 if (data.type === 'receipt') {
                      const msgs = await Store.getMessages(sender);
                      const msg = msgs.find(m => m.id === data.msgId);
                      if (msg) {
                          msg.status = data.status;
                          await Store.put('messages', msg.id, msg);
-                         if (App.state.activeChat === sender) UI.loadChat(sender); // Refresh UI
+                         if (App.state.activeChat === sender) UI.updateMessageTick(msg.id, data.status); // Efficient Update
                      }
                      return;
                 }
@@ -423,12 +408,9 @@
                     try {
                         const dec = await Crypto.decryptPayload(data.payload, connObj.key);
                         if(dec.type === 'text') {
-                             App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read');
-                             // Send Receipts
+                             App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', data.id || data.payload.id);
                              conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'delivered' });
-                             if (App.state.activeChat === sender) {
-                                 conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'read' });
-                             }
+                             if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'read' });
                         }
                     } catch(e) {}
                 }
@@ -488,14 +470,12 @@
                              UI.clearFile();
                              return;
                         }
-
                         if(offset >= file.size) {
                              document.getElementById('upload-progress').classList.add('hidden');
                              const url = URL.createObjectURL(file);
                              Utils.addBlob(url);
-                             // Generate Msg ID
                              const msgId = Date.now();
-                             App.addMessage(peerId, { name: file.name, url, mime: file.type, size: file.size }, 'out', 'file', 'sent');
+                             App.addMessage(peerId, { name: file.name, url, mime: file.type, size: file.size }, 'out', 'file', 'sent', msgId);
                              UI.clearFile();
                              return;
                         }
@@ -505,12 +485,10 @@
                         const buf = await slice.arrayBuffer();
                         const enc = await Crypto.encryptBin(buf, connObj.key);
                         connObj.conn.send(enc);
-                        
                         offset += CHUNK;
                         const pct = Math.round((offset/file.size)*100);
                         document.getElementById('progress-bar').style.width = pct + "%";
                         document.getElementById('progress-percent').innerText = pct + "%";
-
                         requestAnimationFrame(streamLoop);
                     };
                     streamLoop();
@@ -519,7 +497,6 @@
                     const text = input.value.trim();
                     const connObj = Network.connections[peerId];
                     const msgId = Date.now();
-                    
                     if (connObj?.conn?.open) {
                         connObj.conn.send({ type: 'msg', id: msgId, payload: await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key) });
                         App.addMessage(peerId, text, 'out', 'text', 'sent', msgId);
@@ -532,7 +509,7 @@
         };
 
         const Media = {
-            localStream: null, call: null, scanner: null,
+            localStream: null, call: null, scanner: null, recording: false, recorder: null, audioChunks: [],
             openCamera: async () => {
                 document.getElementById('camera-modal').classList.remove('hidden');
                 document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
@@ -547,8 +524,7 @@
                 const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
                 c.getContext('2d').drawImage(v,0,0);
                 c.toBlob(b => {
-                    const dt = new DataTransfer(); 
-                    dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
+                    const dt = new DataTransfer(); dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
                     document.getElementById('file-input').files = dt.files;
                     UI.handleFileSelect({target: {files: dt.files}});
                     Media.closeCamera();
@@ -588,6 +564,31 @@
                 if(Media.localStream) Media.localStream.getTracks().forEach(t=>t.stop());
                 if(Media.call) Media.call.close();
                 document.getElementById('video-overlay').classList.add('hidden');
+            },
+            toggleRecord: async () => {
+                if(Media.recording) {
+                     Media.recorder.stop();
+                     Media.recording = false;
+                     document.getElementById('btn-main-action').classList.remove('mic-active');
+                } else {
+                     try {
+                         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                         Media.recorder = new MediaRecorder(stream);
+                         Media.audioChunks = [];
+                         Media.recorder.ondataavailable = e => Media.audioChunks.push(e.data);
+                         Media.recorder.onstop = () => {
+                             const blob = new Blob(Media.audioChunks, { type: 'audio/webm' });
+                             const file = new File([blob], `Voice_${Date.now()}.webm`, { type: 'audio/webm' });
+                             const dt = new DataTransfer(); dt.items.add(file);
+                             document.getElementById('file-input').files = dt.files;
+                             Network.sendMessage(); // Auto send
+                             stream.getTracks().forEach(t => t.stop());
+                         };
+                         Media.recorder.start();
+                         Media.recording = true;
+                         document.getElementById('btn-main-action').classList.add('mic-active');
+                     } catch(e) { alert("Mic Error"); }
+                }
             }
         };
 
@@ -705,7 +706,6 @@
                 }
             },
             showToast: (msg) => {
-                // Simple toast placeholder
                 const t = document.createElement('div');
                 t.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade-in z-[150]";
                 t.innerText = msg;
@@ -744,51 +744,60 @@
             closeChat: () => { document.getElementById('chat-area').classList.add('hidden'); document.getElementById('sidebar-panel').classList.remove('hidden'); },
             handleFileSelect: (e) => { if(e.target.files[0]) { document.getElementById('file-preview-area').classList.remove('hidden'); document.getElementById('file-preview-name').innerText = e.target.files[0].name; } },
             clearFile: () => { document.getElementById('file-input').value = ''; document.getElementById('file-preview-area').classList.add('hidden'); },
-            handleInputKey: (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Network.sendMessage(); }},
+            handleInputKey: (e) => { 
+                if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Network.sendMessage(); }
+                // Toggle Mic/Send
+                const val = document.getElementById('message-input').value.trim();
+                const iconMic = document.getElementById('icon-mic');
+                const iconSend = document.getElementById('icon-send');
+                if(val) { iconMic.classList.add('hidden'); iconSend.classList.remove('hidden'); }
+                else { iconMic.classList.remove('hidden'); iconSend.classList.add('hidden'); }
+            },
+            handleMainAction: () => {
+                const val = document.getElementById('message-input').value.trim();
+                if(val) Network.sendMessage();
+                else Media.toggleRecord();
+            },
             updateHeaderStatus: (id, s) => { if(App.state.activeChat === id) document.getElementById('chat-header-status').innerText = s; },
             sendLocation: () => navigator.geolocation.getCurrentPosition(p => { 
                 const link = `https://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude}`;
                 document.getElementById('message-input').value = link;
                 Network.sendMessage();
             }),
+            updateMessageTick: (id, status) => {
+                const el = document.getElementById(`msg-${id}`);
+                if(el) {
+                    const tickContainer = el.querySelector('.tick-container');
+                    if(tickContainer) {
+                        let icon = 'check', color = 'tick-sent';
+                        if (status === 'delivered') { icon = 'check-check'; color = 'tick-delivered'; }
+                        if (status === 'read') { icon = 'check-check'; color = 'tick-read'; }
+                        tickContainer.innerHTML = `${el.dataset.time} <i data-lucide="${icon}" class="tick-icon ${color} inline-block"></i>`;
+                        lucide.createIcons();
+                    }
+                }
+            },
             renderMessage: (msg) => {
                 const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
                 
                 let content = '';
                 if (msg.type === 'text') {
-                    content = `<div class="text-sm">${msg.content}</div>`;
+                    content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`;
+                } else if (msg.type === 'voice') {
+                     content = `<audio controls src="${msg.content.url}" class="w-48"></audio>`;
                 } else if (msg.type === 'file') {
                     const sizeStr = Utils.formatBytes(msg.content.size);
                     if (msg.content.mime.startsWith('image')) {
-                         content = `
-                            <div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')">
-                                <img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy">
-                            </div>
-                         `;
+                         content = `<div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')"><img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy"></div>`;
+                         // Special Image Bubble
                          const icon = isMe ? (msg.status === 'pending' ? '<i data-lucide="clock" class="tick-icon tick-pending"></i>' : (msg.status === 'sent' ? '<i data-lucide="check" class="tick-icon tick-sent"></i>' : (msg.status === 'delivered' ? '<i data-lucide="check-check" class="tick-icon tick-delivered"></i>' : '<i data-lucide="check-check" class="tick-icon tick-read"></i>'))) : '';
-                         const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in`;
-                         div.innerHTML = `
-                            <div class="p-1 ${bg} rounded-lg shadow relative group">
-                                ${content}
-                                <div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md">
-                                    <span class="text-[10px] text-white/90">${msg.time}</span>
-                                    ${icon}
-                                </div>
-                            </div>`;
+                         const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
+                         div.innerHTML = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
                          c.appendChild(div); c.scrollTop = c.scrollHeight; lucide.createIcons();
                          return;
                     } else {
                         const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
-                        content = `
-                            <div class="flex items-center gap-3 min-w-[200px] p-1">
-                                <div class="w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center text-[#e9edef]"><i data-lucide="file" class="w-5 h-5"></i></div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef]">${msg.content.name}</div>
-                                    <div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,4)}</div>
-                                </div>
-                                <a href="${msg.content.url}" download="${msg.content.name}" class="p-2 hover:bg-black/10 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></a>
-                            </div>
-                        `;
+                        content = `<div class="flex items-center gap-3 min-w-[200px] p-1"><div class="w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center text-[#e9edef]"><i data-lucide="file" class="w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,4)}</div></div><a href="${msg.content.url}" download="${msg.content.name}" class="p-2 hover:bg-black/10 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></a></div>`;
                     }
                 }
 
@@ -800,8 +809,8 @@
                     else if(msg.status === 'read') icon = '<i data-lucide="check-check" class="tick-icon tick-read"></i>';
                 }
 
-                const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in`;
-                div.innerHTML = `<div class="p-2 ${bg} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">${content}<div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1">${msg.time} ${icon}</div></div>`;
+                const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
+                div.innerHTML = `<div class="p-2 ${bg} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">${content}<div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">${msg.time} ${icon}</div></div>`;
                 c.appendChild(div); c.scrollTop = c.scrollHeight; lucide.createIcons();
             }
         };
