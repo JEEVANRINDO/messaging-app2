@@ -67,7 +67,7 @@
         <div class="w-full max-w-sm space-y-4">
             <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
             <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <button id="btn-create-profile" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
+            <button onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
         </div>
     </div>
 
@@ -113,7 +113,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v5.8 Fixed</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v5.9 Fix</span>
             </div>
         </div>
 
@@ -341,10 +341,7 @@
             },
             connectToInput: () => {
                 const id = document.getElementById('input-peer-id').value.trim();
-                if(id) {
-                     if(id === App.state.id) return alert("Cannot connect to self!");
-                     Network.connectWithRetry(id);
-                }
+                if(id) Network.connectWithRetry(id);
             },
             connectWithRetry: async (id, retries = 0) => {
                 if (Network.connections[id]?.conn?.open) return;
@@ -354,18 +351,7 @@
                     conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
                     Network.processQueue(id);
                 });
-                conn.on('error', () => { 
-                    if (retries < 3) {
-                         setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000); 
-                    } else {
-                         UI.showToast("Connection Timeout. Try scanning again.");
-                    }
-                });
-                // Force error catch if handshake never happens
-                setTimeout(() => {
-                    if(!conn.open && retries === 3) UI.showToast("Peer unreachable");
-                }, 5000);
-
+                conn.on('error', () => { if (retries < 3) setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000); });
                 Network.handleConn(conn);
             },
             handleConn: (conn) => {
@@ -449,7 +435,7 @@
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             
-                            // PERSIST FILE AS BLOB
+                            // *** CRITICAL: Force REPLACE using msgId from tracker ***
                             App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
                             delete App.fileChunks[sender];
                         }
@@ -457,7 +443,7 @@
                 }
                 if (data.type === 'file-start') {
                      App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
-                     // Show Receiving Bubble
+                     // Show Receiving Bubble with ID
                      App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'pending', data.id);
                 }
             },
@@ -660,31 +646,13 @@
                 const name = document.getElementById('setup-name').value;
                 const pass = document.getElementById('setup-password').value;
                 if(!name || !pass) return alert("Required");
-                
-                const btn = document.getElementById('btn-create-profile');
-                btn.innerText = "Generating...";
-                btn.disabled = true;
-
-                try {
-                    // Ensure DB is ready
-                    if(!Store.db) await Store.init();
-                    
-                    const id = 'ghost-' + Math.floor(Math.random() * 1000000);
-                    const kp = await Crypto.generateIdentity();
-                    const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass);
-                    const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey);
-                    
-                    await Store.put('config', 'name', name); 
-                    await Store.put('config', 'id', id); 
-                    await Store.put('config', 'encPrivateKey', encPriv); 
-                    await Store.put('config', 'publicKey', pubJWK);
-                    
-                    App.loadMain(id, name, kp.privateKey, kp.publicKey);
-                } catch(e) {
-                    alert("Error: " + e.message);
-                    btn.innerText = "Initialize Identity";
-                    btn.disabled = false;
-                }
+                const id = 'ghost-' + Math.floor(Math.random() * 1000000);
+                const kp = await Crypto.generateIdentity();
+                const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass);
+                const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey);
+                await Store.put('config', 'name', name); await Store.put('config', 'id', id);
+                await Store.put('config', 'encPrivateKey', encPriv); await Store.put('config', 'publicKey', pubJWK);
+                App.loadMain(id, name, kp.privateKey, kp.publicKey);
             },
             login: async () => {
                 const pass = document.getElementById('login-password').value;
@@ -890,8 +858,15 @@
                          content = `<div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')"><img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy"></div>`;
                          const icon = isMe ? Utils.getStatusHtml(msg.status) : '';
                          const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
-                         div.innerHTML = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
-                         c.appendChild(div); c.scrollTop = c.scrollHeight; return;
+                         
+                         // REPLACEMENT LOGIC
+                         const existing = document.getElementById(`msg-${msg.id}`);
+                         const inner = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
+                         
+                         if(existing) existing.innerHTML = inner;
+                         else { div.innerHTML = inner; c.appendChild(div); c.scrollTop = c.scrollHeight; }
+                         lucide.createIcons();
+                         return;
                     } else {
                         // Styled File Card
                         const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
