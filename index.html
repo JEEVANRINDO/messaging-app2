@@ -22,7 +22,7 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0b141a;
+            background-color: #0b141a; /* WhatsApp Dark BG */
             color: #e9edef;
             height: 100dvh; 
             width: 100vw;
@@ -31,6 +31,7 @@
             inset: 0;
         }
 
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #374045; border-radius: 2px; }
@@ -65,6 +66,7 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Tick Marks Styles */
         .tick-icon { width: 16px; height: 16px; margin-left: 2px; }
         .tick-sending { color: #8696a0; }
         .tick-sent { color: #8696a0; }
@@ -346,7 +348,7 @@
         }
 
         async function handleData(sender, data, conn) {
-            // RAW BINARY (Chunk)
+            // BINARY (File Chunk)
             if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
                 const buffer = data instanceof Uint8Array ? data.buffer : data;
                 if (!fileChunks[sender]) return;
@@ -430,9 +432,8 @@
 
                 const ab = await file.arrayBuffer();
                 
-                // Calculate Overhead
-                const CHUNK_SIZE = 16384; 
-                const overhead = 28; // AES-GCM (12 IV + 16 Tag)
+                const CHUNK_SIZE = 64 * 1024; // 64KB chunks for speed
+                const overhead = 28; 
                 const numChunks = Math.ceil(ab.byteLength / CHUNK_SIZE);
                 const totalEncSize = ab.byteLength + (numChunks * overhead);
 
@@ -440,25 +441,27 @@
                 conn.send({ type: 'file-start', id: msgId, name: file.name, size: file.size, mime: file.type, encSize: totalEncSize });
                 
                 let offset = 0;
-                const sendChunk = async () => {
-                    if (offset >= ab.byteLength) {
-                        document.getElementById('upload-progress').classList.add('hidden');
-                        clearFileSelection();
-                        const m = messages[activeChatId].find(x => x.id === msgId);
-                        if(m) { m.status = 'sent'; renderMessages(activeChatId); }
-                        return;
+                
+                // Optimized send loop
+                const sendLoop = async () => {
+                    while (offset < ab.byteLength) {
+                        if (conn.dataChannel.bufferedAmount > 8 * 1024 * 1024) { // Wait if buffer > 8MB
+                            setTimeout(sendLoop, 50);
+                            return;
+                        }
+                        
+                        const chunk = ab.slice(offset, offset + CHUNK_SIZE);
+                        const encChunk = await CryptoLayer.encryptBin(chunk, key);
+                        conn.send(encChunk);
+                        offset += CHUNK_SIZE;
                     }
-
-                    const chunk = ab.slice(offset, offset + CHUNK_SIZE);
-                    const encChunk = await CryptoLayer.encryptBin(chunk, key);
-                    conn.send(encChunk);
                     
-                    offset += CHUNK_SIZE;
-                    
-                    if (conn.dataChannel.bufferedAmount > 1024*1024) setTimeout(sendChunk, 10);
-                    else requestAnimationFrame(sendChunk);
+                    document.getElementById('upload-progress').classList.add('hidden');
+                    clearFileSelection();
+                    const m = messages[activeChatId].find(x => x.id === msgId);
+                    if(m) { m.status = 'sent'; renderMessages(activeChatId); }
                 };
-                sendChunk();
+                setTimeout(sendLoop, 50); // Start after meta
 
             } else {
                 const text = textInput.value.trim();
@@ -656,7 +659,15 @@
             if(id) connectToPeer(id);
         };
         document.getElementById('btn-send').onclick = sendMessage;
-        document.getElementById('message-input').onkeypress = e => e.key==='Enter' && sendMessage();
+        
+        // FIXED INPUT HANDLER
+        document.getElementById('message-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
         document.getElementById('btn-attach').onclick = () => document.getElementById('file-input').click();
         document.getElementById('file-input').onchange = e => {
             if(e.target.files[0]) {
