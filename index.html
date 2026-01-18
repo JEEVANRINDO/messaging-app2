@@ -1,16 +1,17 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
-    <title>GhostMesh | Pro Secure | Optimized</title>
+    <title>GhostMesh | Pro Secure</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0b141a; color: #e9edef; height: 100dvh; width: 100vw; overflow: hidden; position: fixed; inset: 0; }
@@ -24,48 +25,42 @@
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         
-        .file-card-inner { background-color: rgba(0, 0, 0, 0.15); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; }
+        .file-card-inner { background-color: rgba(0, 0, 0, 0.15); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.05); }
         .file-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
         
-        .tick-icon { width: 16px; height: 16px; margin-left: 4px; display: inline-block; vertical-align: bottom; }
-        .tick-pending { color: #8696a0; opacity: 0.6; }
-        .tick-sent { color: #8696a0; }
-        .tick-delivered { color: #8696a0; }
-        .tick-read { color: #53bdeb; }
+        /* Creative Status Orbs */
+        .status-orb { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-left: 4px; transition: all 0.3s ease; }
+        .status-pending { border: 2px solid #8696a0; border-top-color: transparent; animation: spin 1s linear infinite; }
+        .status-sent { border: 1.5px solid #8696a0; background: transparent; }
+        .status-delivered { border: 1.5px solid #8696a0; background: #8696a0; }
+        .status-read { border: 2px solid #53bdeb; background: #53bdeb; box-shadow: 0 0 6px #53bdeb; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
+        /* Audio Player */
+        .audio-card { display: flex; align-items: center; gap: 12px; min-width: 220px; padding: 4px 0; }
+        .audio-play-btn { width: 36px; height: 36px; background: rgba(0,0,0,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
+        .audio-play-btn:hover { background: rgba(0,0,0,0.3); }
+        .waveform { display: flex; align-items: center; gap: 2px; height: 24px; flex: 1; }
+        .bar { width: 3px; background-color: rgba(255,255,255,0.4); border-radius: 2px; height: 40%; transition: height 0.2s; }
+        .playing .bar { animation: soundWave 0.8s ease-in-out infinite alternate; }
+        .playing .bar:nth-child(odd) { animation-duration: 0.6s; }
+        .playing .bar:nth-child(2n) { animation-duration: 0.9s; }
+        .playing .bar:nth-child(3n) { animation-duration: 1.1s; }
+        @keyframes soundWave { 0% { height: 20%; opacity: 0.5; } 100% { height: 100%; opacity: 1; } }
+
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
         .mic-active { animation: pulseRed 1.5s infinite; background-color: #ef4444 !important; }
         @keyframes pulseRed { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .bubble-constraint { max-width: 85%; }
         @media (min-width: 768px) { .bubble-constraint { max-width: 60%; } }
         
-        /* Optimized progress indicators */
-        .upload-speed { font-size: 11px; color: #8696a0; margin-left: 8px; }
-        .download-speed { font-size: 11px; color: #53bdeb; margin-left: 8px; }
-        .chunk-progress { display: inline-block; width: 60px; height: 4px; background: #2a3942; border-radius: 2px; overflow: hidden; margin-left: 8px; vertical-align: middle; }
-        .chunk-progress-fill { height: 100%; background: #00a884; transition: width 0.3s ease; }
-        .connection-quality { display: inline-flex; align-items: center; margin-left: 8px; }
-        .quality-bar { width: 3px; height: 10px; margin-right: 1px; background: #374045; border-radius: 1px; }
-        .quality-bar.active { background: #00a884; }
-        .quality-bar:nth-child(1) { height: 4px; }
-        .quality-bar:nth-child(2) { height: 6px; }
-        .quality-bar:nth-child(3) { height: 8px; }
-        .quality-bar:nth-child(4) { height: 10px; }
-        
-        /* Audio player */
-        .audio-player { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 20px; }
-        .play-btn { width: 32px; height: 32px; border-radius: 50%; background: #00a884; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .audio-track { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-        .audio-fill { height: 100%; background: #00a884; width: 0%; }
-        
-        /* Spinner */
-        .spinner { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        /* Utility */
+        .mirror-x { transform: scaleX(-1); }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
 
-    <!-- ONBOARDING -->
+    <!-- 1. ONBOARDING -->
     <div id="onboarding-screen" class="absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in overflow-y-auto">
         <div class="relative mb-8"><div class="absolute -inset-1 bg-[#00a884] rounded-full opacity-20 blur-xl animate-pulse"></div><i data-lucide="shield-check" class="w-24 h-24 text-[#00a884] relative z-10"></i></div>
         <h1 class="text-3xl font-bold tracking-tight mb-2">GhostMesh Secure</h1>
@@ -77,7 +72,7 @@
         </div>
     </div>
 
-    <!-- LOGIN -->
+    <!-- 2. LOGIN -->
     <div id="login-screen" class="hidden absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
         <i data-lucide="lock" class="w-16 h-16 text-[#00a884] mb-4"></i>
         <h2 class="text-2xl font-bold mb-4">Unlock Identity</h2>
@@ -86,7 +81,7 @@
         <div id="lockout-msg" class="text-red-400 mt-4 hidden text-sm bg-red-900/20 p-2 rounded border border-red-900"></div>
     </div>
 
-    <!-- MAIN UI -->
+    <!-- 3. MAIN UI -->
     <div id="app-layout" class="hidden w-full h-full flex flex-col md:flex-row relative">
         <!-- Sidebar -->
         <div id="sidebar-panel" class="w-full md:w-96 border-r border-[#2a3942] flex flex-col bg-[#111b21] h-full">
@@ -119,7 +114,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v3.0.0 Optimized</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v4.0 Final</span>
             </div>
         </div>
 
@@ -143,12 +138,6 @@
                             <div class="flex items-center text-xs text-[#8696a0]">
                                 <i data-lucide="shield-check" class="w-3 h-3 mr-1 text-[#00a884]"></i>
                                 <span id="chat-header-status" class="truncate w-24">Offline</span>
-                                <div class="connection-quality ml-2">
-                                    <div class="quality-bar active"></div>
-                                    <div class="quality-bar active"></div>
-                                    <div class="quality-bar"></div>
-                                    <div class="quality-bar"></div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -161,31 +150,15 @@
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full pb-20"></div>
                 
                 <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
-                    <div class="progress-details flex justify-between text-xs mb-1">
-                        <div>
-                            <span class="text-[#00a884]">Uploading...</span>
-                            <button onclick="Network.cancelUpload()" class="ml-2 text-red-400 font-bold hover:underline">CANCEL</button>
-                            <span class="upload-speed"></span>
-                        </div>
-                        <div>
-                            <span id="progress-percent" class="text-[#00a884]">0%</span>
-                            <div class="chunk-progress"><div id="chunk-progress-fill" class="chunk-progress-fill" style="width: 0%"></div></div>
-                        </div>
+                    <div class="flex justify-between text-xs text-[#00a884] mb-1">
+                        <span>Uploading... <button onclick="Network.cancelUpload()" class="ml-2 text-red-400 font-bold hover:underline">CANCEL</button></span>
+                        <span id="progress-percent">0%</span>
                     </div>
                     <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="progress-bar" class="bg-[#00a884] h-1 rounded-full" style="width: 0%"></div></div>
                 </div>
 
                 <div id="download-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
-                    <div class="progress-details flex justify-between text-xs mb-1">
-                        <div>
-                            <span class="text-blue-400">Downloading...</span>
-                            <span class="download-speed"></span>
-                        </div>
-                        <div>
-                            <span id="dl-progress-percent" class="text-blue-400">0%</span>
-                            <div class="chunk-progress"><div id="dl-chunk-progress" class="chunk-progress-fill" style="width: 0%"></div></div>
-                        </div>
-                    </div>
+                    <div class="flex justify-between text-xs text-blue-400 mb-1"><span>Downloading...</span><span id="dl-progress-percent">0%</span></div>
                     <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="dl-progress-bar" class="bg-blue-400 h-1 rounded-full" style="width: 0%"></div></div>
                 </div>
 
@@ -204,18 +177,17 @@
                         <div class="flex items-end gap-2 p-2">
                             <div class="flex pb-2 gap-1">
                                 <button onclick="document.getElementById('file-input').click()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="plus" class="w-6 h-6"></i></button>
-                                <input type="file" id="file-input" class="hidden" onchange="UI.handleFileSelect(event)" multiple>
+                                <input type="file" id="file-input" class="hidden" onchange="UI.handleFileSelect(event)">
                                 <button onclick="Media.openCamera()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="camera" class="w-6 h-6"></i></button>
                                 <button onclick="UI.sendLocation()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="map-pin" class="w-6 h-6"></i></button>
                             </div>
                             <div class="flex-1 bg-[#2a3942] rounded-lg min-h-[42px] flex items-center px-4 py-2 mb-1">
-                                <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)">
+                                <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)" oninput="UI.toggleSendIcon()">
                             </div>
                             <div class="pb-1">
                                 <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
                                     <i id="icon-mic" data-lucide="mic" class="w-5 h-5"></i>
                                     <i id="icon-send" data-lucide="send" class="w-5 h-5 pl-0.5 hidden"></i>
-                                    <i id="icon-spinner" data-lucide="loader-2" class="w-5 h-5 hidden spinner"></i>
                                 </button>
                             </div>
                         </div>
@@ -227,109 +199,45 @@
 
     <!-- MODALS -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3><div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit flex justify-center items-center"></div><button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
-    <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><button onclick="UI.stopScanner()" class="mt-4 w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold">Cancel</button></div></div>
+    <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><div class="flex gap-2 mt-4"><button onclick="Media.toggleScannerMirror()" class="flex-1 py-3 bg-blue-500/20 text-blue-400 rounded-xl font-bold border border-blue-500/50">Flip</button><button onclick="UI.stopScanner()" class="flex-1 py-3 bg-red-500/20 text-red-400 rounded-xl font-bold border border-red-500/50">Cancel</button></div></div></div>
     <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3><p class="text-[#8696a0] text-xs mb-4">Verify this number with your peer.</p><div id="safety-number" class="font-mono-safe text-[#00a884] text-2xl font-bold mb-6 tracking-widest break-all"></div><button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
-    <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col"><video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video><div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe"><button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button><button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button><div class="w-16"></div></div></div>
+    <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col"><video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video><div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe"><button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button><button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button><button onclick="Media.flipCameraView()" class="p-4 text-white"><i data-lucide="flip-horizontal" class="w-8 h-8"></i></button></div></div>
     <div id="video-overlay" class="hidden fixed inset-0 z-[140] bg-[#0b141a] flex flex-col p-4 pb-safe"><div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4"><video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video><div class="absolute top-4 right-4 w-28 h-40 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-30"><video id="local-video" autoplay playsinline muted class="w-full h-full object-cover"></video></div></div><div class="h-24 flex items-center justify-center"><button onclick="Media.endCall()" class="p-5 bg-red-500 rounded-full text-white shadow-xl"><i data-lucide="phone-off" class="w-8 h-8"></i></button></div></div>
     <div id="incoming-call-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full animate-bounce-slight"><div class="w-20 h-20 bg-[#2a3942] rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-[#00a884]"><i data-lucide="phone-incoming" class="w-10 h-10 text-[#00a884] animate-pulse"></i></div><h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3><p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4"></p><div class="flex space-x-8 justify-center"><button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400"><div class="p-4 bg-red-500/20 rounded-full"><i data-lucide="phone-off" class="w-8 h-8"></i></div><span class="text-xs">Decline</span></button><button id="btn-accept-call" class="flex flex-col items-center gap-2 text-[#00a884]"><div class="p-4 bg-[#00a884]/20 rounded-full"><i data-lucide="phone" class="w-8 h-8"></i></div><span class="text-xs">Accept</span></button></div></div></div>
 
     <script>
-        // ======================= OPTIMIZATION CONFIG =======================
-        const OPTIMIZATION = {
-            CHUNK_SIZE: 256 * 1024, // 256KB chunks optimal for WebRTC
-            PARALLEL_CHUNKS: 4, // Process 4 chunks in parallel
-            MAX_CONCURRENT_UPLOADS: 2,
-            BUFFER_SIZE: 1024 * 1024, // 1MB buffer for streaming
-            RETRY_ATTEMPTS: 3,
-            RETRY_DELAY: 1000,
-            PROGRESS_UPDATE_INTERVAL: 100 // ms
-        };
-
-        // ======================= UTILITIES =======================
         const Utils = {
             escapeHTML: str => str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]),
             linkify: str => str.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-blue-400 hover:underline">$1</a>'),
-            blobRegistry: new Map(), // Map for better management
-            addBlob: (id, url) => Utils.blobRegistry.set(id, url),
-            revokeBlob: (id) => { 
-                const url = Utils.blobRegistry.get(id);
-                if (url) URL.revokeObjectURL(url);
-                Utils.blobRegistry.delete(id);
-            },
-            revokeBlobs: () => { 
-                Utils.blobRegistry.forEach(url => URL.revokeObjectURL(url));
-                Utils.blobRegistry.clear();
-            },
+            blobRegistry: new Set(),
+            addBlob: (url) => Utils.blobRegistry.add(url),
+            revokeBlobs: () => { Utils.blobRegistry.forEach(u => URL.revokeObjectURL(u)); Utils.blobRegistry.clear(); },
             bufferToHex: (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''),
             formatBytes: (bytes) => {
                 if (bytes === 0) return '0 B';
                 const k=1024, i=Math.floor(Math.log(bytes)/Math.log(k));
                 return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + ['B','KB','MB','GB'][i];
             },
-            formatSpeed: (bytes, seconds) => {
-                if (seconds === 0) return '';
-                const speed = bytes / seconds;
-                return Utils.formatBytes(speed) + '/s';
-            },
-            getTickIcon: (status) => {
-                if (status === 'pending') return `<svg class="tick-icon tick-pending" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 14A6 6 0 118 2a6 6 0 010 12zm.5-6.5V4h-1v4.2l3.2 1.9.5-.8-2.7-1.3z"/></svg>`;
-                if (status === 'sent') return `<svg class="tick-icon tick-sent" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/></svg>`;
-                if (status === 'delivered') return `<svg class="tick-icon tick-delivered" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
-                if (status === 'read') return `<svg class="tick-icon tick-read" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
-                return '';
-            },
-            
-            // Async chunk processing with progress
-            async processFileInChunks(file, processCallback, progressCallback) {
-                const chunkSize = OPTIMIZATION.CHUNK_SIZE;
-                const totalChunks = Math.ceil(file.size / chunkSize);
-                const results = [];
-                
-                for (let i = 0; i < totalChunks; i += OPTIMIZATION.PARALLEL_CHUNKS) {
-                    const chunkPromises = [];
-                    const batchSize = Math.min(OPTIMIZATION.PARALLEL_CHUNKS, totalChunks - i);
-                    
-                    for (let j = 0; j < batchSize; j++) {
-                        const chunkIndex = i + j;
-                        const start = chunkIndex * chunkSize;
-                        const end = Math.min(start + chunkSize, file.size);
-                        const chunk = file.slice(start, end);
-                        
-                        chunkPromises.push(
-                            processCallback(chunk, chunkIndex, totalChunks)
-                                .then(result => {
-                                    if (progressCallback) {
-                                        progressCallback(chunkIndex + 1, totalChunks);
-                                    }
-                                    return result;
-                                })
-                        );
-                    }
-                    
-                    const batchResults = await Promise.all(chunkPromises);
-                    results.push(...batchResults);
-                }
-                
-                return results;
+            getStatusHtml: (status) => {
+                let cl = 'status-orb';
+                if(status === 'pending') cl += ' status-pending';
+                else if(status === 'sent') cl += ' status-sent';
+                else if(status === 'delivered') cl += ' status-delivered';
+                else if(status === 'read') cl += ' status-read';
+                return `<div class="status-container"><div class="${cl}"></div></div>`;
             }
         };
 
-        // ======================= STORAGE =======================
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
-                const req = indexedDB.open("GhostMeshSecure", 3); // Version 3
+                const req = indexedDB.open("GhostMeshSecure", 2);
                 req.onupgradeneeded = e => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains("config")) db.createObjectStore("config");
                     if (!db.objectStoreNames.contains("messages")) {
                         const store = db.createObjectStore("messages", { keyPath: "id" });
                         store.createIndex("peerId", "peerId", { unique: false });
-                        store.createIndex("timestamp", "timestamp", { unique: false });
-                    }
-                    if (!db.objectStoreNames.contains("files")) {
-                        const store = db.createObjectStore("files", { keyPath: "id" });
-                        store.createIndex("messageId", "messageId", { unique: true });
                     }
                 };
                 req.onsuccess = () => { Store.db = req.result; resolve(); };
@@ -337,7 +245,7 @@
             }),
             put: async (store, key, val) => new Promise(r => {
                 const tx = Store.db.transaction(store, "readwrite");
-                if(store === "messages" || store === "files") {
+                if(store === "messages") {
                      tx.objectStore(store).put(val); 
                 } else {
                      key ? tx.objectStore(store).put(val, key) : tx.objectStore(store).put(val);
@@ -362,1067 +270,367 @@
                 const tx = Store.db.transaction("messages", "readwrite");
                 const index = tx.objectStore("messages").index("peerId");
                 index.getAllKeys(peerId).onsuccess = e => { e.target.result.forEach(k => tx.objectStore("messages").delete(k)); tx.oncomplete = r; };
-            }),
-            saveFileBlob: async (messageId, blob) => {
-                const fileId = `file_${messageId}`;
-                await Store.put('files', null, {
-                    id: fileId,
-                    messageId: messageId,
-                    blob: blob,
-                    timestamp: Date.now()
-                });
-                return fileId;
-            },
-            getFileBlob: async (messageId) => {
-                const tx = Store.db.transaction("files", "readonly");
-                const index = tx.objectStore("files").index("messageId");
-                const req = index.get(messageId);
-                return new Promise(r => {
-                    req.onsuccess = () => r(req.result?.blob);
-                });
-            }
+            })
         };
 
-        // ======================= CRYPTO =======================
         const Crypto = {
             keyPair: null,
-            cryptoCache: new Map(), // Cache for derived keys
-            
-            generateIdentity: async () => window.crypto.subtle.generateKey(
-                { name: "ECDH", namedCurve: "P-256" }, 
-                true, 
-                ["deriveKey", "deriveBits"]
-            ),
-            
+            generateIdentity: async () => window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]),
             deriveKeyFromPassword: async (password, salt) => {
-                const cacheKey = `pw_${password}_${salt}`;
-                if (Crypto.cryptoCache.has(cacheKey)) {
-                    return Crypto.cryptoCache.get(cacheKey);
-                }
-                
                 const enc = new TextEncoder();
-                const keyMaterial = await window.crypto.subtle.importKey(
-                    "raw", 
-                    enc.encode(password), 
-                    {name: "PBKDF2"}, 
-                    false, 
-                    ["deriveKey"]
-                );
-                
-                const key = await window.crypto.subtle.deriveKey(
-                    { 
-                        name: "PBKDF2", 
-                        salt, 
-                        iterations: 100000, 
-                        hash: "SHA-256" 
-                    }, 
-                    keyMaterial, 
-                    { name: "AES-GCM", length: 256 }, 
-                    true, 
-                    ["encrypt", "decrypt"]
-                );
-                
-                Crypto.cryptoCache.set(cacheKey, key);
-                return key;
+                const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(password), {name: "PBKDF2"}, false, ["deriveKey"]);
+                return await window.crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
             },
-            
             encryptPrivateKey: async (privKey, password) => {
                 const salt = window.crypto.getRandomValues(new Uint8Array(16));
                 const iv = window.crypto.getRandomValues(new Uint8Array(12));
                 const keyWrapper = await Crypto.deriveKeyFromPassword(password, salt);
                 const jwk = await window.crypto.subtle.exportKey("jwk", privKey);
-                const encrypted = await window.crypto.subtle.encrypt(
-                    { name: "AES-GCM", iv }, 
-                    keyWrapper, 
-                    new TextEncoder().encode(JSON.stringify(jwk))
-                );
-                return { 
-                    salt: Array.from(salt), 
-                    iv: Array.from(iv), 
-                    data: Array.from(new Uint8Array(encrypted)) 
-                };
+                const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, keyWrapper, new TextEncoder().encode(JSON.stringify(jwk)));
+                return { salt: Array.from(salt), iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) };
             },
-            
             decryptPrivateKey: async (encObj, password) => {
                 try {
-                    const salt = new Uint8Array(encObj.salt);
-                    const iv = new Uint8Array(encObj.iv);
-                    const data = new Uint8Array(encObj.data);
+                    const salt = new Uint8Array(encObj.salt), iv = new Uint8Array(encObj.iv), data = new Uint8Array(encObj.data);
                     const keyWrapper = await Crypto.deriveKeyFromPassword(password, salt);
-                    const decrypted = await window.crypto.subtle.decrypt(
-                        { name: "AES-GCM", iv }, 
-                        keyWrapper, 
-                        data
-                    );
-                    return await window.crypto.subtle.importKey(
-                        "jwk", 
-                        JSON.parse(new TextDecoder().decode(decrypted)), 
-                        { name: "ECDH", namedCurve: "P-256" }, 
-                        true, 
-                        ["deriveKey", "deriveBits"]
-                    );
+                    const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, keyWrapper, data);
+                    return await window.crypto.subtle.importKey("jwk", JSON.parse(new TextDecoder().decode(decrypted)), { name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]);
                 } catch(e) { throw new Error("Invalid Password"); }
             },
-            
             importKey: async (str) => {
                 const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
-                return await window.crypto.subtle.importKey(
-                    "spki", 
-                    bytes.buffer, 
-                    { name: "ECDH", namedCurve: "P-256" }, 
-                    true, 
-                    []
-                );
+                return await window.crypto.subtle.importKey("spki", bytes.buffer, { name: "ECDH", namedCurve: "P-256" }, true, []);
             },
-            
-            exportKey: async (key) => btoa(String.fromCharCode(...new Uint8Array(
-                await window.crypto.subtle.exportKey("spki", key)
-            ))),
-            
-            deriveShared: async (pub) => {
-                const cacheKey = `shared_${App.state.pubStr}_${btoa(String.fromCharCode(
-                    ...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))
-                ))}`;
-                
-                if (Crypto.cryptoCache.has(cacheKey)) {
-                    return Crypto.cryptoCache.get(cacheKey);
-                }
-                
-                const key = await window.crypto.subtle.deriveKey(
-                    { name: "ECDH", public: pub }, 
-                    Crypto.keyPair.privateKey, 
-                    { name: "AES-GCM", length: 256 }, 
-                    true, 
-                    ["encrypt", "decrypt"]
-                );
-                
-                Crypto.cryptoCache.set(cacheKey, key);
-                return key;
-            },
-            
+            exportKey: async (key) => btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", key)))),
+            deriveShared: async (pub) => window.crypto.subtle.deriveKey({ name: "ECDH", public: pub }, Crypto.keyPair.privateKey, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]),
             generateFingerprint: async (remotePubStr) => {
-                const local = App.state.pubStr;
-                const combined = local < remotePubStr ? local + remotePubStr : remotePubStr + local;
+                const local = App.state.pubStr, combined = local < remotePubStr ? local + remotePubStr : remotePubStr + local;
                 const hash = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(combined));
                 return Utils.bufferToHex(hash).substring(0, 12).toUpperCase().match(/.{1,4}/g).join(' ');
             },
-            
             encryptPayload: async (dataObj, key) => {
                 const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                const cipher = await window.crypto.subtle.encrypt(
-                    { name: "AES-GCM", iv }, 
-                    key, 
-                    new TextEncoder().encode(JSON.stringify(dataObj))
-                );
-                return { 
-                    iv: Array.from(iv), 
-                    data: Array.from(new Uint8Array(cipher)) 
-                };
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(dataObj)));
+                return { iv: Array.from(iv), data: Array.from(new Uint8Array(cipher)) };
             },
-            
             decryptPayload: async (encObj, key) => {
-                const dec = await window.crypto.subtle.decrypt(
-                    { name: "AES-GCM", iv: new Uint8Array(encObj.iv) }, 
-                    key, 
-                    new Uint8Array(encObj.data)
-                );
+                const dec = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(encObj.iv) }, key, new Uint8Array(encObj.data));
                 return JSON.parse(new TextDecoder().decode(dec));
             },
-            
-            // Optimized batch encryption
-            encryptBinBatch: async (buffers, key) => {
-                const results = [];
-                for (let i = 0; i < buffers.length; i += OPTIMIZATION.PARALLEL_CHUNKS) {
-                    const batch = buffers.slice(i, i + OPTIMIZATION.PARALLEL_CHUNKS);
-                    const promises = batch.map(buf => Crypto.encryptBin(buf, key));
-                    const batchResults = await Promise.all(promises);
-                    results.push(...batchResults);
-                }
-                return results;
-            },
-            
             encryptBin: async (buffer, key) => {
                 const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                const cipher = await window.crypto.subtle.encrypt(
-                    { name: "AES-GCM", iv }, 
-                    key, 
-                    buffer
-                );
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, buffer);
                 const res = new Uint8Array(iv.length + cipher.byteLength);
-                res.set(iv, 0);
-                res.set(new Uint8Array(cipher), 12);
+                res.set(iv, 0); res.set(new Uint8Array(cipher), 12);
                 return res.buffer;
             },
-            
             decryptBin: async (buffer, key) => {
-                const u8 = new Uint8Array(buffer);
-                const iv = u8.slice(0, 12);
-                const data = u8.slice(12);
-                return await window.crypto.subtle.decrypt(
-                    { name: "AES-GCM", iv }, 
-                    key, 
-                    data
-                );
-            },
-            
-            // Stream encryption (for large files)
-            createEncryptStream: async (key) => {
-                const iv = window.crypto.getRandomValues(new Uint8Array(12));
-                return {
-                    iv: iv,
-                    key: key,
-                    encrypt: async (chunk) => {
-                        return await window.crypto.subtle.encrypt(
-                            { name: "AES-GCM", iv: iv }, 
-                            key, 
-                            chunk
-                        );
-                    }
-                };
+                const u8 = new Uint8Array(buffer), iv = u8.slice(0, 12), data = u8.slice(12);
+                return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
             }
         };
 
-        // ======================= NETWORK (OPTIMIZED) =======================
         const Network = {
-            peer: null, 
-            connections: {}, 
-            uploadQueue: new Map(),
-            downloadQueue: new Map(),
-            activeUploads: 0,
-            connectionStats: {},
-            
-            // Initialize with optimized settings
+            peer: null, connections: {}, uploadCancelled: false,
             init: async (id) => {
                 if(Network.peer) return;
-                
-                Network.peer = new Peer(id, { 
-                    pingInterval: 3000,
-                    config: { 
-                        iceServers: [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:global.stun.twilio.com:3478' },
-                            { urls: 'turn:global.turn.twilio.com:3478?transport=udp', 
-                              username: 'ghostmesh', 
-                              credential: 'secure123' }
-                        ],
-                        iceCandidatePoolSize: 10,
-                        rtcpMuxPolicy: 'require'
-                    }
-                });
-                
-                Network.peer.on('open', () => {
-                    console.log('Peer connected with ID:', Network.peer.id);
-                    UI.updateHeaderStatus(App.state.activeChat, "Online");
-                });
-                
+                Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
+                Network.peer.on('open', () => UI.updateHeaderStatus(App.state.activeChat, "Online"));
                 Network.peer.on('connection', Network.handleConn);
                 Network.peer.on('call', Media.handleIncoming);
-                
-                Network.peer.on('disconnected', () => { 
-                    UI.updateHeaderStatus(App.state.activeChat, "Offline"); 
-                    setTimeout(() => {
-                        if (!Network.peer.destroyed) {
-                            Network.peer.reconnect();
-                        }
-                    }, 1000);
-                });
-                
-                Network.peer.on('error', (err) => {
-                    console.error('PeerJS error:', err);
-                });
+                Network.peer.on('disconnected', () => { UI.updateHeaderStatus(App.state.activeChat, "Offline"); setTimeout(() => !Network.peer.destroyed && Network.peer.reconnect(), 2000); });
             },
-            
             connectToInput: () => {
                 const id = document.getElementById('input-peer-id').value.trim();
                 if(id) Network.connectWithRetry(id);
             },
-            
-            // Optimized connection with retry and stats
             connectWithRetry: async (id, retries = 0) => {
                 if (Network.connections[id]?.conn?.open) return;
-                
-                const conn = Network.peer.connect(id, { 
-                    reliable: true,
-                    serialization: 'json',
-                    metadata: { 
-                        version: '3.0.0',
-                        timestamp: Date.now()
-                    }
-                });
-                
+                const conn = Network.peer.connect(id, { reliable: true });
                 conn.on('open', () => {
-                    console.log(`Connected to ${id}`);
-                    
-                    // Send optimized handshake
-                    conn.send({ 
-                        type: 'handshake', 
-                        key: App.state.pubStr, 
-                        name: App.state.name, 
-                        id: App.state.id,
-                        timestamp: Date.now()
-                    });
-                    
+                    // Send Handshake
+                    conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
                     Network.processQueue(id);
-                    Network.updateConnectionStats(id, 'connected');
                 });
-                
-                conn.on('error', (err) => {
-                    console.error(`Connection error to ${id}:`, err);
-                    if (retries < 3) {
-                        setTimeout(() => Network.connectWithRetry(id, retries + 1), 1000 * (retries + 1));
-                    }
-                });
-                
+                conn.on('error', () => { if (retries < 3) setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000); });
                 Network.handleConn(conn);
             },
-            
             handleConn: (conn) => {
                 conn.on('data', data => Network.handleData(conn.peer, data, conn));
-                conn.on('close', () => { 
-                    delete Network.connections[conn.peer]; 
-                    UI.updateHeaderStatus(conn.peer, "Offline");
-                    Network.updateConnectionStats(conn.peer, 'disconnected');
-                });
-                
-                // Initialize connection stats
-                Network.connectionStats[conn.peer] = {
-                    bytesSent: 0,
-                    bytesReceived: 0,
-                    packetsSent: 0,
-                    packetsReceived: 0,
-                    startTime: Date.now(),
-                    lastActivity: Date.now()
-                };
+                conn.on('close', () => { delete Network.connections[conn.peer]; UI.updateHeaderStatus(conn.peer, "Offline"); });
             },
-            
-            updateConnectionStats: (peerId, status) => {
-                if (!Network.connectionStats[peerId]) {
-                    Network.connectionStats[peerId] = {
-                        bytesSent: 0,
-                        bytesReceived: 0,
-                        packetsSent: 0,
-                        packetsReceived: 0,
-                        startTime: Date.now(),
-                        lastActivity: Date.now()
-                    };
-                }
-                Network.connectionStats[peerId].lastActivity = Date.now();
-                Network.connectionStats[peerId].status = status;
-                
-                // Update UI quality indicator
-                UI.updateConnectionQuality(peerId);
-            },
-            
             processQueue: async (peerId) => {
                 const pending = await Store.getPendingMessages(peerId);
                 const connObj = Network.connections[peerId];
                 if(!connObj?.conn?.open) return;
-                
-                // Send pending messages in batches
-                const batchSize = 10;
-                for (let i = 0; i < pending.length; i += batchSize) {
-                    const batch = pending.slice(i, i + batchSize);
-                    for (const msg of batch) {
-                        if (msg.type === 'text') {
-                            connObj.conn.send({ 
-                                type: 'msg', 
-                                payload: await Crypto.encryptPayload({
-                                    content: msg.content, 
-                                    seq: ++connObj.seqOut, 
-                                    ts: Date.now(), 
-                                    type: 'text'
-                                }, connObj.key), 
-                                id: msg.id 
-                            });
-                        }
-                        msg.status = 'sent';
-                        await Store.put('messages', null, msg);
+                for (const msg of pending) {
+                    if (msg.type === 'text') {
+                        connObj.conn.send({ type: 'msg', payload: await Crypto.encryptPayload({ content: msg.content, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key), id: msg.id });
                     }
-                    
-                    // Small delay between batches to prevent flooding
-                    await new Promise(resolve => setTimeout(resolve, 50));
+                    msg.status = 'sent';
+                    await Store.put('messages', null, msg); 
                 }
-                
                 if(App.state.activeChat === peerId) UI.loadChat(peerId);
             },
-            
-            // Optimized file upload with parallel processing
-            uploadFile: async (peerId, file, onProgress) => {
-                if (Network.activeUploads >= OPTIMIZATION.MAX_CONCURRENT_UPLOADS) {
-                    throw new Error("Too many concurrent uploads");
-                }
-                
-                Network.activeUploads++;
-                const connObj = Network.connections[peerId];
-                if (!connObj?.conn?.open) {
-                    Network.activeUploads--;
-                    throw new Error("Peer offline");
-                }
-                
-                const uploadId = `upload_${peerId}_${Date.now()}`;
-                const tracker = {
-                    file: file,
-                    peerId: peerId,
-                    totalChunks: 0,
-                    uploadedChunks: 0,
-                    startTime: Date.now(),
-                    bytesSent: 0,
-                    onProgress: onProgress,
-                    chunks: []
-                };
-                
-                Network.uploadQueue.set(uploadId, tracker);
-                
-                try {
-                    // Calculate optimal chunk size based on file size
-                    const optimalChunkSize = Math.min(
-                        OPTIMIZATION.CHUNK_SIZE,
-                        Math.max(64 * 1024, Math.floor(file.size / 100))
-                    );
-                    
-                    const totalChunks = Math.ceil(file.size / optimalChunkSize);
-                    tracker.totalChunks = totalChunks;
-                    
-                    // Send file metadata
-                    connObj.conn.send({ 
-                        type: 'file-start', 
-                        id: uploadId,
-                        name: file.name, 
-                        mime: file.type, 
-                        size: file.size,
-                        totalChunks: totalChunks,
-                        chunkSize: optimalChunkSize,
-                        timestamp: Date.now()
-                    });
-                    
-                    // Prepare chunks for parallel processing
-                    const chunkPromises = [];
-                    const chunkBuffers = [];
-                    
-                    // Read all chunks first
-                    for (let i = 0; i < totalChunks; i++) {
-                        const start = i * optimalChunkSize;
-                        const end = Math.min(start + optimalChunkSize, file.size);
-                        const chunk = file.slice(start, end);
-                        chunkPromises.push(chunk.arrayBuffer());
-                    }
-                    
-                    const chunks = await Promise.all(chunkPromises);
-                    
-                    // Encrypt chunks in parallel batches
-                    const encryptedChunks = await Utils.processFileInChunks(
-                        file,
-                        async (chunk, index, total) => {
-                            return await Crypto.encryptBin(chunks[index], connObj.key);
-                        },
-                        (current, total) => {
-                            const chunkProgress = Math.round((current / total) * 50);
-                            document.getElementById('chunk-progress-fill').style.width = chunkProgress + '%';
-                        }
-                    );
-                    
-                    // Send encrypted chunks
-                    let sentChunks = 0;
-                    const sendBatch = async (startIdx) => {
-                        const batchSize = OPTIMIZATION.PARALLEL_CHUNKS;
-                        const endIdx = Math.min(startIdx + batchSize, encryptedChunks.length);
-                        
-                        const batchPromises = [];
-                        for (let i = startIdx; i < endIdx; i++) {
-                            batchPromises.push(new Promise((resolve, reject) => {
-                                try {
-                                    // Send chunk with metadata
-                                    const chunkData = {
-                                        type: 'file-chunk',
-                                        uploadId: uploadId,
-                                        index: i,
-                                        total: encryptedChunks.length,
-                                        data: encryptedChunks[i]
-                                    };
-                                    
-                                    connObj.conn.send(chunkData);
-                                    
-                                    tracker.uploadedChunks++;
-                                    tracker.bytesSent += encryptedChunks[i].byteLength;
-                                    
-                                    // Update progress
-                                    const progress = Math.round((tracker.uploadedChunks / tracker.totalChunks) * 100);
-                                    if (tracker.onProgress) {
-                                        tracker.onProgress(progress);
-                                    }
-                                    
-                                    // Update speed
-                                    const elapsed = (Date.now() - tracker.startTime) / 1000;
-                                    const speed = tracker.bytesSent / elapsed;
-                                    document.querySelector('.upload-speed').textContent = Utils.formatBytes(speed) + '/s';
-                                    
-                                    resolve();
-                                } catch (err) {
-                                    reject(err);
-                                }
-                            }));
-                        }
-                        
-                        await Promise.all(batchPromises);
-                        
-                        // Schedule next batch if there are more chunks
-                        if (endIdx < encryptedChunks.length) {
-                            // Small delay to prevent flooding
-                            await new Promise(resolve => setTimeout(resolve, 10));
-                            await sendBatch(endIdx);
-                        } else {
-                            // Upload complete
-                            connObj.conn.send({
-                                type: 'file-complete',
-                                uploadId: uploadId,
-                                timestamp: Date.now()
-                            });
-                            
-                            // Save message with file reference
-                            const msgId = Date.now();
-                            await App.addMessage(peerId, {
-                                name: file.name,
-                                blob: file,
-                                mime: file.type,
-                                size: file.size,
-                                uploadId: uploadId
-                            }, 'out', 'file', 'sent', msgId);
-                            
-                            Network.uploadQueue.delete(uploadId);
-                            Network.activeUploads--;
-                            
-                            // Clear UI
-                            setTimeout(() => {
-                                document.getElementById('upload-progress').classList.add('hidden');
-                            }, 1000);
-                        }
-                    };
-                    
-                    // Start sending batches
-                    await sendBatch(0);
-                    
-                } catch (error) {
-                    console.error('Upload error:', error);
-                    Network.uploadQueue.delete(uploadId);
-                    Network.activeUploads--;
-                    throw error;
-                }
-            },
-            
-            // Optimized file download
-            handleFileDownload: async (sender, metadata) => {
-                const downloadId = metadata.id || `download_${Date.now()}`;
-                const tracker = {
-                    ...metadata,
-                    downloadId: downloadId,
-                    receivedChunks: new Array(metadata.totalChunks).fill(null),
-                    receivedCount: 0,
-                    startTime: Date.now(),
-                    bytesReceived: 0,
-                    chunks: []
-                };
-                
-                App.fileChunks[sender] = tracker;
-                
-                // Show download progress
-                if (App.state.activeChat === sender) {
-                    document.getElementById('download-progress').classList.remove('hidden');
-                }
-                
-                return downloadId;
-            },
-            
-            handleFileChunk: async (sender, chunkData) => {
-                const tracker = App.fileChunks[sender];
-                if (!tracker || tracker.downloadId !== chunkData.uploadId) return;
-                
-                const connObj = Network.connections[sender];
-                if (!connObj?.key) return;
-                
-                try {
-                    // Decrypt chunk
-                    const decrypted = await Crypto.decryptBin(chunkData.data, connObj.key);
-                    
-                    // Store chunk
-                    tracker.receivedChunks[chunkData.index] = decrypted;
-                    tracker.receivedCount++;
-                    tracker.bytesReceived += chunkData.data.byteLength;
-                    
-                    // Update progress
-                    if (App.state.activeChat === sender) {
-                        const progress = Math.round((tracker.receivedCount / tracker.totalChunks) * 100);
-                        const chunkProgress = Math.round((tracker.receivedCount / tracker.totalChunks) * 50) + 50;
-                        
-                        document.getElementById('dl-progress-bar').style.width = progress + "%";
-                        document.getElementById('dl-progress-percent').innerText = progress + "%";
-                        document.getElementById('dl-chunk-progress').style.width = chunkProgress + '%';
-                        
-                        // Update speed
-                        const elapsed = (Date.now() - tracker.startTime) / 1000;
-                        const speed = tracker.bytesReceived / elapsed;
-                        document.querySelector('.download-speed').textContent = Utils.formatBytes(speed) + '/s';
-                    }
-                    
-                    // Check if all chunks received
-                    if (tracker.receivedCount === tracker.totalChunks) {
-                        // Combine chunks
-                        const blob = new Blob(tracker.receivedChunks, { type: tracker.mime });
-                        
-                        // Save file to storage
-                        const msgId = Date.now();
-                        await App.addMessage(sender, {
-                            name: tracker.name,
-                            blob: blob,
-                            mime: tracker.mime,
-                            size: tracker.size,
-                            downloadId: tracker.downloadId
-                        }, 'in', tracker.mime.startsWith('audio') ? 'voice' : 'file', 'read', msgId);
-                        
-                        // Send receipt
-                        if (connObj.conn.open) {
-                            connObj.conn.send({
-                                type: 'file-receipt',
-                                downloadId: tracker.downloadId,
-                                status: 'received',
-                                timestamp: Date.now()
-                            });
-                        }
-                        
-                        // Cleanup
-                        delete App.fileChunks[sender];
-                        
-                        // Hide progress
-                        if (App.state.activeChat === sender) {
-                            setTimeout(() => {
-                                document.getElementById('download-progress').classList.add('hidden');
-                            }, 1000);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Chunk processing error:', error);
-                }
-            },
-            
-            // Optimized data handler
             handleData: async (sender, data, conn) => {
-                Network.updateConnectionStats(sender, 'active');
-                
-                // Track data for stats
-                if (Network.connectionStats[sender]) {
-                    Network.connectionStats[sender].bytesReceived += 
-                        data instanceof ArrayBuffer ? data.byteLength : 
-                        JSON.stringify(data).length;
-                    Network.connectionStats[sender].packetsReceived++;
-                }
-                
                 if (data.type === 'handshake') {
-                    try {
-                        const pub = await Crypto.importKey(data.key);
-                        const shared = await Crypto.deriveShared(pub);
-                        const pubStr = btoa(String.fromCharCode(...new Uint8Array(
-                            await window.crypto.subtle.exportKey("spki", pub)
-                        )));
-                        
-                        App.addContact(sender, data.name, pubStr);
-                        Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
-                        
-                        // Send optimized handshake ack
-                        conn.send({ 
-                            type: 'handshake-ack', 
-                            key: App.state.pubStr, 
-                            name: App.state.name, 
-                            id: App.state.id,
-                            timestamp: Date.now()
-                        });
-                        
-                        if (!App.state.activeChat) UI.loadChat(sender);
-                        else if (App.state.activeChat === sender) UI.loadChat(sender);
-                        
-                        UI.showToast(`Connected with ${data.name}!`);
-                    } catch (e) {
-                        console.error('Handshake error:', e);
-                    }
+                    const pub = await Crypto.importKey(data.key);
+                    const shared = await Crypto.deriveShared(pub);
+                    const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                    App.addContact(sender, data.name, pubStr);
+                    Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                    conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
+                    if (!App.state.activeChat) UI.loadChat(sender);
+                    else if (App.state.activeChat === sender) UI.loadChat(sender);
+                    UI.showToast(`Connected with ${data.name}!`);
                 }
-                
                 if (data.type === 'handshake-ack') {
-                    try {
-                        const pub = await Crypto.importKey(data.key);
-                        const shared = await Crypto.deriveShared(pub);
-                        const pubStr = btoa(String.fromCharCode(...new Uint8Array(
-                            await window.crypto.subtle.exportKey("spki", pub)
-                        )));
-                        
-                        App.addContact(sender, data.name, pubStr);
-                        Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
-                        
-                        if (App.state.activeChat === sender) UI.loadChat(sender);
-                        else if (!App.state.activeChat) UI.loadChat(sender);
-                        UI.showToast("Connection Secured");
-                    } catch (e) {
-                        console.error('Handshake ack error:', e);
-                    }
+                     const pub = await Crypto.importKey(data.key);
+                     const shared = await Crypto.deriveShared(pub);
+                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                     App.addContact(sender, data.name, pubStr);
+                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                     if (App.state.activeChat === sender) UI.loadChat(sender);
+                     else if (!App.state.activeChat) UI.loadChat(sender);
+                     UI.showToast("Connection Secured");
                 }
-                
                 const connObj = Network.connections[sender];
                 if (!connObj || !connObj.key) return;
-                
-                // Handle file operations
-                if (data.type === 'file-start') {
-                    await Network.handleFileDownload(sender, data);
-                    return;
-                }
-                
-                if (data.type === 'file-chunk') {
-                    await Network.handleFileChunk(sender, data);
-                    return;
-                }
-                
-                if (data.type === 'file-complete') {
-                    // File transfer complete
-                    console.log('File transfer complete:', data.uploadId);
-                    return;
-                }
-                
-                if (data.type === 'file-receipt') {
-                    // Update message status if needed
-                    return;
-                }
-                
-                // Handle message receipts
+
                 if (data.type === 'receipt') {
-                    const msgs = await Store.getMessages(sender);
-                    const msg = msgs.find(m => m.id === data.msgId);
-                    if (msg) {
-                        msg.status = data.status;
-                        await Store.put('messages', null, msg);
-                        if (App.state.activeChat === sender) {
-                            UI.updateMessageTick(msg.id, data.status);
-                        }
-                    }
-                    return;
+                     const msgs = await Store.getMessages(sender);
+                     const msg = msgs.find(m => m.id === data.msgId);
+                     if (msg) {
+                         msg.status = data.status;
+                         await Store.put('messages', null, msg);
+                         if (App.state.activeChat === sender) UI.updateMessageTick(msg.id, data.status);
+                     }
+                     return;
                 }
-                
-                // Handle text messages
+
                 if (data.type === 'msg') {
                     try {
                         const dec = await Crypto.decryptPayload(data.payload, connObj.key);
-                        if (dec.type === 'text') {
-                            const msgId = data.id || Date.now();
-                            await App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', msgId);
-                            
-                            // Send delivery receipt
-                            if (conn.open) {
-                                conn.send({ 
-                                    type: 'receipt', 
-                                    msgId: msgId, 
-                                    status: 'delivered',
-                                    timestamp: Date.now()
-                                });
-                                
-                                // Send read receipt if chat is active
-                                if (App.state.activeChat === sender) {
-                                    conn.send({ 
-                                        type: 'receipt', 
-                                        msgId: msgId, 
-                                        status: 'read',
-                                        timestamp: Date.now()
-                                    });
-                                }
-                            }
+                        if(dec.type === 'text') {
+                             App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', data.id || data.payload.id);
+                             conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'delivered' });
+                             if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'read' });
                         }
-                    } catch (e) {
-                        console.error('Message decryption error:', e);
-                    }
+                    } catch(e) {}
+                }
+                
+                if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
+                    const tracker = App.fileChunks[sender];
+                    if (!tracker) return;
+                    try {
+                        const dec = await Crypto.decryptBin(data, connObj.key);
+                        tracker.chunks.push(dec);
+                        tracker.received += data.byteLength;
+                        if (App.state.activeChat === sender) {
+                            const pct = Math.round((tracker.received / tracker.encSize) * 100);
+                            document.getElementById('download-progress').classList.remove('hidden');
+                            document.getElementById('dl-progress-bar').style.width = pct + "%";
+                            document.getElementById('dl-progress-percent').innerText = pct + "%";
+                        }
+                        if (tracker.received >= tracker.encSize) {
+                            document.getElementById('download-progress').classList.add('hidden');
+                            const blob = new Blob(tracker.chunks, { type: tracker.mime });
+                            
+                            // *** CRITICAL: Fix "Double Bubble" by passing MsgID to Update ***
+                            App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
+                            
+                            delete App.fileChunks[sender];
+                        }
+                    } catch(e){}
+                }
+                if (data.type === 'file-start') {
+                     App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
+                     // Show Receiving Bubble
+                     App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'pending', data.id);
                 }
             },
-            
-            // Optimized message sending
+            cancelUpload: () => { Network.uploadCancelled = true; },
             sendMessage: async () => {
                 if (!App.state.activeChat) return;
+                const peerId = App.state.activeChat, input = document.getElementById('message-input'), fileInput = document.getElementById('file-input');
                 
-                const peerId = App.state.activeChat;
-                const input = document.getElementById('message-input');
-                const fileInput = document.getElementById('file-input');
-                
-                UI.setSendingState(true);
-                
-                try {
-                    // Handle file upload
-                    if (fileInput.files.length > 0) {
-                        const files = Array.from(fileInput.files);
-                        
-                        for (const file of files) {
-                            // Validate file size
-                            if (file.size > 100 * 1024 * 1024) {
-                                alert("File size must be less than 100MB");
-                                continue;
-                            }
-                            
-                            // Show upload progress
-                            document.getElementById('upload-progress').classList.remove('hidden');
-                            
-                            // Start upload
-                            await Network.uploadFile(peerId, file, (progress) => {
-                                document.getElementById('progress-bar').style.width = progress + "%";
-                                document.getElementById('progress-percent').innerText = progress + "%";
-                            });
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    if (file.size > 50*1024*1024) { alert("File > 50MB"); UI.clearFile(); return; }
+                    const connObj = Network.connections[peerId];
+                    if (!connObj?.conn?.open) return alert("Peer Offline");
+
+                    Network.uploadCancelled = false;
+                    const CHUNK = 256 * 1024;
+                    const overhead = 28;
+                    const numChunks = Math.ceil(file.size / CHUNK);
+                    const totalEncSize = file.size + (numChunks * overhead);
+
+                    const msgId = Date.now();
+                    // OPTIMISTIC RENDER: Pending
+                    App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
+                    UI.clearFile();
+
+                    connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: file.type, encSize: totalEncSize });
+                    
+                    let offset = 0;
+                    document.getElementById('upload-progress').classList.remove('hidden');
+                    
+                    const streamLoop = async () => {
+                        if (Network.uploadCancelled) {
+                             document.getElementById('upload-progress').classList.add('hidden');
+                             return;
                         }
-                        
-                        UI.clearFile();
-                    } 
-                    // Handle text message
-                    else if (input.value.trim()) {
-                        const text = input.value.trim();
-                        const connObj = Network.connections[peerId];
-                        const msgId = Date.now();
-                        
-                        if (connObj?.conn?.open) {
-                            // Send with optimized payload
-                            const payload = await Crypto.encryptPayload({
-                                content: text,
-                                seq: ++connObj.seqOut,
-                                ts: Date.now(),
-                                type: 'text'
-                            }, connObj.key);
-                            
-                            connObj.conn.send({ 
-                                type: 'msg', 
-                                id: msgId, 
-                                payload: payload,
-                                timestamp: Date.now()
-                            });
-                            
-                            await App.addMessage(peerId, text, 'out', 'text', 'sent', msgId);
-                        } else {
-                            // Queue for later delivery
-                            await App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
+                        if(offset >= file.size) {
+                             document.getElementById('upload-progress').classList.add('hidden');
+                             // Update to SENT locally after upload done
+                             const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
+                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                             return;
                         }
-                        
-                        input.value = '';
+                        if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
+
+                        const slice = file.slice(offset, offset + CHUNK);
+                        const buf = await slice.arrayBuffer();
+                        const enc = await Crypto.encryptBin(buf, connObj.key);
+                        connObj.conn.send(enc);
+                        offset += CHUNK;
+                        const pct = Math.round((offset/file.size)*100);
+                        document.getElementById('progress-bar').style.width = pct + "%";
+                        document.getElementById('progress-percent').innerText = pct + "%";
+                        requestAnimationFrame(streamLoop);
+                    };
+                    streamLoop();
+                } 
+                else if (input.value.trim()) {
+                    const text = input.value.trim();
+                    const connObj = Network.connections[peerId];
+                    const msgId = Date.now();
+                    
+                    // OPTIMISTIC RENDER: Pending
+                    App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
+                    input.value = '';
+                    UI.toggleSendIcon();
+
+                    if (connObj?.conn?.open) {
+                        try {
+                            const encPayload = await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key);
+                            connObj.conn.send({ type: 'msg', id: msgId, payload: encPayload });
+                            // Update to Sent
+                            const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
+                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                        } catch(e) { console.error("Encryption Failed", e); alert("Encryption Error"); }
                     }
-                } catch (error) {
-                    console.error('Send error:', error);
-                    UI.showToast("Send failed: " + error.message);
-                } finally {
-                    UI.setSendingState(false);
-                    UI.handleInputKey({key:'a'});
                 }
-            },
-            
-            cancelUpload: () => {
-                // Cancel all uploads for active chat
-                const peerId = App.state.activeChat;
-                Network.uploadQueue.forEach((tracker, id) => {
-                    if (tracker.peerId === peerId) {
-                        Network.uploadQueue.delete(id);
-                    }
-                });
-                
-                document.getElementById('upload-progress').classList.add('hidden');
-                UI.clearFile();
             }
         };
 
-        // ======================= MEDIA =======================
         const Media = {
             localStream: null, call: null, scanner: null, recording: false, recorder: null, audioChunks: [],
-            
-            openCamera: async () => { 
-                try {
-                    document.getElementById('camera-modal').classList.remove('hidden'); 
-                    document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({
-                        video: {facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 }},
-                        audio: false
-                    }); 
-                } catch (e) {
-                    alert("Camera access denied");
-                }
-            },
-            
-            closeCamera: () => { 
-                document.getElementById('camera-modal').classList.add('hidden'); 
-                const v = document.getElementById('camera-preview'); 
-                if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop()); 
-            },
-            
+            openCamera: async () => { document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}}); },
+            closeCamera: () => { document.getElementById('camera-modal').classList.add('hidden'); const v = document.getElementById('camera-preview'); if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop()); },
             takePhoto: () => {
-                const v = document.getElementById('camera-preview'); 
-                const c = document.createElement('canvas');
-                c.width = v.videoWidth;
-                c.height = v.videoHeight;
-                c.getContext('2d').drawImage(v,0,0);
-                
+                const v = document.getElementById('camera-preview'); const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0);
                 c.toBlob(b => {
-                    const dt = new DataTransfer(); 
-                    dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
+                    const dt = new DataTransfer(); dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
                     document.getElementById('file-input').files = dt.files;
                     UI.handleFileSelect({target: {files: dt.files}});
                     Media.closeCamera();
-                }, 'image/jpeg', 0.85); // 85% quality
+                }, 'image/jpeg');
             },
-            
             toggleRecordUI: () => {
-                const normal = document.getElementById('normal-input-ui');
-                const rec = document.getElementById('recording-ui');
-                if(normal && rec) {
-                    normal.classList.add('hidden');
-                    rec.classList.remove('hidden');
-                    Media.startRecord();
-                }
+                 const normal = document.getElementById('normal-input-ui');
+                 const rec = document.getElementById('recording-ui');
+                 if(normal && rec) {
+                     normal.classList.add('hidden');
+                     rec.classList.remove('hidden');
+                     Media.startRecord();
+                 }
             },
-            
             cancelRecord: () => {
                 if (Media.recorder) Media.recorder.stop();
                 Media.recording = false;
                 document.getElementById('recording-ui').classList.add('hidden');
                 document.getElementById('normal-input-ui').classList.remove('hidden');
-                document.getElementById('btn-main-action').classList.remove('mic-active');
             },
-            
             startRecord: async () => {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            sampleRate: 44100
-                        } 
-                    });
-                    Media.recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-                    Media.audioChunks = [];
-                    Media.recorder.ondataavailable = e => Media.audioChunks.push(e.data);
-                    Media.recorder.onstop = () => {
-                        if (Media.recording) {
-                            const blob = new Blob(Media.audioChunks, { type: 'audio/webm' });
-                            const file = new File([blob], `Voice_${Date.now()}.webm`, { type: 'audio/webm' });
-                            const dt = new DataTransfer(); 
-                            dt.items.add(file);
-                            document.getElementById('file-input').files = dt.files;
-                            UI.handleFileSelect({target: {files: dt.files}});
-                        }
-                        stream.getTracks().forEach(t => t.stop());
-                    };
-                    Media.recorder.start(100); // 100ms chunks
-                    Media.recording = true;
-                    document.getElementById('btn-main-action').classList.add('mic-active');
-                } catch(e) { 
-                    console.error("Mic Error:", e);
-                    alert("Microphone access required");
-                }
+                 try {
+                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                     Media.recorder = new MediaRecorder(stream);
+                     Media.audioChunks = [];
+                     Media.recorder.ondataavailable = e => Media.audioChunks.push(e.data);
+                     Media.recorder.onstop = () => {
+                         if (Media.recording) {
+                             const blob = new Blob(Media.audioChunks, { type: 'audio/webm' });
+                             const file = new File([blob], `Voice.webm`, { type: 'audio/webm' });
+                             const dt = new DataTransfer(); dt.items.add(file);
+                             document.getElementById('file-input').files = dt.files;
+                             Network.sendMessage();
+                             UI.handleFileSelect({target: {files: dt.files}});
+                         }
+                         stream.getTracks().forEach(t => t.stop());
+                     };
+                     Media.recorder.start();
+                     Media.recording = true;
+                     document.getElementById('btn-main-action').classList.add('mic-active');
+                 } catch(e) { alert("Mic Error"); }
             },
-            
             stopRecord: () => {
-                if(Media.recorder) Media.recorder.stop();
-                Media.recording = false;
-                document.getElementById('recording-ui').classList.add('hidden');
-                document.getElementById('normal-input-ui').classList.remove('hidden');
-                document.getElementById('btn-main-action').classList.remove('mic-active');
+                 if(Media.recorder) Media.recorder.stop();
+                 document.getElementById('recording-ui').classList.add('hidden');
+                 document.getElementById('normal-input-ui').classList.remove('hidden');
             },
-            
             startCall: async (video) => {
                 if(!App.state.activeChat) return;
                 try {
-                    const constraints = {
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true
-                        },
-                        video: video ? {
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 },
-                            frameRate: { ideal: 30 }
-                        } : false
-                    };
-                    
-                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    const stream = await navigator.mediaDevices.getUserMedia({ video, audio: true });
                     Media.localStream = stream;
                     if(video) document.getElementById('local-video').srcObject = stream;
                     document.getElementById('video-overlay').classList.remove('hidden');
-                    
-                    const call = Network.peer.call(App.state.activeChat, stream, { 
-                        metadata: { video, timestamp: Date.now() }
-                    });
+                    const call = Network.peer.call(App.state.activeChat, stream, { metadata: { video } });
                     Media.setupCall(call, video);
-                } catch(e) { 
-                    console.error("Call Error:", e);
-                    alert("Call failed: " + e.message);
-                }
+                } catch(e) { alert("Call Error: " + e); }
             },
-            
             handleIncoming: (call) => {
-                const modal = document.getElementById('incoming-call-modal');
-                document.getElementById('caller-id-display').textContent = call.peer;
-                document.getElementById('incoming-call-title').textContent = 
-                    call.metadata.video ? 'Incoming Video Call' : 'Incoming Audio Call';
-                
-                modal.classList.remove('hidden');
-                
-                document.getElementById('btn-accept-call').onclick = () => {
-                    modal.classList.add('hidden');
-                    navigator.mediaDevices.getUserMedia({ 
-                        video: call.metadata.video, 
-                        audio: true 
-                    }).then(stream => {
+                if(confirm(`Incoming ${call.metadata.video?'Video':'Audio'} Call`)) {
+                    navigator.mediaDevices.getUserMedia({ video: call.metadata.video, audio: true }).then(stream => {
                         Media.localStream = stream;
                         if(call.metadata.video) document.getElementById('local-video').srcObject = stream;
                         document.getElementById('video-overlay').classList.remove('hidden');
                         call.answer(stream);
                         Media.setupCall(call, call.metadata.video);
-                    }).catch(() => {
-                        call.close();
-                        alert("Media access denied");
                     });
-                };
-                
-                document.getElementById('btn-decline-call').onclick = () => {
-                    modal.classList.add('hidden');
-                    call.close();
-                };
+                } else call.close();
             },
-            
             setupCall: (call, video) => {
                 Media.call = call;
-                call.on('stream', remoteStream => {
+                call.on('stream', r => {
                     const v = document.getElementById('remote-video');
-                    if(video) {
-                        v.srcObject = remoteStream;
-                    } else {
-                        const a = new Audio();
-                        a.srcObject = remoteStream;
-                        a.play();
-                    }
+                    if(video) v.srcObject = r; else { const a = new Audio(); a.srcObject = r; a.play(); }
                 });
                 call.on('close', Media.endCall);
-                call.on('error', (err) => {
-                    console.error('Call error:', err);
-                    Media.endCall();
-                });
             },
-            
             endCall: () => {
-                if(Media.localStream) {
-                    Media.localStream.getTracks().forEach(t => {
-                        t.stop();
-                        t.enabled = false;
-                    });
-                    Media.localStream = null;
-                }
-                if(Media.call) {
-                    Media.call.close();
-                    Media.call = null;
-                }
+                if(Media.localStream) Media.localStream.getTracks().forEach(t=>t.stop());
+                if(Media.call) Media.call.close();
                 document.getElementById('video-overlay').classList.add('hidden');
-                document.getElementById('incoming-call-modal').classList.add('hidden');
+            },
+            // FLIP Logic
+            flipCameraView: () => {
+                const v = document.getElementById('camera-preview');
+                v.classList.toggle('mirror-x'); // Toggle CSS mirror
+            },
+            toggleScannerMirror: () => {
+                const reader = document.getElementById('reader');
+                // The actual video element is inside reader
+                const video = reader.querySelector('video');
+                if(video) video.classList.toggle('mirror-x');
             }
         };
 
-        // ======================= APP CORE =======================
         const App = {
             state: { id: null, name: null, activeChat: null, contacts: {}, pubStr: null },
             fileChunks: {},
-            messageCache: new Map(),
-            
             init: async () => {
                 lucide.createIcons();
                 await Store.init();
@@ -1434,252 +642,113 @@
                     App.state.id = id;
                     App.state.name = name;
                 }
-                
-                // Start memory cleanup
-                setInterval(App.cleanupMemory, 30000);
             },
-            
             createProfile: async () => {
-                const name = document.getElementById('setup-name').value.trim();
+                const name = document.getElementById('setup-name').value;
                 const pass = document.getElementById('setup-password').value;
-                if(!name || !pass) return alert("Name and password required");
-                
-                // Generate secure ID
-                const randomBytes = new Uint8Array(8);
-                window.crypto.getRandomValues(randomBytes);
-                const id = 'ghost-' + Array.from(randomBytes).map(b => b.toString(16).padStart(2,'0')).join('');
-                
+                if(!name || !pass) return alert("Required");
+                const id = 'ghost-' + Math.floor(Math.random() * 1000000);
                 const kp = await Crypto.generateIdentity();
                 const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass);
                 const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey);
-                
-                await Store.put('config', 'name', name);
-                await Store.put('config', 'id', id);
-                await Store.put('config', 'encPrivateKey', encPriv);
-                await Store.put('config', 'publicKey', pubJWK);
-                
+                await Store.put('config', 'name', name); await Store.put('config', 'id', id);
+                await Store.put('config', 'encPrivateKey', encPriv); await Store.put('config', 'publicKey', pubJWK);
                 App.loadMain(id, name, kp.privateKey, kp.publicKey);
             },
-            
             login: async () => {
                 const pass = document.getElementById('login-password').value;
                 try {
-                    const priv = await Crypto.decryptPrivateKey(
-                        await Store.get('config', 'encPrivateKey'), 
-                        pass
-                    );
-                    const pub = await window.crypto.subtle.importKey(
-                        "spki", 
-                        await Store.get('config', 'publicKey'), 
-                        {name:"ECDH",namedCurve:"P-256"}, 
-                        true, 
-                        []
-                    );
+                    const priv = await Crypto.decryptPrivateKey(await Store.get('config', 'encPrivateKey'), pass);
+                    const pub = await window.crypto.subtle.importKey("spki", await Store.get('config', 'publicKey'), {name:"ECDH",namedCurve:"P-256"}, true, []);
                     App.loadMain(App.state.id, App.state.name, priv, pub);
-                } catch(e) { 
-                    alert("Wrong password or corrupted data");
-                }
+                } catch(e) { alert("Wrong Password"); }
             },
-            
             loadMain: async (id, name, priv, pub) => {
                 Crypto.keyPair = { privateKey: priv, publicKey: pub };
                 App.state.pubStr = await Crypto.exportKey(pub);
-                
                 document.getElementById('onboarding-screen').classList.add('hidden');
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-layout').classList.remove('hidden');
-                
                 App.state.contacts = await Store.get('config', 'contacts') || {};
-                UI.renderContacts(); 
-                UI.updateSelf(name); 
-                Network.init(id);
+                UI.renderContacts(); UI.updateSelf(name); Network.init(id);
             },
-            
             addContact: (id, name, pubKey) => {
-                App.state.contacts[id] = { 
-                    id, 
-                    name: name || "Unknown", 
-                    pubKey: pubKey || App.state.contacts[id]?.pubKey 
-                };
+                App.state.contacts[id] = { id, name: name || "Unknown", pubKey: pubKey || App.state.contacts[id]?.pubKey };
                 Store.put('config', 'contacts', App.state.contacts);
                 UI.renderContacts();
             },
-            
             deleteContact: async (id) => {
                 if(!confirm("Delete contact and all messages?")) return;
                 delete App.state.contacts[id];
                 await Store.put('config', 'contacts', App.state.contacts);
                 await Store.deleteMessagesForPeer(id);
-                
-                if(Network.connections[id]) {
-                    Network.connections[id].conn.close();
-                }
+                if(Network.connections[id]) Network.connections[id].conn.close();
                 delete Network.connections[id];
-                
                 if(App.state.activeChat === id) UI.closeChat();
                 UI.renderContacts();
             },
-            
-            addMessage: async (peerId, content, dir, type, status, id) => {
-                const msg = { 
-                    id: id || Date.now(), 
-                    peerId, 
-                    content, 
-                    dir, 
-                    type, 
-                    status, 
-                    timestamp: Date.now(),
-                    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
-                };
-                
-                // Cache for quick access
-                App.messageCache.set(msg.id, msg);
-                
-                // Save to storage
-                await Store.put('messages', null, msg);
-                
-                // Save file blob if present
-                if ((type === 'file' || type === 'voice') && content.blob) {
-                    await Store.saveFileBlob(msg.id, content.blob);
-                }
-                
-                if(App.state.activeChat === peerId) {
-                    UI.renderMessage(msg);
-                }
-                
-                return msg;
+            addMessage: (peerId, content, dir, type, status, id) => {
+                const msg = { id: id || Date.now(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
+                // Persist the actual Blob object in IDB, not just the URL
+                Store.put('messages', null, msg); // Use null key for IDB keyPath
+                if(App.state.activeChat === peerId) UI.renderMessage(msg);
             },
-            
             exportIdentity: async () => {
                 const data = {
-                    id: App.state.id, 
-                    name: App.state.name,
+                    id: App.state.id, name: App.state.name,
                     priv: await Store.get('config', 'encPrivateKey'),
-                    contacts: App.state.contacts, 
-                    messages: await Store.getAllMessages(),
-                    version: '3.0.0',
-                    exportDate: new Date().toISOString()
+                    contacts: App.state.contacts, msgs: await Store.getAllMessages()
                 };
-                
-                const jsonStr = JSON.stringify(data, null, 2);
-                const blob = new Blob([jsonStr], {type: "application/json"});
-                const url = URL.createObjectURL(blob);
-                Utils.addBlob('export', url);
-                
-                const a = document.createElement('a'); 
-                a.href = url; 
-                a.download = `ghostmesh_backup_${new Date().toISOString().split('T')[0]}.json`; 
-                a.click();
-            },
-            
-            cleanupMemory: () => {
-                // Clean old cached messages (older than 1 hour)
-                const oneHourAgo = Date.now() - 3600000;
-                App.messageCache.forEach((msg, id) => {
-                    if (msg.timestamp && msg.timestamp < oneHourAgo) {
-                        App.messageCache.delete(id);
-                    }
-                });
-                
-                // Clean old blobs
-                Utils.revokeBlobs();
-                
-                // GC suggestion
-                if (window.gc) {
-                    setTimeout(() => window.gc(), 0);
-                }
+                const url = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: "application/json"}));
+                const a = document.createElement('a'); a.href = url; a.download = "ghost_backup.json"; a.click();
             }
         };
 
-        // ======================= UI =======================
         const UI = {
-            updateSelf: (name) => { 
-                document.getElementById('my-display-name').innerText = name; 
-                document.getElementById('my-avatar').innerText = name[0].toUpperCase(); 
-            },
-            
-            copyId: () => { 
-                navigator.clipboard.writeText(App.state.id); 
-                UI.showToast("ID Copied to Clipboard"); 
-            },
-            
-            toggleAddContact: () => {
-                const panel = document.getElementById('new-chat-panel');
-                panel.classList.toggle('hidden');
-                if (!panel.classList.contains('hidden')) {
-                    document.getElementById('input-peer-id').focus();
-                }
-            },
-            
+            updateSelf: (name) => { document.getElementById('my-display-name').innerText = name; document.getElementById('my-avatar').innerText = name[0]; },
+            setStatus: (s) => document.getElementById('status-indicator').className = `w-3 h-3 rounded-full ${s==='online'?'bg-green-500':'bg-red-500'}`,
+            copyId: () => { navigator.clipboard.writeText(App.state.id); alert("ID Copied"); },
+            toggleAddContact: () => document.getElementById('new-chat-panel').classList.toggle('hidden'),
             showQR: () => {
                 if(!App.state.id) return;
                 document.getElementById('qr-modal').classList.remove('hidden');
                 document.getElementById('qrcode-container').innerHTML = '';
                 setTimeout(() => { 
-                    try { 
-                        new QRCode(document.getElementById('qrcode-container'), { 
-                            text: JSON.stringify({
-                                id: App.state.id,
-                                name: App.state.name,
-                                key: App.state.pubStr,
-                                version: '3.0.0'
-                            }), 
-                            width: 200, 
-                            height: 200 
-                        }); 
-                    } catch(e) { 
-                        console.error("QR Error", e); 
-                    }
+                    try { new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 }); }
+                    catch(e) { console.error("QR Error", e); }
                 }, 100);
             },
-            
             startScanner: () => {
                 document.getElementById('scanner-modal').classList.remove('hidden');
-                if(!Media.scanner) {
-                    Media.scanner = new Html5Qrcode("reader");
-                }
-                
+                if(!Media.scanner) Media.scanner = new Html5Qrcode("reader");
                 const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                Media.scanner.start(
-                    { facingMode: "environment" }, 
-                    config, 
-                    (decodedText) => {
-                        try {
-                            const data = JSON.parse(decodedText);
-                            Media.scanner.stop();
-                            document.getElementById('scanner-modal').classList.add('hidden');
-                            
-                            if (data.id && data.key) {
-                                App.addContact(data.id, data.name, data.key);
-                                Network.connectWithRetry(data.id);
-                            }
-                        } catch (e) {
-                            // Try as plain ID
-                            const id = decodedText.trim();
-                            if(id) {
-                                Media.scanner.stop();
-                                document.getElementById('scanner-modal').classList.add('hidden');
-                                Network.connectWithRetry(id);
-                            }
-                        }
-                    }
-                ).catch(err => {
+                Media.scanner.start({ facingMode: "environment" }, config, (decodedText) => {
+                    Media.scanner.stop();
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                    const id = decodedText.trim();
+                    if(id) Network.connectWithRetry(id);
+                }).catch(err => {
                     console.error("Scanner Error", err);
                     alert("Camera access failed or not supported.");
                     document.getElementById('scanner-modal').classList.add('hidden');
                 });
             },
-            
             stopScanner: () => {
                 if(Media.scanner) {
                     Media.scanner.stop().then(() => {
-                        document.getElementById('scanner-modal').classList.add('hidden');
+                         document.getElementById('scanner-modal').classList.add('hidden');
                     }).catch(console.error);
                 } else {
                     document.getElementById('scanner-modal').classList.add('hidden');
                 }
             },
-            
+            // Toggle Logic for Buttons
+            toggleScannerMirror: Media.toggleScannerMirror, 
+            toggleSendIcon: () => {
+                 const val = document.getElementById('message-input').value.trim();
+                 if(val) { document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); }
+                 else { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); }
+            },
             showSafetyNumber: async () => {
                 if(!App.state.activeChat) return;
                 const c = App.state.contacts[App.state.activeChat];
@@ -1688,430 +757,132 @@
                     document.getElementById('safety-modal').classList.remove('hidden');
                 }
             },
-            
-            showToast: (msg, type = 'info') => {
+            showToast: (msg) => {
                 const t = document.createElement('div');
-                t.className = `fixed top-4 right-4 ${type === 'error' ? 'bg-red-600' : 'bg-green-600'} text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in z-[150] max-w-xs`;
+                t.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade-in z-[150]";
                 t.innerText = msg;
                 document.body.appendChild(t);
-                setTimeout(() => {
-                    t.style.opacity = '0';
-                    t.style.transition = 'opacity 0.3s';
-                    setTimeout(() => t.remove(), 300);
-                }, 3000);
+                setTimeout(() => t.remove(), 3000);
             },
-            
             renderContacts: () => {
-                const contacts = Object.values(App.state.contacts);
-                const html = contacts.length ? contacts.map(c => `
+                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `
                     <div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00a884] to-[#008f6f] text-white flex items-center justify-center font-bold text-sm">
-                            ${c.name[0].toUpperCase()}
-                        </div>
-                        <div class="flex-1 overflow-hidden">
-                            <div class="font-medium text-[#e9edef] truncate">${c.name}</div>
-                            <div class="text-xs text-[#8696a0] truncate">${c.id.substring(0, 16)}...</div>
-                        </div>
-                        <button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full transition-colors">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
+                        <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div>
+                        <div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div>
+                        <button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
-                `).join('') : `
-                    <div class="p-8 text-center text-[#8696a0]">
-                        <i data-lucide="users" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
-                        <p>No contacts yet</p>
-                        <p class="text-sm mt-2">Add a contact to start chatting</p>
-                    </div>
-                `;
-                
-                document.getElementById('chat-list').innerHTML = html;
+                `).join('');
                 lucide.createIcons();
             },
-            
             filterContacts: () => {
                 const term = document.getElementById('search-contacts').value.toLowerCase();
-                const contacts = Object.values(App.state.contacts)
-                    .filter(c => c.name.toLowerCase().includes(term) || c.id.includes(term));
-                
-                const html = contacts.length ? contacts.map(c => `
-                    <div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00a884] to-[#008f6f] text-white flex items-center justify-center font-bold text-sm">
-                            ${c.name[0].toUpperCase()}
-                        </div>
-                        <div class="flex-1 overflow-hidden">
-                            <div class="font-medium text-[#e9edef] truncate">${c.name}</div>
-                            <div class="text-xs text-[#8696a0] truncate">${c.id.substring(0, 16)}...</div>
-                        </div>
-                    </div>
-                `).join('') : `
-                    <div class="p-4 text-center text-[#8696a0]">
-                        No contacts match "${term}"
-                    </div>
-                `;
-                
-                document.getElementById('chat-list').innerHTML = html;
+                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts)
+                    .filter(c => c.name.toLowerCase().includes(term) || c.id.includes(term))
+                    .map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join('');
                 lucide.createIcons();
             },
-            
             loadChat: async (id) => {
-                // Cleanup old blobs
-                Utils.revokeBlobs();
-                
-                App.state.activeChat = id; 
-                const c = App.state.contacts[id];
-                if(!c) return;
-                
-                // Mobile responsive
-                if(window.innerWidth < 768) { 
-                    document.getElementById('sidebar-panel').classList.add('hidden'); 
-                    document.getElementById('chat-area').classList.remove('hidden'); 
-                    document.getElementById('chat-area').classList.add('flex'); 
-                }
-                
-                // Update UI
-                document.getElementById('chat-empty-state').classList.add('hidden'); 
-                document.getElementById('chat-interface').classList.remove('hidden'); 
-                document.getElementById('chat-interface').classList.add('flex');
+                Utils.revokeBlobs(); App.state.activeChat = id; const c = App.state.contacts[id];
+                if(window.innerWidth < 768) { document.getElementById('sidebar-panel').classList.add('hidden'); document.getElementById('chat-area').classList.remove('hidden'); document.getElementById('chat-area').classList.add('flex'); }
+                document.getElementById('chat-empty-state').classList.add('hidden'); document.getElementById('chat-interface').classList.remove('hidden'); document.getElementById('chat-interface').classList.add('flex');
                 
                 document.getElementById('chat-header-name').innerText = c.name; 
-                const status = Network.connections[id]?.conn?.open ? "Online" : "Offline";
+                const status = Network.connections[id] ? "Online" : "Offline";
                 document.getElementById('chat-header-status').innerText = status;
-                document.getElementById('chat-header-avatar').innerText = c.name[0].toUpperCase();
                 
-                // Load messages
-                const msgs = await Store.getMessages(id); 
-                const container = document.getElementById('messages-container');
-                container.innerHTML = ''; 
-                
-                // Render messages with virtualization for large chats
-                const maxMessages = 100; // Show last 100 messages
-                const messagesToShow = msgs.slice(-maxMessages);
-                messagesToShow.forEach(UI.renderMessage);
-                
-                // Scroll to bottom
-                setTimeout(() => {
-                    container.scrollTop = container.scrollHeight;
-                }, 100);
-                
-                // Update connection quality
-                UI.updateConnectionQuality(id);
+                document.getElementById('chat-header-avatar').innerText = c.name[0];
+                const msgs = await Store.getMessages(id); document.getElementById('messages-container').innerHTML = ''; msgs.forEach(UI.renderMessage);
             },
-            
-            closeChat: () => { 
-                document.getElementById('chat-area').classList.add('hidden'); 
-                document.getElementById('sidebar-panel').classList.remove('hidden'); 
-                App.state.activeChat = null;
-            },
-            
+            closeChat: () => { document.getElementById('chat-area').classList.add('hidden'); document.getElementById('sidebar-panel').classList.remove('hidden'); },
             handleFileSelect: (e) => { 
-                if(e.target.files.length > 0) { 
-                    const file = e.target.files[0];
+                if(e.target.files[0]) { 
                     document.getElementById('file-preview-area').classList.remove('hidden'); 
-                    document.getElementById('file-preview-name').innerText = 
-                        `${file.name} (${Utils.formatBytes(file.size)})`;
-                    
-                    // Show send icon
+                    document.getElementById('file-preview-name').innerText = e.target.files[0].name; 
+                    // Force Show Send
                     document.getElementById('icon-mic').classList.add('hidden');
                     document.getElementById('icon-send').classList.remove('hidden');
                 } 
             },
-            
             clearFile: () => { 
                 document.getElementById('file-input').value = ''; 
                 document.getElementById('file-preview-area').classList.add('hidden'); 
-                
+                // Reset Icon
                 const val = document.getElementById('message-input').value.trim();
-                if(!val) { 
-                    document.getElementById('icon-mic').classList.remove('hidden'); 
-                    document.getElementById('icon-send').classList.add('hidden'); 
-                }
+                if(!val) { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); }
             },
-            
             handleInputKey: (e) => { 
                 const val = document.getElementById('message-input').value.trim();
-                const file = document.getElementById('file-input').files.length > 0;
-                
-                if(val || file) { 
-                    document.getElementById('icon-mic').classList.add('hidden'); 
-                    document.getElementById('icon-send').classList.remove('hidden'); 
-                } else { 
-                    document.getElementById('icon-mic').classList.remove('hidden'); 
-                    document.getElementById('icon-send').classList.add('hidden'); 
-                }
-                
-                if(e.key === 'Enter' && !e.shiftKey) { 
-                    e.preventDefault(); 
-                    Network.sendMessage(); 
-                }
+                if(val) { document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); }
+                else { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); }
+                if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Network.sendMessage(); }
             },
-            
-            setSendingState: (sending) => {
-                const btn = document.getElementById('btn-main-action');
-                const mic = document.getElementById('icon-mic');
-                const send = document.getElementById('icon-send');
-                const spinner = document.getElementById('icon-spinner');
-                
-                if (sending) {
-                    mic.classList.add('hidden');
-                    send.classList.add('hidden');
-                    spinner.classList.remove('hidden');
-                    btn.disabled = true;
-                } else {
-                    spinner.classList.add('hidden');
-                    const val = document.getElementById('message-input').value.trim();
-                    const file = document.getElementById('file-input').files.length > 0;
-                    
-                    if(val || file) {
-                        send.classList.remove('hidden');
-                    } else {
-                        mic.classList.remove('hidden');
-                    }
-                    btn.disabled = false;
-                }
-            },
-            
             handleMainAction: () => {
                 const val = document.getElementById('message-input').value.trim();
                 const file = document.getElementById('file-input').files.length > 0;
-                
-                if(val || file) {
-                    Network.sendMessage();
-                } else {
-                    Media.toggleRecordUI();
-                }
+                if(val || file) Network.sendMessage();
+                else Media.toggleRecordUI();
             },
-            
-            updateHeaderStatus: (id, s) => { 
-                if(App.state.activeChat === id) {
-                    document.getElementById('chat-header-status').innerText = s;
-                }
-            },
-            
-            updateConnectionQuality: (peerId) => {
-                if (App.state.activeChat !== peerId) return;
-                
-                const stats = Network.connectionStats[peerId];
-                if (!stats) return;
-                
-                const bars = document.querySelectorAll('.quality-bar');
-                const activeCount = Math.min(4, Math.floor(Math.random() * 4) + 1); // Simulated for now
-                
-                bars.forEach((bar, index) => {
-                    if (index < activeCount) {
-                        bar.classList.add('active');
-                    } else {
-                        bar.classList.remove('active');
-                    }
-                });
-            },
-            
+            updateHeaderStatus: (id, s) => { if(App.state.activeChat === id) document.getElementById('chat-header-status').innerText = s; },
             updateMessageTick: (id, status) => {
-                const el = document.getElementById(`msg-${id}`);
-                if(el) {
-                    const tickContainer = el.querySelector('.tick-container');
-                    if(tickContainer) {
-                        const time = el.dataset.time || new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                        const svg = Utils.getTickIcon(status);
-                        tickContainer.innerHTML = `${time} ${svg}`;
-                    }
-                }
+                 const el = document.getElementById(`msg-${id}`);
+                 if(el) {
+                     const tickContainer = el.querySelector('.tick-container');
+                     if(tickContainer) {
+                        let html = Utils.getStatusHtml(status);
+                        // Preserve time, just update icon
+                        const time = el.dataset.time;
+                        tickContainer.innerHTML = `${time} ${html}`;
+                     }
+                 }
             },
-            
-            renderMessage: async (msg) => {
-                const container = document.getElementById('messages-container');
-                if (!container) return;
-                
-                const isMe = msg.dir === 'out';
-                const bg = isMe ? 'msg-sent' : 'msg-received';
-                const align = isMe ? 'justify-end' : 'justify-start';
-                
-                // Check if message already exists
-                const existing = document.getElementById(`msg-${msg.id}`);
-                if (existing) {
-                    UI.updateMessageTick(msg.id, msg.status);
-                    return;
-                }
+            renderMessage: (msg) => {
+                const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
                 
                 let content = '';
-                
-                // Handle different message types
-                if (msg.type === 'text') {
-                    content = `<div class="text-sm whitespace-pre-wrap break-words">${Utils.linkify(Utils.escapeHTML(msg.content))}</div>`;
-                } 
-                else if (msg.type === 'voice') {
-                    // Get blob URL
-                    let blobUrl = msg.content.url;
-                    if (!blobUrl && msg.content.blob) {
-                        blobUrl = URL.createObjectURL(msg.content.blob);
-                        Utils.addBlob(msg.id, blobUrl);
-                    } else if (!blobUrl) {
-                        // Try to get from storage
-                        const blob = await Store.getFileBlob(msg.id);
-                        if (blob) {
-                            blobUrl = URL.createObjectURL(blob);
-                            Utils.addBlob(msg.id, blobUrl);
-                        }
-                    }
-                    
-                    content = `
-                        <div class="audio-player">
-                            <div class="play-btn" onclick="this.nextElementSibling.play()">
-                                <i data-lucide="play" class="w-4 h-4 text-white"></i>
-                            </div>
-                            <audio src="${blobUrl || ''}" class="hidden" 
-                                ontimeupdate="this.nextElementSibling.style.width=(this.currentTime/this.duration)*100+'%'"
-                                onended="this.previousElementSibling.innerHTML='<i data-lucide=\\'play\\' class=\\'w-4 h-4 text-white\\'></i>'">
-                            </audio>
-                            <div class="audio-track"><div class="audio-fill"></div></div>
-                            <div class="text-xs text-[#8696a0] ml-2">${Utils.formatBytes(msg.content.size || 0)}</div>
-                        </div>
-                    `;
-                } 
-                else if (msg.type === 'file' || msg.type === 'image') {
-                    // Get blob URL
-                    let blobUrl = msg.content.url;
-                    if (!blobUrl && msg.content.blob) {
-                        blobUrl = URL.createObjectURL(msg.content.blob);
-                        Utils.addBlob(msg.id, blobUrl);
-                    } else if (!blobUrl) {
-                        // Try to get from storage
-                        const blob = await Store.getFileBlob(msg.id);
-                        if (blob) {
-                            blobUrl = URL.createObjectURL(blob);
-                            Utils.addBlob(msg.id, blobUrl);
-                        }
-                    }
-                    
-                    const isImage = msg.type === 'image' || (msg.content.mime && msg.content.mime.startsWith('image'));
-                    
-                    if (isImage && blobUrl) {
-                        content = `
-                            <div class="relative cursor-pointer group" onclick="window.open('${blobUrl}')">
-                                <img src="${blobUrl}" 
-                                     class="rounded-lg max-w-[240px] max-h-[300px] object-cover transition-transform group-hover:scale-[1.02]" 
-                                     loading="lazy"
-                                     onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-                                <div class="absolute inset-0 bg-[#202c33] rounded-lg hidden items-center justify-center">
-                                    <i data-lucide="file-image" class="w-12 h-12 text-[#8696a0]"></i>
-                                </div>
-                            </div>
-                        `;
+                // Hydrate Blob URLs from DB Blobs
+                if ((msg.type === 'file' || msg.type === 'voice') && msg.content.blob && !msg.content.url) {
+                     msg.content.url = URL.createObjectURL(msg.content.blob);
+                }
+
+                // Placeholder for incoming file stream
+                if (msg.type === 'file-receiving') {
+                     content = `<div class="file-card-inner"><div class="file-icon-box bg-gray-600"><i data-lucide="loader" class="animate-spin w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0]">Receiving...</div></div></div>`;
+                }
+                else if (msg.type === 'text') { content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`; }
+                else if (msg.type === 'voice') { content = `<div class="audio-card"><div class="audio-play-btn" onclick="this.nextElementSibling.play()"><i data-lucide="play" class="w-4 h-4 text-white"></i></div><audio src="${msg.content.url}" class="hidden" onended="this.previousElementSibling.innerHTML='<svg...><path d=\\'M5 3l14 9-14 9V3z\\'/></svg>'"></audio><div class="waveform"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>`; }
+                else if (msg.type === 'file') {
+                    const sizeStr = Utils.formatBytes(msg.content.size);
+                    if (msg.content.mime.startsWith('image')) {
+                         content = `<div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')"><img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy"></div>`;
+                         const icon = isMe ? Utils.getStatusHtml(msg.status) : '';
+                         const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
+                         div.innerHTML = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
+                         c.appendChild(div); c.scrollTop = c.scrollHeight; return;
                     } else {
-                        const sizeStr = Utils.formatBytes(msg.content.size || 0);
-                        const extension = msg.content.name ? msg.content.name.split('.').pop().toUpperCase() : 'FILE';
-                        
-                        let iconName = 'file';
-                        let colorClass = 'bg-[#00a884]';
-                        
-                        if (msg.content.mime) {
-                            if (msg.content.mime.includes('pdf')) { 
-                                iconName = 'file-text'; 
-                                colorClass = 'bg-red-500'; 
-                            }
-                            else if (msg.content.mime.includes('word') || msg.content.mime.includes('document')) { 
-                                iconName = 'file-text'; 
-                                colorClass = 'bg-blue-500'; 
-                            }
-                            else if (msg.content.mime.includes('sheet')) { 
-                                iconName = 'table'; 
-                                colorClass = 'bg-green-500'; 
-                            }
-                            else if (msg.content.mime.includes('zip') || msg.content.mime.includes('compressed')) { 
-                                iconName = 'archive'; 
-                                colorClass = 'bg-yellow-500'; 
-                            }
-                        }
-                        
-                        content = `
-                            <div class="file-card-inner cursor-pointer group" onclick="window.open('${blobUrl || '#'}')">
-                                <div class="file-icon-box ${colorClass}">
-                                    <i data-lucide="${iconName}" class="w-5 h-5"></i>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">
-                                        ${msg.content.name || 'File'}
-                                    </div>
-                                    <div class="text-[10px] text-[#8696a0] mt-0.5">
-                                        ${sizeStr} • ${extension}
-                                    </div>
-                                </div>
-                                <div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0] transition-colors group-hover:text-[#00a884]">
-                                    <i data-lucide="download" class="w-5 h-5"></i>
-                                </div>
-                            </div>
-                        `;
+                        // Styled File Card
+                        const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
+                        let iconName = 'file'; let colorClass = 'bg-[#00a884]';
+                        if(msg.content.mime.includes('pdf')) { iconName = 'file-text'; colorClass = 'bg-red-500'; }
+                        else if(msg.content.mime.includes('word')) { iconName = 'file-text'; colorClass = 'bg-blue-500'; }
+                        else if(msg.content.mime.startsWith('video/')) { iconName = 'video'; colorClass = 'bg-purple-600'; }
+                        content = `<div class="file-card-inner cursor-pointer" onclick="window.open('${msg.content.url}')"><div class="file-icon-box" style="background-color: ${colorClass.replace('bg-','')}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${msg.content.name}</div><div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,3)}</div></div><div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></div></div>`;
                     }
                 }
+
+                let icon = isMe ? Utils.getStatusHtml(msg.status) : '';
+                const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
                 
-                const icon = isMe ? Utils.getTickIcon(msg.status) : '';
-                const div = document.createElement('div');
-                div.className = `flex ${align} animate-fade-in mb-1`;
-                div.id = `msg-${msg.id}`;
-                div.dataset.time = msg.time;
+                // Smart Update: Replace if existing
+                const existing = document.getElementById(`msg-${msg.id}`);
+                const inner = `<div class="p-2 ${bg} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">${content}<div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">${msg.time} ${icon}</div></div>`;
                 
-                const innerHTML = `
-                    <div class="p-2 ${bg} rounded-lg shadow break-words text-[#e9edef] bubble-constraint relative">
-                        ${content}
-                        <div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">
-                            ${msg.time} ${icon}
-                        </div>
-                    </div>
-                `;
-                
-                div.innerHTML = innerHTML;
-                container.appendChild(div);
-                container.scrollTop = container.scrollHeight;
-                
-                // Create icons
+                if(existing) { existing.innerHTML = inner; }
+                else { div.innerHTML = inner; c.appendChild(div); c.scrollTop = c.scrollHeight; }
                 lucide.createIcons();
-            },
-            
-            sendLocation: () => {
-                if (!navigator.geolocation) {
-                    alert("Geolocation not supported");
-                    return;
-                }
-                
-                UI.showToast("Getting location...");
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lon = pos.coords.longitude;
-                        const url = `https://maps.google.com/?q=${lat},${lon}`;
-                        const text = `📍 My Location: ${url}`;
-                        
-                        document.getElementById('message-input').value = text;
-                        UI.handleInputKey({key:'a'});
-                    },
-                    (err) => {
-                        alert("Location access denied");
-                    },
-                    { timeout: 10000, enableHighAccuracy: true }
-                );
             }
         };
 
-        // Initialize app
         App.init();
-        
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            if (window.innerWidth >= 768 && App.state.activeChat) {
-                document.getElementById('sidebar-panel').classList.remove('hidden');
-                document.getElementById('chat-area').classList.remove('hidden');
-            }
-        });
-        
-        // Handle beforeunload
-        window.addEventListener('beforeunload', () => {
-            Media.endCall();
-            Utils.revokeBlobs();
-            if (Network.peer) {
-                Network.peer.destroy();
-            }
-        });
     </script>
 </body>
-
 </html>
-
