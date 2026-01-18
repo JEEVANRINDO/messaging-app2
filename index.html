@@ -29,7 +29,7 @@
         .file-card-inner { background-color: rgba(30, 40, 45, 0.6); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(5px); }
         .file-icon-box { width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
         
-        /* Creative Status Orbs */
+        /* Status Orbs */
         .status-orb { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-left: 4px; transition: all 0.3s ease; }
         .status-pending { border: 2px solid #8696a0; border-top-color: transparent; animation: spin 1s linear infinite; }
         .status-sent { border: 1.5px solid #8696a0; background: transparent; }
@@ -40,7 +40,6 @@
         /* Audio Player */
         .audio-card { display: flex; align-items: center; gap: 12px; min-width: 220px; padding: 4px 0; }
         .audio-play-btn { width: 36px; height: 36px; background: rgba(0,0,0,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
-        .audio-play-btn:hover { background: rgba(0,0,0,0.3); }
         .waveform { display: flex; align-items: center; gap: 2px; height: 24px; flex: 1; }
         .bar { width: 3px; background-color: rgba(255,255,255,0.4); border-radius: 2px; height: 40%; transition: height 0.2s; }
         .playing .bar { animation: soundWave 0.8s ease-in-out infinite alternate; }
@@ -54,7 +53,6 @@
         @keyframes pulseRed { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .bubble-constraint { max-width: 85%; }
         @media (min-width: 768px) { .bubble-constraint { max-width: 60%; } }
-        
         .mirror-x { transform: scaleX(-1); }
     </style>
 </head>
@@ -68,7 +66,7 @@
         <div class="w-full max-w-sm space-y-4">
             <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
             <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <button id="btn-create-profile" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
+            <button id="btn-create-profile" type="button" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
         </div>
     </div>
 
@@ -114,7 +112,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v5.9 Fix</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v8.2 Working</span>
             </div>
         </div>
 
@@ -231,7 +229,7 @@
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
-                const req = indexedDB.open("GhostMeshSecure", 5); 
+                const req = indexedDB.open("GhostMeshSecure", 8); // Bump to 8 for fresh start
                 req.onupgradeneeded = e => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains("config")) db.createObjectStore("config");
@@ -241,7 +239,11 @@
                     }
                 };
                 req.onsuccess = () => { Store.db = req.result; resolve(); };
-                req.onerror = reject;
+                req.onerror = (e) => { 
+                    console.error("DB Error", e);
+                    indexedDB.deleteDatabase("GhostMeshSecure");
+                    setTimeout(() => location.reload(), 500);
+                };
             }),
             put: async (store, key, val) => new Promise(r => {
                 if(!Store.db) return r();
