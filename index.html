@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- CSP: Allow data/blob for images/files -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #111b21; color: #e9edef; height: 100dvh; width: 100vw; overflow: hidden; position: fixed; inset: 0; }
@@ -20,21 +23,17 @@
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
         .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
         
-        /* WhatsApp Colors */
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; }
-        .file-card-sent { background-color: #025144; } /* Slightly darker for file area */
-        .file-card-received { background-color: #1d282f; }
-        
         .img-overlay { background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%); }
         .bubble-constraint { max-width: 85%; }
         @media (min-width: 768px) { .bubble-constraint { max-width: 65%; } }
         
         .tick-icon { width: 16px; height: 16px; margin-left: 2px; display: inline-block; vertical-align: middle; }
-        .tick-pending { color: #8696a0; }
+        .tick-pending { color: #8696a0; opacity: 0.6; }
         .tick-sent { color: #8696a0; }
         .tick-delivered { color: #8696a0; }
-        .tick-read { color: #53bdeb; } /* Blue */
+        .tick-read { color: #53bdeb; }
         
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
     </style>
@@ -93,9 +92,9 @@
             
             <div class="p-3 bg-[#111b21] border-t border-[#2a3942] flex justify-between items-center pb-safe shrink-0">
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
-                    <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
+                    <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v1.4 Secure</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v1.5 Stable</span>
             </div>
         </div>
 
@@ -105,8 +104,8 @@
             
             <div id="chat-empty-state" class="flex-1 flex flex-col items-center justify-center text-[#8696a0] relative z-10">
                 <i data-lucide="ghost" class="w-20 h-20 mb-4 opacity-20"></i>
-                <p class="text-xl font-light mt-4">GhostMesh for Web</p>
-                <p class="text-sm mt-2 opacity-60">Send and receive messages securely.</p>
+                <p class="text-xl font-light mt-4">GhostMesh</p>
+                <p class="text-sm mt-2 opacity-60">End-to-End Encrypted</p>
             </div>
 
             <div id="chat-interface" class="hidden flex-1 flex-col h-full w-full relative z-10">
@@ -116,7 +115,10 @@
                         <div id="chat-header-avatar" class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold text-sm">?</div>
                         <div class="flex flex-col">
                             <span id="chat-header-name" class="font-semibold text-sm text-[#e9edef] truncate">Peer</span>
-                            <span id="chat-header-status" class="text-xs text-[#8696a0] truncate w-24">Connecting...</span>
+                            <div class="flex items-center text-xs text-[#8696a0]">
+                                <i data-lucide="shield-check" class="w-3 h-3 mr-1 text-[#00a884]"></i>
+                                <span id="chat-header-status" class="truncate w-24">Offline</span>
+                            </div>
                         </div>
                     </div>
                     <div class="flex space-x-4 text-[#aebac1]">
@@ -167,7 +169,7 @@
         </div>
     </div>
 
-    <!-- 4. MODALS -->
+    <!-- MODALS -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
         <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center">
             <h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3>
@@ -295,7 +297,6 @@
             },
             importKey: async (str) => {
                 const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
-                if (bytes.length !== 91) throw new Error("Invalid key");
                 return await window.crypto.subtle.importKey("spki", bytes.buffer, { name: "ECDH", namedCurve: "P-256" }, true, []);
             },
             exportKey: async (key) => btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", key)))),
@@ -342,11 +343,12 @@
                 if(id) Network.connectWithRetry(id);
             },
             connectWithRetry: async (id, retries = 0) => {
-                if (Network.connections[id] && Network.connections[id].conn.open) return;
+                // Safe check: Only return if connection exists AND is open
+                if (Network.connections[id]?.conn?.open) return;
+                
                 const conn = Network.peer.connect(id, { reliable: true });
                 conn.on('open', () => {
-                    // Send Handshake
-                    conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name });
+                    conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
                     Network.processQueue(id);
                 });
                 conn.on('error', () => { if (retries < 3) setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000); });
@@ -355,14 +357,15 @@
             handleConn: (conn) => {
                 conn.on('data', data => Network.handleData(conn.peer, data, conn));
                 conn.on('close', () => { delete Network.connections[conn.peer]; UI.updateHeaderStatus(conn.peer, "Offline"); });
+                // If this is incoming, wait for data
             },
             processQueue: async (peerId) => {
                 const pending = await Store.getPendingMessages(peerId);
                 const connObj = Network.connections[peerId];
-                if(!connObj || !connObj.conn.open) return;
+                if(!connObj?.conn?.open) return;
                 for (const msg of pending) {
                     if (msg.type === 'text') {
-                        connObj.conn.send({ type: 'msg', payload: await Crypto.encryptPayload({ content: msg.content, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key) });
+                        connObj.conn.send({ type: 'msg', payload: await Crypto.encryptPayload({ content: msg.content, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key), id: msg.id });
                     }
                     msg.status = 'sent';
                     await Store.put('messages', msg.id, msg);
@@ -380,12 +383,12 @@
                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
                     
                     // FIXED: Auto-Reply Handshake Ack
-                    conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name });
+                    conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
 
                     if (!App.state.activeChat) UI.loadChat(sender);
                     else if (App.state.activeChat === sender) UI.loadChat(sender);
 
-                    console.log(`Connected with ${data.name}!`);
+                    UI.showToast(`Connected with ${data.name}!`);
                 }
                 
                 if (data.type === 'handshake-ack') {
@@ -398,6 +401,7 @@
                      
                      if (App.state.activeChat === sender) UI.loadChat(sender);
                      else if (!App.state.activeChat) UI.loadChat(sender);
+                     UI.showToast("Connection Secured");
                 }
 
                 const connObj = Network.connections[sender];
@@ -421,9 +425,9 @@
                         if(dec.type === 'text') {
                              App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read');
                              // Send Receipts
-                             conn.send({ type: 'receipt', msgId: data.id, status: 'delivered' });
+                             conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'delivered' });
                              if (App.state.activeChat === sender) {
-                                 conn.send({ type: 'receipt', msgId: data.id, status: 'read' });
+                                 conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'read' });
                              }
                         }
                     } catch(e) {}
@@ -450,12 +454,6 @@
                             const url = URL.createObjectURL(blob);
                             Utils.addBlob(url);
                             App.addMessage(sender, { name: tracker.name, url, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read');
-                            
-                            // Send Receipt for File
-                            // Note: Tracker ID is not message ID in this flow, simplifying:
-                            // We can't send precise receipt without refactoring chunk logic to carry MsgID, 
-                            // but text flow works.
-                            
                             delete App.fileChunks[sender];
                         }
                     } catch(e){}
@@ -471,7 +469,7 @@
                     const file = fileInput.files[0];
                     if (file.size > 50*1024*1024) { alert("File > 50MB"); UI.clearFile(); return; }
                     const connObj = Network.connections[peerId];
-                    if (!connObj || !connObj.conn.open) return alert("Peer Offline");
+                    if (!connObj?.conn?.open) return alert("Peer Offline");
 
                     Network.uploadCancelled = false;
                     const CHUNK = 64 * 1024;
@@ -522,7 +520,7 @@
                     const connObj = Network.connections[peerId];
                     const msgId = Date.now();
                     
-                    if (connObj && connObj.conn.open) {
+                    if (connObj?.conn?.open) {
                         connObj.conn.send({ type: 'msg', id: msgId, payload: await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key) });
                         App.addMessage(peerId, text, 'out', 'text', 'sent', msgId);
                     } else {
@@ -638,7 +636,6 @@
                 UI.renderContacts(); UI.updateSelf(name); Network.init(id);
             },
             addContact: (id, name, pubKey) => {
-                // Update even if exists to capture name/key updates
                 App.state.contacts[id] = { id, name: name || "Unknown", pubKey: pubKey || App.state.contacts[id]?.pubKey };
                 Store.put('config', 'contacts', App.state.contacts);
                 UI.renderContacts();
@@ -675,28 +672,20 @@
             copyId: () => { navigator.clipboard.writeText(App.state.id); alert("ID Copied"); },
             toggleAddContact: () => document.getElementById('new-chat-panel').classList.toggle('hidden'),
             showQR: () => {
-                // Ensure ID is available
                 if(!App.state.id) return;
                 document.getElementById('qr-modal').classList.remove('hidden');
                 document.getElementById('qrcode-container').innerHTML = '';
-                // Wait for modal to render to get correct dimensions
-                setTimeout(() => {
-                     new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 });
-                }, 50);
+                setTimeout(() => { new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 }); }, 50);
             },
             startScanner: () => {
                 document.getElementById('scanner-modal').classList.remove('hidden');
                 if(!Media.scanner) Media.scanner = new Html5Qrcode("reader");
-                
                 const config = { fps: 10, qrbox: { width: 250, height: 250 } };
                 Media.scanner.start({ facingMode: "environment" }, config, (decodedText) => {
                     Media.scanner.stop();
                     document.getElementById('scanner-modal').classList.add('hidden');
-                    // Connect logic
                     const id = decodedText.trim();
-                    if(id) {
-                         Network.connectWithRetry(id);
-                    }
+                    if(id) Network.connectWithRetry(id);
                 }).catch(err => {
                     console.error("Scanner Error", err);
                     alert("Camera access failed or not supported.");
@@ -704,13 +693,8 @@
                 });
             },
             stopScanner: () => {
-                if(Media.scanner) {
-                    Media.scanner.stop().then(() => {
-                         document.getElementById('scanner-modal').classList.add('hidden');
-                    }).catch(console.error);
-                } else {
-                    document.getElementById('scanner-modal').classList.add('hidden');
-                }
+                if(Media.scanner) { Media.scanner.stop().then(() => { document.getElementById('scanner-modal').classList.add('hidden'); }).catch(console.error); } 
+                else { document.getElementById('scanner-modal').classList.add('hidden'); }
             },
             showSafetyNumber: async () => {
                 if(!App.state.activeChat) return;
@@ -720,15 +704,23 @@
                     document.getElementById('safety-modal').classList.remove('hidden');
                 }
             },
+            showToast: (msg) => {
+                // Simple toast placeholder
+                const t = document.createElement('div');
+                t.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade-in z-[150]";
+                t.innerText = msg;
+                document.body.appendChild(t);
+                setTimeout(() => t.remove(), 3000);
+            },
             renderContacts: () => {
                 document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `
                     <div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0]}</div>
+                        <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div>
                         <div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div>
                         <button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 `).join('');
-                lucide.createIcons(); // FIX: Re-render icons
+                lucide.createIcons();
             },
             filterContacts: () => {
                 const term = document.getElementById('search-contacts').value.toLowerCase();
@@ -743,7 +735,6 @@
                 document.getElementById('chat-empty-state').classList.add('hidden'); document.getElementById('chat-interface').classList.remove('hidden'); document.getElementById('chat-interface').classList.add('flex');
                 
                 document.getElementById('chat-header-name').innerText = c.name; 
-                // Set initial status based on connection
                 const status = Network.connections[id] ? "Online" : "Offline";
                 document.getElementById('chat-header-status').innerText = status;
                 
@@ -769,15 +760,12 @@
                 } else if (msg.type === 'file') {
                     const sizeStr = Utils.formatBytes(msg.content.size);
                     if (msg.content.mime.startsWith('image')) {
-                         // Image Bubble
                          content = `
                             <div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')">
                                 <img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy">
                             </div>
                          `;
-                         // Wrap differently for images
                          const icon = isMe ? (msg.status === 'pending' ? '<i data-lucide="clock" class="tick-icon tick-pending"></i>' : (msg.status === 'sent' ? '<i data-lucide="check" class="tick-icon tick-sent"></i>' : (msg.status === 'delivered' ? '<i data-lucide="check-check" class="tick-icon tick-delivered"></i>' : '<i data-lucide="check-check" class="tick-icon tick-read"></i>'))) : '';
-                         
                          const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in`;
                          div.innerHTML = `
                             <div class="p-1 ${bg} rounded-lg shadow relative group">
@@ -790,7 +778,6 @@
                          c.appendChild(div); c.scrollTop = c.scrollHeight; lucide.createIcons();
                          return;
                     } else {
-                        // File Card
                         const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
                         content = `
                             <div class="flex items-center gap-3 min-w-[200px] p-1">
@@ -805,7 +792,6 @@
                     }
                 }
 
-                // Standard Bubble (Text or File Card)
                 let icon = '';
                 if (isMe) {
                     if(msg.status === 'pending') icon = '<i data-lucide="clock" class="tick-icon tick-pending"></i>';
