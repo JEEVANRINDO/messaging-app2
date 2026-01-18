@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
-    <title>GhostMesh | Pro</title>
+    <title>GhostMesh | Pro Secure</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -25,29 +25,26 @@
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         
-        /* Modern File Card */
         .file-card-inner { background-color: rgba(30, 40, 45, 0.6); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(5px); }
         .file-icon-box { width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
         
-        /* Ghost Orbs (Status) */
-        .status-container { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-left: 5px; vertical-align: text-bottom; }
-        .status-orb { width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s ease; }
-        .orb-pending { border: 2px solid #8696a0; border-top-color: transparent; animation: spin 1s linear infinite; }
-        .orb-sent { border: 1.5px solid #8696a0; background: transparent; }
-        .orb-delivered { border: 1.5px solid #8696a0; background: #8696a0; }
-        .orb-read { border: 1.5px solid #06b6d4; background: #06b6d4; box-shadow: 0 0 8px rgba(6,182,212,0.6); } /* Cyan Glow */
+        /* Status Orbs */
+        .status-orb { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-left: 4px; transition: all 0.3s ease; }
+        .status-pending { border: 2px solid #8696a0; border-top-color: transparent; animation: spin 1s linear infinite; }
+        .status-sent { border: 1.5px solid #8696a0; background: transparent; }
+        .status-delivered { border: 1.5px solid #8696a0; background: #8696a0; }
+        .status-read { border: 2px solid #53bdeb; background: #53bdeb; box-shadow: 0 0 6px #53bdeb; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Pro Audio Player */
-        .audio-player-card { display: flex; align-items: center; gap: 12px; min-width: 220px; padding: 6px 0; }
-        .play-btn { width: 38px; height: 38px; background: rgba(0,0,0,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.1s; }
-        .play-btn:active { transform: scale(0.95); }
-        .wave-container { flex: 1; height: 24px; display: flex; align-items: center; gap: 3px; opacity: 0.7; }
-        .wave-bar { width: 3px; background-color: currentColor; border-radius: 2px; height: 40%; }
-        .playing .wave-bar { animation: wave 0.8s ease-in-out infinite alternate; }
-        .playing .wave-bar:nth-child(odd) { animation-duration: 0.6s; }
-        .playing .wave-bar:nth-child(2n) { animation-duration: 0.9s; }
-        @keyframes wave { 0% { height: 30%; opacity: 0.6; } 100% { height: 100%; opacity: 1; } }
+        /* Audio Player */
+        .audio-card { display: flex; align-items: center; gap: 12px; min-width: 220px; padding: 4px 0; }
+        .audio-play-btn { width: 36px; height: 36px; background: rgba(0,0,0,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
+        .waveform { display: flex; align-items: center; gap: 2px; height: 24px; flex: 1; }
+        .bar { width: 3px; background-color: rgba(255,255,255,0.4); border-radius: 2px; height: 40%; transition: height 0.2s; }
+        .playing .bar { animation: soundWave 0.8s ease-in-out infinite alternate; }
+        .playing .bar:nth-child(odd) { animation-duration: 0.6s; }
+        .playing .bar:nth-child(2n) { animation-duration: 0.9s; }
+        @keyframes soundWave { 0% { height: 20%; opacity: 0.5; } 100% { height: 100%; opacity: 1; } }
 
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
         .mic-active { animation: pulseRed 1.5s infinite; background-color: #ef4444 !important; }
@@ -62,12 +59,12 @@
     <!-- 1. ONBOARDING -->
     <div id="onboarding-screen" class="absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in overflow-y-auto">
         <div class="relative mb-8"><div class="absolute -inset-1 bg-[#00a884] rounded-full opacity-20 blur-xl animate-pulse"></div><i data-lucide="shield-check" class="w-24 h-24 text-[#00a884] relative z-10"></i></div>
-        <h1 class="text-3xl font-bold tracking-tight mb-2">GhostMesh Pro</h1>
-        <p class="text-[#8696a0] max-w-xs mx-auto mb-8">Secure. Local. Fast.</p>
+        <h1 class="text-3xl font-bold tracking-tight mb-2">GhostMesh Secure</h1>
+        <p class="text-[#8696a0] max-w-xs mx-auto mb-8">Encrypted Local Storage. Zero Cloud.</p>
         <div class="w-full max-w-sm space-y-4">
             <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
             <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <button id="btn-create-profile" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
+            <button id="btn-create-profile" type="button" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
         </div>
     </div>
 
@@ -82,6 +79,7 @@
 
     <!-- 3. MAIN UI -->
     <div id="app-layout" class="hidden w-full h-full flex flex-col md:flex-row relative">
+        <!-- Sidebar -->
         <div id="sidebar-panel" class="w-full md:w-96 border-r border-[#2a3942] flex flex-col bg-[#111b21] h-full">
             <div class="p-3 border-b border-[#2a3942] flex justify-between items-center shrink-0 bg-[#202c33]">
                 <div class="flex items-center space-x-3 cursor-pointer min-w-0 overflow-hidden" onclick="UI.copyId()">
@@ -97,29 +95,47 @@
                     <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full" title="My QR"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
                 </div>
             </div>
+            
+            <div class="p-2 bg-[#111b21] border-b border-[#2a3942]">
+                <input id="search-contacts" onkeyup="UI.filterContacts()" placeholder="Search contacts..." class="w-full bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none placeholder-[#8696a0]">
+            </div>
+
             <div id="new-chat-panel" class="hidden p-2 bg-[#111b21] border-b border-[#2a3942] flex gap-2">
                 <input id="input-peer-id" placeholder="Paste Peer ID..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none">
                 <button onclick="Network.connectToInput()" class="bg-[#00a884] p-2 rounded-lg"><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i></button>
             </div>
             <div id="chat-list" class="flex-1 overflow-y-auto"></div>
+            
             <div class="p-3 bg-[#111b21] border-t border-[#2a3942] flex justify-between items-center pb-safe shrink-0">
-                <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors"><i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup</button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v7.0</span>
+                <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
+                    <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
+                </button>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v8.0</span>
             </div>
         </div>
 
+        <!-- Chat Area -->
         <div id="chat-area" class="hidden md:flex flex-1 flex-col h-full relative bg-[#0b141a]">
             <div class="absolute inset-0 opacity-[0.06] pointer-events-none" style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-repeat: repeat;"></div>
+            
             <div id="chat-empty-state" class="flex-1 flex flex-col items-center justify-center text-[#8696a0] relative z-10">
                 <i data-lucide="ghost" class="w-20 h-20 mb-4 opacity-20"></i>
-                <p class="text-xl font-light mt-4">GhostMesh Pro</p>
+                <p class="text-xl font-light mt-4">GhostMesh</p>
+                <p class="text-sm mt-2 opacity-60">End-to-End Encrypted</p>
             </div>
+
             <div id="chat-interface" class="hidden flex-1 flex-col h-full w-full relative z-10">
                 <div class="h-16 border-b border-[#2a3942] flex items-center justify-between px-4 bg-[#202c33] shrink-0">
                     <div class="flex items-center space-x-3 cursor-pointer" onclick="UI.showSafetyNumber()">
                         <button onclick="UI.closeChat()" class="md:hidden p-1 mr-1 text-[#aebac1]"><i data-lucide="arrow-left" class="w-6 h-6"></i></button>
                         <div id="chat-header-avatar" class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold text-sm">?</div>
-                        <div class="flex flex-col"><span id="chat-header-name" class="font-semibold text-sm text-[#e9edef] truncate">Peer</span><span id="chat-header-status" class="text-xs text-[#8696a0] truncate w-24">Offline</span></div>
+                        <div class="flex flex-col">
+                            <span id="chat-header-name" class="font-semibold text-sm text-[#e9edef] truncate">Peer</span>
+                            <div class="flex items-center text-xs text-[#8696a0]">
+                                <i data-lucide="shield-check" class="w-3 h-3 mr-1 text-[#00a884]"></i>
+                                <span id="chat-header-status" class="truncate w-24">Offline</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="flex space-x-4 text-[#aebac1]">
                         <button onclick="Media.startCall(false)"><i data-lucide="phone" class="w-5 h-5"></i></button>
@@ -130,7 +146,10 @@
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full pb-20"></div>
                 
                 <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
-                    <div class="flex justify-between text-xs text-[#00a884] mb-1"><span>Uploading... <button onclick="Network.cancelUpload()" class="ml-2 text-red-400 font-bold hover:underline">CANCEL</button></span><span id="progress-percent">0%</span></div>
+                    <div class="flex justify-between text-xs text-[#00a884] mb-1">
+                        <span>Uploading... <button onclick="Network.cancelUpload()" class="ml-2 text-red-400 font-bold hover:underline">CANCEL</button></span>
+                        <span id="progress-percent">0%</span>
+                    </div>
                     <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="progress-bar" class="bg-[#00a884] h-1 rounded-full" style="width: 0%"></div></div>
                 </div>
 
@@ -141,7 +160,7 @@
 
                 <div class="bg-[#202c33] shrink-0 w-full pb-safe">
                     <div id="recording-ui" class="hidden px-4 py-3 bg-[#202c33] flex items-center gap-4 border-t border-[#2a3942]">
-                        <div class="text-red-500 animate-pulse flex-1 font-mono">Recording...</div>
+                        <div class="text-red-500 animate-pulse flex-1 font-mono">Recording Audio...</div>
                         <button onclick="Media.cancelRecord()" class="text-[#8696a0]">Cancel</button>
                         <button onclick="Media.stopRecord()" class="bg-[#00a884] text-white px-4 py-1 rounded-full">Send</button>
                     </div>
@@ -162,7 +181,10 @@
                                 <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)" oninput="UI.toggleSendIcon()">
                             </div>
                             <div class="pb-1">
-                                <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform"><i id="icon-mic" data-lucide="mic" class="w-5 h-5"></i><i id="icon-send" data-lucide="send" class="w-5 h-5 pl-0.5 hidden"></i></button>
+                                <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
+                                    <i id="icon-mic" data-lucide="mic" class="w-5 h-5"></i>
+                                    <i id="icon-send" data-lucide="send" class="w-5 h-5 pl-0.5 hidden"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -187,84 +209,246 @@
             addBlob: (url) => Utils.blobRegistry.add(url),
             revokeBlobs: () => { Utils.blobRegistry.forEach(u => URL.revokeObjectURL(u)); Utils.blobRegistry.clear(); },
             bufferToHex: (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''),
-            formatBytes: (bytes) => { if (bytes === 0) return '0 B'; const k=1024, i=Math.floor(Math.log(bytes)/Math.log(k)); return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + ['B','KB','MB','GB'][i]; },
+            formatBytes: (bytes) => {
+                if (bytes === 0) return '0 B';
+                const k=1024, i=Math.floor(Math.log(bytes)/Math.log(k));
+                return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + ['B','KB','MB','GB'][i];
+            },
             getStatusHtml: (status) => {
                 let cl = 'status-orb';
-                if(status === 'pending') return `<div class="status-container"><div class="status-orb orb-pending"></div></div>`;
-                if(status === 'sent') return `<div class="status-container"><div class="status-orb orb-sent"></div></div>`;
-                if(status === 'delivered') return `<div class="status-container"><div class="status-orb orb-delivered"></div></div>`;
-                if(status === 'read') return `<div class="status-container"><div class="status-orb orb-read"></div></div>`;
-                return '';
+                if(status === 'pending') cl += ' status-pending';
+                else if(status === 'sent') cl += ' status-sent';
+                else if(status === 'delivered') cl += ' status-delivered';
+                else if(status === 'read') cl += ' status-read';
+                return `<div class="status-container"><div class="${cl}"></div></div>`;
             }
         };
 
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
-                const req = indexedDB.open("GhostMeshSecure", 6);
-                req.onupgradeneeded = e => { const db = e.target.result; if (!db.objectStoreNames.contains("config")) db.createObjectStore("config"); if (!db.objectStoreNames.contains("messages")) { const store = db.createObjectStore("messages", { keyPath: "id" }); store.createIndex("peerId", "peerId", { unique: false }); } };
-                req.onsuccess = () => { Store.db = req.result; resolve(); }; req.onerror = (e) => { console.error("DB Error", e); resolve(); /* Fallback if DB fails */ };
+                // FORCE VERSION 7 to clear broken schemas
+                const req = indexedDB.open("GhostMeshSecure", 7);
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    // Nuke old stores if corrupt
+                    if(db.objectStoreNames.contains("config")) db.deleteObjectStore("config");
+                    if(db.objectStoreNames.contains("messages")) db.deleteObjectStore("messages");
+                    
+                    db.createObjectStore("config");
+                    const store = db.createObjectStore("messages", { keyPath: "id" });
+                    store.createIndex("peerId", "peerId", { unique: false });
+                };
+                req.onsuccess = () => { Store.db = req.result; resolve(); };
+                req.onerror = (e) => { 
+                    console.error("DB Error", e);
+                    // Critical Fallback: Nuke DB and retry
+                    indexedDB.deleteDatabase("GhostMeshSecure");
+                    location.reload(); 
+                };
             }),
-            put: async (store, key, val) => new Promise(r => { if(!Store.db) return r(); const tx = Store.db.transaction(store, "readwrite"); if(store === "messages") { tx.objectStore(store).put(val); } else { key ? tx.objectStore(store).put(val, key) : tx.objectStore(store).put(val); } tx.oncomplete = r; tx.onerror = r; }),
-            get: async (store, key) => new Promise(r => { if(!Store.db) return r(null); const req = Store.db.transaction(store, "readonly").objectStore(store).get(key); req.onsuccess = () => r(req.result); req.onerror = () => r(null); }),
-            getAllMessages: async () => new Promise(r => { if(!Store.db) return r([]); const req = Store.db.transaction("messages", "readonly").objectStore("messages").getAll(); req.onsuccess = () => r(req.result); req.onerror = () => r([]); }),
-            getMessages: async (peerId) => new Promise(r => { if(!Store.db) return r([]); const tx = Store.db.transaction("messages", "readonly"); const req = tx.objectStore("messages").index("peerId").getAll(peerId); req.onsuccess = () => r(req.result || []); req.onerror = () => r([]); }),
+            put: async (store, key, val) => new Promise(r => {
+                if(!Store.db) return r();
+                const tx = Store.db.transaction(store, "readwrite");
+                if(store === "messages") { tx.objectStore(store).put(val); }
+                else { key ? tx.objectStore(store).put(val, key) : tx.objectStore(store).put(val); }
+                tx.oncomplete = r;
+            }),
+            get: async (store, key) => new Promise(r => {
+                if(!Store.db) return r(null);
+                const req = Store.db.transaction(store, "readonly").objectStore(store).get(key);
+                req.onsuccess = () => r(req.result);
+            }),
+            getAllMessages: async () => new Promise(r => {
+                if(!Store.db) return r([]);
+                const req = Store.db.transaction("messages", "readonly").objectStore("messages").getAll();
+                req.onsuccess = () => r(req.result);
+            }),
+            getMessages: async (peerId) => new Promise(r => {
+                if(!Store.db) return r([]);
+                const tx = Store.db.transaction("messages", "readonly");
+                const req = tx.objectStore("messages").index("peerId").getAll(peerId);
+                req.onsuccess = () => r(req.result || []);
+            }),
             getPendingMessages: async (peerId) => (await Store.getMessages(peerId)).filter(m => m.status === 'pending'),
-            deleteMessagesForPeer: async (peerId) => new Promise(r => { if(!Store.db) return r(); const tx = Store.db.transaction("messages", "readwrite"); const idx = tx.objectStore("messages").index("peerId"); idx.getAllKeys(peerId).onsuccess = e => { e.target.result.forEach(k => tx.objectStore("messages").delete(k)); tx.oncomplete = r; }; })
+            deleteMessagesForPeer: async (peerId) => new Promise(r => {
+                const tx = Store.db.transaction("messages", "readwrite");
+                const index = tx.objectStore("messages").index("peerId");
+                index.getAllKeys(peerId).onsuccess = e => { e.target.result.forEach(k => tx.objectStore("messages").delete(k)); tx.oncomplete = r; };
+            })
         };
 
         const Crypto = {
             keyPair: null,
             generateIdentity: async () => window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]),
-            deriveKeyFromPassword: async (password, salt) => { const enc = new TextEncoder(); const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(password), {name: "PBKDF2"}, false, ["deriveKey"]); return await window.crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]); },
-            encryptPrivateKey: async (privKey, password) => { const salt = window.crypto.getRandomValues(new Uint8Array(16)); const iv = window.crypto.getRandomValues(new Uint8Array(12)); const keyWrapper = await Crypto.deriveKeyFromPassword(password, salt); const jwk = await window.crypto.subtle.exportKey("jwk", privKey); const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, keyWrapper, new TextEncoder().encode(JSON.stringify(jwk))); return { salt: Array.from(salt), iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }; },
-            decryptPrivateKey: async (encObj, password) => { try { const salt = new Uint8Array(encObj.salt), iv = new Uint8Array(encObj.iv), data = new Uint8Array(encObj.data); const keyWrapper = await Crypto.deriveKeyFromPassword(password, salt); const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, keyWrapper, data); return await window.crypto.subtle.importKey("jwk", JSON.parse(new TextDecoder().decode(decrypted)), { name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]); } catch(e) { throw new Error("Invalid Password"); } },
-            importKey: async (str) => { const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0)); return await window.crypto.subtle.importKey("spki", bytes.buffer, { name: "ECDH", namedCurve: "P-256" }, true, []); },
+            deriveKeyFromPassword: async (password, salt) => {
+                const enc = new TextEncoder();
+                const keyMaterial = await window.crypto.subtle.importKey("raw", enc.encode(password), {name: "PBKDF2"}, false, ["deriveKey"]);
+                return await window.crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+            },
+            encryptPrivateKey: async (privKey, password) => {
+                const salt = window.crypto.getRandomValues(new Uint8Array(16));
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const keyWrapper = await Crypto.deriveKeyFromPassword(password, salt);
+                const jwk = await window.crypto.subtle.exportKey("jwk", privKey);
+                const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, keyWrapper, new TextEncoder().encode(JSON.stringify(jwk)));
+                return { salt: Array.from(salt), iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) };
+            },
+            decryptPrivateKey: async (encObj, password) => {
+                try {
+                    const salt = new Uint8Array(encObj.salt), iv = new Uint8Array(encObj.iv), data = new Uint8Array(encObj.data);
+                    const keyWrapper = await Crypto.deriveKeyFromPassword(password, salt);
+                    const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, keyWrapper, data);
+                    return await window.crypto.subtle.importKey("jwk", JSON.parse(new TextDecoder().decode(decrypted)), { name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]);
+                } catch(e) { throw new Error("Invalid Password"); }
+            },
+            importKey: async (str) => {
+                const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
+                return await window.crypto.subtle.importKey("spki", bytes.buffer, { name: "ECDH", namedCurve: "P-256" }, true, []);
+            },
             exportKey: async (key) => btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", key)))),
             deriveShared: async (pub) => window.crypto.subtle.deriveKey({ name: "ECDH", public: pub }, Crypto.keyPair.privateKey, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]),
-            generateFingerprint: async (remotePubStr) => { const local = App.state.pubStr, combined = local < remotePubStr ? local + remotePubStr : remotePubStr + local; const hash = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(combined)); return Utils.bufferToHex(hash).substring(0, 12).toUpperCase().match(/.{1,4}/g).join(' '); },
-            encryptPayload: async (dataObj, key) => { const iv = window.crypto.getRandomValues(new Uint8Array(12)); const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(dataObj))); return { iv: Array.from(iv), data: Array.from(new Uint8Array(cipher)) }; },
-            decryptPayload: async (encObj, key) => { const dec = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(encObj.iv) }, key, new Uint8Array(encObj.data)); return JSON.parse(new TextDecoder().decode(dec)); },
-            encryptBin: async (buffer, key) => { const iv = window.crypto.getRandomValues(new Uint8Array(12)); const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, buffer); const res = new Uint8Array(iv.length + cipher.byteLength); res.set(iv, 0); res.set(new Uint8Array(cipher), 12); return res.buffer; },
-            decryptBin: async (buffer, key) => { const u8 = new Uint8Array(buffer), iv = u8.slice(0, 12), data = u8.slice(12); return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data); }
+            generateFingerprint: async (remotePubStr) => {
+                const local = App.state.pubStr, combined = local < remotePubStr ? local + remotePubStr : remotePubStr + local;
+                const hash = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(combined));
+                return Utils.bufferToHex(hash).substring(0, 12).toUpperCase().match(/.{1,4}/g).join(' ');
+            },
+            encryptPayload: async (dataObj, key) => {
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(dataObj)));
+                return { iv: Array.from(iv), data: Array.from(new Uint8Array(cipher)) };
+            },
+            decryptPayload: async (encObj, key) => {
+                const dec = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(encObj.iv) }, key, new Uint8Array(encObj.data));
+                return JSON.parse(new TextDecoder().decode(dec));
+            },
+            encryptBin: async (buffer, key) => {
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, buffer);
+                const res = new Uint8Array(iv.length + cipher.byteLength);
+                res.set(iv, 0); res.set(new Uint8Array(cipher), 12);
+                return res.buffer;
+            },
+            decryptBin: async (buffer, key) => {
+                const u8 = new Uint8Array(buffer), iv = u8.slice(0, 12), data = u8.slice(12);
+                return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+            }
         };
 
         const Network = {
             peer: null, connections: {}, uploadCancelled: false,
-            init: async (id) => { if(Network.peer) return; Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } }); Network.peer.on('open', () => UI.updateHeaderStatus(App.state.activeChat, "Online")); Network.peer.on('connection', Network.handleConn); Network.peer.on('call', Media.handleIncoming); Network.peer.on('disconnected', () => { UI.updateHeaderStatus(App.state.activeChat, "Offline"); setTimeout(() => !Network.peer.destroyed && Network.peer.reconnect(), 2000); }); },
-            connectToInput: () => { const id = document.getElementById('input-peer-id').value.trim(); if(id) Network.connectWithRetry(id); },
-            connectWithRetry: async (id, retries = 0) => { if (Network.connections[id]?.conn?.open) return; const conn = Network.peer.connect(id, { reliable: true }); conn.on('open', () => { conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id }); Network.processQueue(id); }); conn.on('error', () => { if (retries < 3) setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000); }); Network.handleConn(conn); },
-            handleConn: (conn) => { conn.on('data', data => Network.handleData(conn.peer, data, conn)); conn.on('close', () => { delete Network.connections[conn.peer]; UI.updateHeaderStatus(conn.peer, "Offline"); }); },
-            processQueue: async (peerId) => { const pending = await Store.getPendingMessages(peerId); const connObj = Network.connections[peerId]; if(!connObj?.conn?.open) return; for (const msg of pending) { if (msg.type === 'text') { connObj.conn.send({ type: 'msg', payload: await Crypto.encryptPayload({ content: msg.content, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key), id: msg.id }); } msg.status = 'sent'; await Store.put('messages', null, msg); } if(App.state.activeChat === peerId) UI.loadChat(peerId); },
+            init: async (id) => {
+                if(Network.peer) return;
+                Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
+                Network.peer.on('open', () => UI.updateHeaderStatus(App.state.activeChat, "Online"));
+                Network.peer.on('connection', Network.handleConn);
+                Network.peer.on('call', Media.handleIncoming);
+                Network.peer.on('disconnected', () => { UI.updateHeaderStatus(App.state.activeChat, "Offline"); setTimeout(() => !Network.peer.destroyed && Network.peer.reconnect(), 2000); });
+            },
+            connectToInput: () => {
+                const id = document.getElementById('input-peer-id').value.trim();
+                if(id) Network.connectWithRetry(id);
+            },
+            connectWithRetry: async (id, retries = 0) => {
+                if (Network.connections[id]?.conn?.open) return;
+                const conn = Network.peer.connect(id, { reliable: true });
+                conn.on('open', () => {
+                    conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
+                    Network.processQueue(id);
+                });
+                conn.on('error', () => { if (retries < 3) setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000); });
+                Network.handleConn(conn);
+            },
+            handleConn: (conn) => {
+                conn.on('data', data => Network.handleData(conn.peer, data, conn));
+                conn.on('close', () => { delete Network.connections[conn.peer]; UI.updateHeaderStatus(conn.peer, "Offline"); });
+            },
+            processQueue: async (peerId) => {
+                const pending = await Store.getPendingMessages(peerId);
+                const connObj = Network.connections[peerId];
+                if(!connObj?.conn?.open) return;
+                for (const msg of pending) {
+                    if (msg.type === 'text') {
+                        connObj.conn.send({ type: 'msg', payload: await Crypto.encryptPayload({ content: msg.content, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key), id: msg.id });
+                    }
+                    msg.status = 'sent';
+                    await Store.put('messages', null, msg); 
+                }
+                if(App.state.activeChat === peerId) UI.loadChat(peerId);
+            },
             handleData: async (sender, data, conn) => {
-                if (data.type === 'handshake') { const pub = await Crypto.importKey(data.key); const shared = await Crypto.deriveShared(pub); const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub)))); App.addContact(sender, data.name, pubStr); Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 }; conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id }); if (!App.state.activeChat) UI.loadChat(sender); else if (App.state.activeChat === sender) UI.loadChat(sender); UI.showToast(`Connected with ${data.name}!`); }
-                if (data.type === 'handshake-ack') { const pub = await Crypto.importKey(data.key); const shared = await Crypto.deriveShared(pub); const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub)))); App.addContact(sender, data.name, pubStr); Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 }; if (App.state.activeChat === sender) UI.loadChat(sender); else if (!App.state.activeChat) UI.loadChat(sender); UI.showToast("Connection Secured"); }
-                const connObj = Network.connections[sender]; if (!connObj || !connObj.key) return;
-                if (data.type === 'receipt') { const msgs = await Store.getMessages(sender); const msg = msgs.find(m => m.id === data.msgId); if (msg) { msg.status = data.status; await Store.put('messages', null, msg); if (App.state.activeChat === sender) UI.updateMessageTick(msg.id, data.status); } return; }
-                if (data.type === 'msg') { try { const dec = await Crypto.decryptPayload(data.payload, connObj.key); if(dec.type === 'text') { App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', data.id || data.payload.id); conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'delivered' }); if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'read' }); } } catch(e) {} }
-                if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
-                    const tracker = App.fileChunks[sender]; if (!tracker) return;
+                if (data.type === 'handshake') {
+                    const pub = await Crypto.importKey(data.key);
+                    const shared = await Crypto.deriveShared(pub);
+                    const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                    App.addContact(sender, data.name, pubStr);
+                    Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                    conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
+                    if (!App.state.activeChat) UI.loadChat(sender);
+                    else if (App.state.activeChat === sender) UI.loadChat(sender);
+                    UI.showToast(`Connected with ${data.name}!`);
+                }
+                if (data.type === 'handshake-ack') {
+                     const pub = await Crypto.importKey(data.key);
+                     const shared = await Crypto.deriveShared(pub);
+                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                     App.addContact(sender, data.name, pubStr);
+                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                     if (App.state.activeChat === sender) UI.loadChat(sender);
+                     else if (!App.state.activeChat) UI.loadChat(sender);
+                     UI.showToast("Connection Secured");
+                }
+                const connObj = Network.connections[sender];
+                if (!connObj || !connObj.key) return;
+
+                if (data.type === 'receipt') {
+                     const msgs = await Store.getMessages(sender);
+                     const msg = msgs.find(m => m.id === data.msgId);
+                     if (msg) {
+                         msg.status = data.status;
+                         await Store.put('messages', null, msg);
+                         if (App.state.activeChat === sender) UI.updateMessageTick(msg.id, data.status);
+                     }
+                     return;
+                }
+
+                if (data.type === 'msg') {
                     try {
-                        const dec = await Crypto.decryptBin(data, connObj.key); tracker.chunks.push(dec); tracker.received += data.byteLength;
-                        if (App.state.activeChat === sender) { const pct = Math.round((tracker.received / tracker.encSize) * 100); document.getElementById('download-progress').classList.remove('hidden'); document.getElementById('dl-progress-bar').style.width = pct + "%"; document.getElementById('dl-progress-percent').innerText = pct + "%"; }
+                        const dec = await Crypto.decryptPayload(data.payload, connObj.key);
+                        if(dec.type === 'text') {
+                             App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', data.id || data.payload.id);
+                             conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'delivered' });
+                             if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'read' });
+                        }
+                    } catch(e) {}
+                }
+                
+                if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
+                    const tracker = App.fileChunks[sender];
+                    if (!tracker) return;
+                    try {
+                        const dec = await Crypto.decryptBin(data, connObj.key);
+                        tracker.chunks.push(dec);
+                        tracker.received += data.byteLength;
+                        if (App.state.activeChat === sender) {
+                            const pct = Math.round((tracker.received / tracker.encSize) * 100);
+                            document.getElementById('download-progress').classList.remove('hidden');
+                            document.getElementById('dl-progress-bar').style.width = pct + "%";
+                            document.getElementById('dl-progress-percent').innerText = pct + "%";
+                        }
                         if (tracker.received >= tracker.encSize) {
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             
-                            // *** CRITICAL FIX: Pass tracker.msgId to update existing bubble ***
+                            // *** ID MATCHING FIX: Use tracker.msgId to replace the receiving bubble ***
                             App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
-                            
-                            // Send Receipt
-                            conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'delivered' });
-                            if(App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'read' });
-
                             delete App.fileChunks[sender];
                         }
                     } catch(e){}
                 }
                 if (data.type === 'file-start') {
                      App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
-                     // Show Receiving Bubble with correct ID
+                     // *** ID MATCHING FIX: Pass data.id when creating Receiving bubble ***
                      App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'pending', data.id);
                 }
             },
@@ -272,36 +456,75 @@
             sendMessage: async () => {
                 if (!App.state.activeChat) return;
                 const peerId = App.state.activeChat, input = document.getElementById('message-input'), fileInput = document.getElementById('file-input');
+                
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
                     if (file.size > 50*1024*1024) { alert("File > 50MB"); UI.clearFile(); return; }
                     const connObj = Network.connections[peerId];
                     if (!connObj?.conn?.open) return alert("Peer Offline");
+
                     Network.uploadCancelled = false;
-                    const CHUNK = 256 * 1024; const overhead = 28; const numChunks = Math.ceil(file.size / CHUNK); const totalEncSize = file.size + (numChunks * overhead);
-                    const msgId = Date.now().toString(); 
+                    const CHUNK = 256 * 1024;
+                    const overhead = 28;
+                    const numChunks = Math.ceil(file.size / CHUNK);
+                    const totalEncSize = file.size + (numChunks * overhead);
+
+                    const msgId = Date.now().toString(); // Use String ID
+                    // OPTIMISTIC RENDER: Pending
                     App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
                     UI.clearFile();
+
                     connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: file.type, encSize: totalEncSize });
-                    let offset = 0; document.getElementById('upload-progress').classList.remove('hidden');
+                    
+                    let offset = 0;
+                    document.getElementById('upload-progress').classList.remove('hidden');
+                    
                     const streamLoop = async () => {
-                        if (Network.uploadCancelled) { document.getElementById('upload-progress').classList.add('hidden'); return; }
+                        if (Network.uploadCancelled) {
+                             document.getElementById('upload-progress').classList.add('hidden');
+                             return;
+                        }
+
                         if(offset >= file.size) {
                              document.getElementById('upload-progress').classList.add('hidden');
+                             // Update to SENT locally after upload done
                              const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
                              if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
                              return;
                         }
                         if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
-                        const slice = file.slice(offset, offset + CHUNK); const buf = await slice.arrayBuffer(); const enc = await Crypto.encryptBin(buf, connObj.key); connObj.conn.send(enc);
-                        offset += CHUNK; const pct = Math.round((offset/file.size)*100); document.getElementById('progress-bar').style.width = pct + "%"; document.getElementById('progress-percent').innerText = pct + "%";
+
+                        const slice = file.slice(offset, offset + CHUNK);
+                        const buf = await slice.arrayBuffer();
+                        const enc = await Crypto.encryptBin(buf, connObj.key);
+                        connObj.conn.send(enc);
+                        offset += CHUNK;
+                        const pct = Math.round((offset/file.size)*100);
+                        document.getElementById('progress-bar').style.width = pct + "%";
+                        document.getElementById('progress-percent').innerText = pct + "%";
                         requestAnimationFrame(streamLoop);
-                    }; streamLoop();
+                    };
+                    streamLoop();
                 } 
                 else if (input.value.trim()) {
-                    const text = input.value.trim(); const connObj = Network.connections[peerId]; const msgId = Date.now().toString();
-                    App.addMessage(peerId, text, 'out', 'text', 'pending', msgId); input.value = ''; UI.toggleSendIcon();
-                    if (connObj?.conn?.open) { try { const encPayload = await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key); connObj.conn.send({ type: 'msg', id: msgId, payload: encPayload }); const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId); if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); } } catch(e) { console.error(e); } }
+                    const text = input.value.trim();
+                    const connObj = Network.connections[peerId];
+                    const msgId = Date.now().toString();
+                    
+                    // OPTIMISTIC RENDER: Pending
+                    App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
+                    input.value = '';
+                    UI.toggleSendIcon();
+
+                    if (connObj?.conn?.open) {
+                        try {
+                            const encPayload = await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key);
+                            connObj.conn.send({ type: 'msg', id: msgId, payload: encPayload });
+                            // Update to Sent
+                            const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
+                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                        } catch(e) { console.error("Encryption Failed", e); alert("Encryption Error"); }
+                    }
                 }
             }
         };
@@ -310,21 +533,108 @@
             localStream: null, call: null, scanner: null, recording: false, recorder: null, audioChunks: [],
             openCamera: async () => { document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}}); },
             closeCamera: () => { document.getElementById('camera-modal').classList.add('hidden'); const v = document.getElementById('camera-preview'); if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop()); },
-            takePhoto: () => { const v = document.getElementById('camera-preview'); const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0); c.toBlob(b => { const dt = new DataTransfer(); dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"})); document.getElementById('file-input').files = dt.files; UI.handleFileSelect({target: {files: dt.files}}); Media.closeCamera(); }, 'image/jpeg'); },
-            toggleRecordUI: () => { const normal = document.getElementById('normal-input-ui'); const rec = document.getElementById('recording-ui'); if(normal && rec) { normal.classList.add('hidden'); rec.classList.remove('hidden'); Media.startRecord(); } },
-            cancelRecord: () => { if (Media.recorder) Media.recorder.stop(); Media.recording = false; document.getElementById('recording-ui').classList.add('hidden'); document.getElementById('normal-input-ui').classList.remove('hidden'); },
-            startRecord: async () => { try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); Media.recorder = new MediaRecorder(stream); Media.audioChunks = []; Media.recorder.ondataavailable = e => Media.audioChunks.push(e.data); Media.recorder.onstop = () => { if (Media.recording) { const blob = new Blob(Media.audioChunks, { type: 'audio/webm' }); const file = new File([blob], `Voice.webm`, { type: 'audio/webm' }); const dt = new DataTransfer(); dt.items.add(file); document.getElementById('file-input').files = dt.files; Network.sendMessage(); UI.handleFileSelect({target: {files: dt.files}}); } stream.getTracks().forEach(t => t.stop()); }; Media.recorder.start(); Media.recording = true; document.getElementById('btn-main-action').classList.add('mic-active'); } catch(e) { alert("Mic Error"); } },
-            stopRecord: () => { if(Media.recorder) Media.recorder.stop(); document.getElementById('recording-ui').classList.add('hidden'); document.getElementById('normal-input-ui').classList.remove('hidden'); },
-            startCall: async (video) => { if(!App.state.activeChat) return; try { const stream = await navigator.mediaDevices.getUserMedia({ video, audio: true }); Media.localStream = stream; if(video) document.getElementById('local-video').srcObject = stream; document.getElementById('video-overlay').classList.remove('hidden'); const call = Network.peer.call(App.state.activeChat, stream, { metadata: { video } }); Media.setupCall(call, video); } catch(e) { alert("Call Error: " + e); } },
-            handleIncoming: (call) => { if(confirm(`Incoming ${call.metadata.video?'Video':'Audio'} Call`)) { navigator.mediaDevices.getUserMedia({ video: call.metadata.video, audio: true }).then(stream => { Media.localStream = stream; if(call.metadata.video) document.getElementById('local-video').srcObject = stream; document.getElementById('video-overlay').classList.remove('hidden'); call.answer(stream); Media.setupCall(call, call.metadata.video); }); } else call.close(); },
-            setupCall: (call, video) => { Media.call = call; call.on('stream', r => { const v = document.getElementById('remote-video'); if(video) v.srcObject = r; else { const a = new Audio(); a.srcObject = r; a.play(); } }); call.on('close', Media.endCall); },
-            endCall: () => { if(Media.localStream) Media.localStream.getTracks().forEach(t=>t.stop()); if(Media.call) Media.call.close(); document.getElementById('video-overlay').classList.add('hidden'); },
-            flipCameraView: () => { const v = document.getElementById('camera-preview'); v.classList.toggle('mirror-x'); },
-            toggleScannerMirror: () => { const reader = document.getElementById('reader'); const video = reader.querySelector('video'); if(video) video.classList.toggle('mirror-x'); }
+            takePhoto: () => {
+                const v = document.getElementById('camera-preview'); const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0);
+                c.toBlob(b => {
+                    const dt = new DataTransfer(); dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
+                    document.getElementById('file-input').files = dt.files;
+                    UI.handleFileSelect({target: {files: dt.files}});
+                    Media.closeCamera();
+                }, 'image/jpeg');
+            },
+            toggleRecordUI: () => {
+                 const normal = document.getElementById('normal-input-ui');
+                 const rec = document.getElementById('recording-ui');
+                 if(normal && rec) {
+                     normal.classList.add('hidden');
+                     rec.classList.remove('hidden');
+                     Media.startRecord();
+                 }
+            },
+            cancelRecord: () => {
+                if (Media.recorder) Media.recorder.stop();
+                Media.recording = false;
+                document.getElementById('recording-ui').classList.add('hidden');
+                document.getElementById('normal-input-ui').classList.remove('hidden');
+            },
+            startRecord: async () => {
+                 try {
+                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                     Media.recorder = new MediaRecorder(stream);
+                     Media.audioChunks = [];
+                     Media.recorder.ondataavailable = e => Media.audioChunks.push(e.data);
+                     Media.recorder.onstop = () => {
+                         if (Media.recording) {
+                             const blob = new Blob(Media.audioChunks, { type: 'audio/webm' });
+                             const file = new File([blob], `Voice.webm`, { type: 'audio/webm' });
+                             const dt = new DataTransfer(); dt.items.add(file);
+                             document.getElementById('file-input').files = dt.files;
+                             Network.sendMessage();
+                             UI.handleFileSelect({target: {files: dt.files}});
+                         }
+                         stream.getTracks().forEach(t => t.stop());
+                     };
+                     Media.recorder.start();
+                     Media.recording = true;
+                     document.getElementById('btn-main-action').classList.add('mic-active');
+                 } catch(e) { alert("Mic Error"); }
+            },
+            stopRecord: () => {
+                 if(Media.recorder) Media.recorder.stop();
+                 document.getElementById('recording-ui').classList.add('hidden');
+                 document.getElementById('normal-input-ui').classList.remove('hidden');
+            },
+            startCall: async (video) => {
+                if(!App.state.activeChat) return;
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video, audio: true });
+                    Media.localStream = stream;
+                    if(video) document.getElementById('local-video').srcObject = stream;
+                    document.getElementById('video-overlay').classList.remove('hidden');
+                    const call = Network.peer.call(App.state.activeChat, stream, { metadata: { video } });
+                    Media.setupCall(call, video);
+                } catch(e) { alert("Call Error: " + e); }
+            },
+            handleIncoming: (call) => {
+                if(confirm(`Incoming ${call.metadata.video?'Video':'Audio'} Call`)) {
+                    navigator.mediaDevices.getUserMedia({ video: call.metadata.video, audio: true }).then(stream => {
+                        Media.localStream = stream;
+                        if(call.metadata.video) document.getElementById('local-video').srcObject = stream;
+                        document.getElementById('video-overlay').classList.remove('hidden');
+                        call.answer(stream);
+                        Media.setupCall(call, call.metadata.video);
+                    });
+                } else call.close();
+            },
+            setupCall: (call, video) => {
+                Media.call = call;
+                call.on('stream', r => {
+                    const v = document.getElementById('remote-video');
+                    if(video) v.srcObject = r; else { const a = new Audio(); a.srcObject = r; a.play(); }
+                });
+                call.on('close', Media.endCall);
+            },
+            endCall: () => {
+                if(Media.localStream) Media.localStream.getTracks().forEach(t=>t.stop());
+                if(Media.call) Media.call.close();
+                document.getElementById('video-overlay').classList.add('hidden');
+            },
+            // FLIP Logic
+            flipCameraView: () => {
+                const v = document.getElementById('camera-preview');
+                v.classList.toggle('mirror-x'); // Toggle CSS mirror
+            },
+            toggleScannerMirror: () => {
+                const reader = document.getElementById('reader');
+                // The actual video element is inside reader
+                const video = reader.querySelector('video');
+                if(video) video.classList.toggle('mirror-x');
+            }
         };
 
         const App = {
-            state: { id: null, name: null, activeChat: null, contacts: {}, pubStr: null }, fileChunks: {},
+            state: { id: null, name: null, activeChat: null, contacts: {}, pubStr: null },
+            fileChunks: {},
             init: async () => {
                 lucide.createIcons();
                 // FIX: Fallback and robust check
@@ -337,7 +647,7 @@
             login: async () => { const pass = document.getElementById('login-password').value; try { const priv = await Crypto.decryptPrivateKey(await Store.get('config', 'encPrivateKey'), pass); const pub = await window.crypto.subtle.importKey("spki", await Store.get('config', 'publicKey'), {name:"ECDH",namedCurve:"P-256"}, true, []); App.loadMain(App.state.id, App.state.name, priv, pub); } catch(e) { alert("Wrong Password"); } },
             loadMain: async (id, name, priv, pub) => { Crypto.keyPair = { privateKey: priv, publicKey: pub }; App.state.pubStr = await Crypto.exportKey(pub); document.getElementById('onboarding-screen').classList.add('hidden'); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('app-layout').classList.remove('hidden'); App.state.contacts = await Store.get('config', 'contacts') || {}; UI.renderContacts(); UI.updateSelf(name); Network.init(id); },
             addContact: (id, name, pubKey) => { App.state.contacts[id] = { id, name: name || "Unknown", pubKey: pubKey || App.state.contacts[id]?.pubKey }; Store.put('config', 'contacts', App.state.contacts); UI.renderContacts(); },
-            deleteContact: async (id) => { if(!confirm("Delete contact?")) return; delete App.state.contacts[id]; await Store.put('config', 'contacts', App.state.contacts); await Store.deleteMessagesForPeer(id); if(Network.connections[id]) Network.connections[id].conn.close(); delete Network.connections[id]; if(App.state.activeChat === id) UI.closeChat(); UI.renderContacts(); },
+            deleteContact: async (id) => { if(!confirm("Delete contact and all messages?")) return; delete App.state.contacts[id]; await Store.put('config', 'contacts', App.state.contacts); await Store.deleteMessagesForPeer(id); if(Network.connections[id]) Network.connections[id].conn.close(); delete Network.connections[id]; if(App.state.activeChat === id) UI.closeChat(); UI.renderContacts(); },
             addMessage: (peerId, content, dir, type, status, id) => { const msg = { id: id || Date.now().toString(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) }; if (type === 'file' && content.blob && content.size > 10 * 1024 * 1024) { content.blob = null; } Store.put('messages', null, msg); if(App.state.activeChat === peerId) UI.renderMessage(msg); },
             exportIdentity: async () => { const data = { id: App.state.id, name: App.state.name, priv: await Store.get('config', 'encPrivateKey'), contacts: App.state.contacts, msgs: await Store.getAllMessages() }; const url = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: "application/json"})); const a = document.createElement('a'); a.href = url; a.download = "ghost_backup.json"; a.click(); }
         };
@@ -354,7 +664,7 @@
             toggleSendIcon: () => { const val = document.getElementById('message-input').value.trim(); if(val) { document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); } else { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); } },
             showSafetyNumber: async () => { if(!App.state.activeChat) return; const c = App.state.contacts[App.state.activeChat]; if(c && c.pubKey) { document.getElementById('safety-number').innerText = await Crypto.generateFingerprint(c.pubKey); document.getElementById('safety-modal').classList.remove('hidden'); } },
             showToast: (msg) => { const t = document.createElement('div'); t.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade-in z-[150]"; t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); },
-            renderContacts: () => { document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join(''); lucide.createIcons(); },
+            renderContacts: () => { document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0]}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join(''); lucide.createIcons(); },
             filterContacts: () => { const term = document.getElementById('search-contacts').value.toLowerCase(); document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).filter(c => c.name.toLowerCase().includes(term) || c.id.includes(term)).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join(''); lucide.createIcons(); },
             loadChat: async (id) => { Utils.revokeBlobs(); App.state.activeChat = id; const c = App.state.contacts[id]; if(window.innerWidth < 768) { document.getElementById('sidebar-panel').classList.add('hidden'); document.getElementById('chat-area').classList.remove('hidden'); document.getElementById('chat-area').classList.add('flex'); } document.getElementById('chat-empty-state').classList.add('hidden'); document.getElementById('chat-interface').classList.remove('hidden'); document.getElementById('chat-interface').classList.add('flex'); document.getElementById('chat-header-name').innerText = c.name; const status = Network.connections[id] ? "Online" : "Offline"; document.getElementById('chat-header-status').innerText = status; document.getElementById('chat-header-avatar').innerText = c.name[0]; const msgs = await Store.getMessages(id); document.getElementById('messages-container').innerHTML = ''; msgs.forEach(UI.renderMessage); },
             closeChat: () => { document.getElementById('chat-area').classList.add('hidden'); document.getElementById('sidebar-panel').classList.remove('hidden'); },
