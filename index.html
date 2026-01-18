@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- CSP -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
     
@@ -26,6 +25,7 @@
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         
+        /* File Card */
         .file-card-inner { background-color: rgba(0, 0, 0, 0.15); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.05); }
         .file-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
         
@@ -78,7 +78,6 @@
         <h2 class="text-2xl font-bold mb-4">Unlock Identity</h2>
         <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center">
         <button onclick="App.login()" class="w-full max-w-sm p-4 bg-[#00a884] rounded-xl font-bold">Unlock</button>
-        <div id="lockout-msg" class="text-red-400 mt-4 hidden text-sm bg-red-900/20 p-2 rounded border border-red-900"></div>
     </div>
 
     <!-- 3. MAIN UI -->
@@ -114,7 +113,6 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v6.0 Final</span>
             </div>
         </div>
 
@@ -426,14 +424,12 @@
                         const dec = await Crypto.decryptBin(data, connObj.key);
                         tracker.chunks.push(dec);
                         tracker.received += data.byteLength;
-                        
                         if (App.state.activeChat === sender) {
                             const pct = Math.round((tracker.received / tracker.encSize) * 100);
                             document.getElementById('download-progress').classList.remove('hidden');
                             document.getElementById('dl-progress-bar').style.width = pct + "%";
                             document.getElementById('dl-progress-percent').innerText = pct + "%";
                         }
-
                         if (tracker.received >= tracker.encSize) {
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
@@ -450,8 +446,9 @@
                     } catch(e){}
                 }
                 if (data.type === 'file-start') {
+                     // Store the message ID from sender to match the bubbles later
                      App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
-                     // Show Receiving Bubble with ID
+                     // Create Initial Receiving Bubble with the SAME ID
                      App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'pending', data.id);
                 }
             },
@@ -654,13 +651,31 @@
                 const name = document.getElementById('setup-name').value;
                 const pass = document.getElementById('setup-password').value;
                 if(!name || !pass) return alert("Required");
-                const id = 'ghost-' + Math.floor(Math.random() * 1000000);
-                const kp = await Crypto.generateIdentity();
-                const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass);
-                const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey);
-                await Store.put('config', 'name', name); await Store.put('config', 'id', id);
-                await Store.put('config', 'encPrivateKey', encPriv); await Store.put('config', 'publicKey', pubJWK);
-                App.loadMain(id, name, kp.privateKey, kp.publicKey);
+                
+                const btn = document.getElementById('btn-create-profile');
+                btn.innerText = "Generating...";
+                btn.disabled = true;
+
+                try {
+                    // Ensure DB is ready
+                    if(!Store.db) await Store.init();
+                    
+                    const id = 'ghost-' + Math.floor(Math.random() * 1000000);
+                    const kp = await Crypto.generateIdentity();
+                    const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass);
+                    const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey);
+                    
+                    await Store.put('config', 'name', name); 
+                    await Store.put('config', 'id', id); 
+                    await Store.put('config', 'encPrivateKey', encPriv); 
+                    await Store.put('config', 'publicKey', pubJWK);
+                    
+                    App.loadMain(id, name, kp.privateKey, kp.publicKey);
+                } catch(e) {
+                    alert("Error: " + e.message);
+                    btn.innerText = "Initialize Identity";
+                    btn.disabled = false;
+                }
             },
             login: async () => {
                 const pass = document.getElementById('login-password').value;
