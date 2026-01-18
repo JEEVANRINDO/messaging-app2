@@ -89,42 +89,54 @@
             <div class="absolute -inset-1 bg-[#00a884] rounded-full opacity-20 blur-xl animate-pulse"></div>
             <i data-lucide="shield" class="w-24 h-24 text-[#00a884] relative z-10"></i>
         </div>
+        
         <h1 class="text-4xl font-bold tracking-tighter mb-2">GhostMesh</h1>
         <p class="text-gray-400 max-w-md mx-auto mb-8">Zero Servers. Max Privacy. Max Speed.</p>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg mb-8">
             <button id="btn-host" class="group relative flex flex-col items-center p-6 bg-[#202c33] hover:bg-[#2a3942] border border-[#2a3942] rounded-xl transition-all hover:scale-105 active:scale-95 cursor-pointer">
                 <i id="icon-host" data-lucide="wifi" class="w-8 h-8 mb-3 text-[#00a884]"></i>
                 <div id="loader-host" class="hidden mb-3"><div class="loader w-8 h-8"></div></div>
                 <span id="text-host" class="text-lg font-semibold text-white">Host Node</span>
             </button>
+
             <div class="flex flex-col space-y-2">
-                <input id="input-join-id" type="text" placeholder="Paste ID..." class="p-4 bg-[#2a3942] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#00a884] text-center">
+                <input id="input-join-id" type="text" placeholder="Paste Invite ID..." class="p-4 bg-[#2a3942] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[#00a884] text-center">
                 <button id="btn-join" class="p-4 bg-[#202c33] hover:bg-[#2a3942] border border-[#2a3942] rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2">
                     <span id="text-join">Join Network</span>
                     <div id="loader-join" class="hidden"><div class="loader"></div></div>
                 </button>
             </div>
         </div>
+        
         <div id="identity-display" class="text-xs text-zinc-600 font-mono">Securing Environment...</div>
     </div>
 
     <!-- APP LAYOUT -->
     <div id="app-layout" class="hidden w-full h-full flex flex-col md:flex-row relative">
+        
         <!-- SIDEBAR -->
         <div id="sidebar-panel" class="w-full md:w-96 border-r border-[#2a3942] flex flex-col bg-[#111b21] h-full">
+            <!-- Header -->
             <div class="p-4 border-b border-[#2a3942] flex justify-between items-center shrink-0 bg-[#202c33]">
                 <div class="flex items-center space-x-3">
                     <div id="status-indicator" class="w-3 h-3 rounded-full bg-blue-500"></div>
                     <span class="font-bold text-zinc-200">GhostMesh</span>
                 </div>
-                <button id="btn-show-qr" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
+                <button id="btn-show-qr" class="p-2 hover:bg-[#2a3942] rounded-full transition-colors" title="Show QR Code">
+                    <i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i>
+                </button>
             </div>
+
+            <!-- Chat List -->
             <div id="chat-list" class="flex-1 overflow-y-auto">
                 <div id="empty-state-sidebar" class="p-8 text-center text-[#8696a0] h-full flex flex-col justify-center items-center">
                     <i data-lucide="users" class="w-12 h-12 mb-2 opacity-20"></i>
                     <p>No active peers.</p>
                 </div>
             </div>
+
+            <!-- Footer -->
             <div class="p-4 bg-[#111b21] border-t border-[#2a3942] text-xs font-mono text-[#8696a0] truncate flex justify-between items-center pb-safe shrink-0">
                 <span id="my-peer-id-display">Connecting...</span>
                 <button id="btn-copy-id" class="text-[#00a884] hover:text-white ml-2 p-2 font-bold">COPY</button>
@@ -138,14 +150,17 @@
 
             <div id="chat-empty-state" class="flex-1 flex flex-col items-center justify-center text-[#8696a0] relative z-10">
                 <i data-lucide="shield" class="w-16 h-16 mb-4 opacity-20"></i>
-                <p>Select a peer to chat.</p>
+                <p>Select a peer to chat securely.</p>
             </div>
 
+            <!-- Active Chat Interface -->
             <div id="chat-interface" class="hidden flex-1 flex-col h-full w-full relative z-10">
-                <!-- Header -->
+                <!-- Chat Header -->
                 <div class="h-16 border-b border-[#2a3942] flex items-center justify-between px-4 bg-[#202c33] shrink-0">
                     <div class="flex items-center space-x-3">
-                        <button id="btn-close-chat" class="md:hidden p-2 -ml-2 hover:bg-[#2a3942] rounded-full text-[#aebac1]"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+                        <button id="btn-close-chat" class="md:hidden p-2 -ml-2 hover:bg-[#2a3942] rounded-full text-[#aebac1]">
+                            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                        </button>
                         <div id="chat-avatar" class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00a884] to-blue-500 flex items-center justify-center text-white font-bold text-sm">ID</div>
                         <div class="overflow-hidden">
                             <div id="chat-title" class="font-semibold text-sm text-[#e9edef] truncate">Peer ID</div>
@@ -158,7 +173,7 @@
                     </div>
                 </div>
 
-                <!-- Messages -->
+                <!-- Messages Container -->
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full"></div>
 
                 <!-- Upload Progress -->
@@ -166,8 +181,9 @@
                     Sending File... Do not close app.
                 </div>
 
-                <!-- Input -->
+                <!-- Input Area -->
                 <div class="bg-[#202c33] border-t border-[#2a3942] shrink-0 w-full">
+                    <!-- Preview -->
                     <div id="file-preview-area" class="hidden px-4 py-2 bg-[#2a3942] flex items-center justify-between">
                         <div class="flex items-center space-x-3 min-w-0 flex-1">
                              <div class="bg-[#202c33] p-2 rounded"><i data-lucide="file" class="w-5 h-5 text-[#00a884]"></i></div>
@@ -175,21 +191,30 @@
                         </div>
                         <button id="btn-clear-file" class="text-[#8696a0] hover:text-red-400 p-2"><i data-lucide="x" class="w-5 h-5"></i></button>
                     </div>
+
+                    <!-- Input Bar -->
                     <div class="flex items-center space-x-2 p-2 pb-safe">
                         <input type="file" id="file-input" class="hidden">
-                        <button id="btn-attach" class="p-3 hover:bg-[#2a3942] rounded-full text-[#8696a0] transition-colors shrink-0"><i data-lucide="paperclip" class="w-6 h-6"></i></button>
+                        
+                        <button id="btn-attach" class="p-3 hover:bg-[#2a3942] rounded-full text-[#8696a0] transition-colors shrink-0">
+                            <i data-lucide="paperclip" class="w-6 h-6"></i>
+                        </button>
+
                         <div class="flex-1 bg-[#2a3942] rounded-lg px-4 py-2 flex items-center">
                             <input id="message-input" type="text" class="flex-1 bg-transparent border-none focus:outline-none text-base text-[#e9edef] placeholder-[#8696a0]" placeholder="Type a message">
                         </div>
-                        <button id="btn-send" class="p-3 bg-[#00a884] hover:bg-[#008f6f] rounded-full text-white transition-colors shrink-0 shadow-lg"><i data-lucide="send" class="w-5 h-5 pl-0.5"></i></button>
+                        
+                        <button id="btn-send" class="p-3 bg-[#00a884] hover:bg-[#008f6f] rounded-full text-white transition-colors shrink-0 shadow-lg">
+                            <i data-lucide="send" class="w-5 h-5 pl-0.5"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODALS -->
-    <div id="qr-modal" class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
+    <!-- QR MODAL -->
+    <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full">
             <h3 class="text-xl font-bold mb-4">Scan to Join</h3>
             <div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit"></div>
@@ -198,13 +223,14 @@
         </div>
     </div>
 
-    <div id="incoming-call-modal" class="hidden fixed inset-0 z-[80] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
+    <!-- INCOMING CALL MODAL -->
+    <div id="incoming-call-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4">
         <div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full animate-bounce-slight">
             <div class="w-20 h-20 bg-[#2a3942] rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-[#00a884]">
                 <i data-lucide="phone-incoming" class="w-10 h-10 text-[#00a884] animate-pulse"></i>
             </div>
             <h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3>
-            <p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4"></p>
+            <p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4">Peer ID</p>
             <div class="flex space-x-8 justify-center">
                 <button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400 group">
                     <div class="p-4 bg-red-500/20 group-hover:bg-red-500/30 rounded-full transition-colors"><i data-lucide="phone-off" class="w-8 h-8"></i></div>
@@ -218,10 +244,14 @@
         </div>
     </div>
 
-    <div id="video-overlay" class="hidden fixed inset-0 z-[70] bg-[#0b141a] flex flex-col p-4 pb-safe">
+    <!-- CALL OVERLAY (FULL SCREEN) -->
+    <div id="video-overlay" class="hidden fixed inset-0 z-[100] bg-[#0b141a] flex flex-col p-4 pb-safe">
         <div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4 shadow-2xl">
-            <div id="call-status" class="absolute top-4 left-4 z-10 px-4 py-2 bg-black/60 backdrop-blur rounded-full text-xs font-mono text-white/80">Connecting...</div>
-            <div id="audio-call-ui" class="hidden absolute inset-0 flex items-center justify-center z-0">
+            <!-- Status Pill -->
+            <div id="call-status" class="absolute top-4 left-4 z-20 px-4 py-2 bg-black/60 backdrop-blur rounded-full text-xs font-mono text-white/80">Connecting...</div>
+            
+            <!-- Audio UI -->
+            <div id="audio-call-ui" class="hidden absolute inset-0 flex items-center justify-center z-10">
                 <div class="flex flex-col items-center">
                     <div class="w-32 h-32 bg-[#202c33] rounded-full flex items-center justify-center mb-6 animate-pulse">
                         <i data-lucide="mic" class="w-16 h-16 text-[#00a884]"></i>
@@ -229,11 +259,17 @@
                     <span class="text-[#e9edef] text-xl font-medium">Audio Call</span>
                 </div>
             </div>
-            <video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-1 relative bg-black"></video>
-            <div id="local-video-container" class="absolute top-4 right-4 w-32 h-48 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-20">
+
+            <!-- Remote Video (Full) -->
+            <video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video>
+            
+            <!-- Local Video (PIP) -->
+            <div id="local-video-container" class="absolute top-4 right-4 w-32 h-48 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-30">
                 <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
             </div>
         </div>
+        
+        <!-- Controls -->
         <div class="h-24 flex items-center justify-center space-x-6">
             <button id="btn-end-call" class="p-5 bg-red-500 hover:bg-red-600 rounded-full text-white shadow-lg transition-transform hover:scale-105 active:scale-95">
                 <i data-lucide="phone-off" class="w-8 h-8"></i>
@@ -348,7 +384,7 @@
         }
 
         async function handleData(sender, data, conn) {
-            // BINARY (File Chunk)
+            // RAW BINARY (File Chunk) - Fast Path
             if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
                 const buffer = data instanceof Uint8Array ? data.buffer : data;
                 if (!fileChunks[sender]) return;
@@ -364,6 +400,7 @@
                         const finalBlob = new Blob(tracker.chunks, { type: tracker.mime });
                         const url = URL.createObjectURL(finalBlob);
                         addMessage(sender, "File", 'received-file', { name: tracker.name, size: finalBlob.size, mime: tracker.mime, url });
+                        
                         conn.send({ type: 'receipt', id: tracker.msgId, status: 'delivered' });
                         setTimeout(() => conn.send({ type: 'receipt', id: tracker.msgId, status: 'read' }), 500);
                         delete fileChunks[sender];
@@ -372,7 +409,7 @@
                 return;
             }
 
-            // JSON
+            // JSON MESSAGES
             if (data.type === 'handshake') {
                 const rKey = await CryptoLayer.importPublicKey(data.key);
                 const sKey = await CryptoLayer.deriveSharedKey(myIdentity.privateKey, rKey);
@@ -398,6 +435,7 @@
                 setTimeout(() => conn.send({ type: 'receipt', id: data.id, status: 'read' }), 500);
             }
             else if (data.type === 'file-start') {
+                // Initialize chunk tracking
                 fileChunks[sender] = {
                     msgId: data.id,
                     name: data.name,
@@ -422,7 +460,7 @@
 
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
-                if(file.size > 100*1024*1024) { alert("File > 100MB"); return; }
+                if(file.size > 200*1024*1024) { alert("File > 200MB"); return; }
                 
                 document.getElementById('upload-progress').classList.remove('hidden');
                 
@@ -432,8 +470,9 @@
 
                 const ab = await file.arrayBuffer();
                 
-                const CHUNK_SIZE = 64 * 1024; // 64KB chunks for speed
-                const overhead = 28; 
+                // Burst Streaming Config
+                const CHUNK_SIZE = 256 * 1024; // 256KB chunks
+                const overhead = 28; // AES-GCM (12 IV + 16 Tag)
                 const numChunks = Math.ceil(ab.byteLength / CHUNK_SIZE);
                 const totalEncSize = ab.byteLength + (numChunks * overhead);
 
@@ -442,26 +481,37 @@
                 
                 let offset = 0;
                 
-                // Optimized send loop
+                // Optimized High-Speed Burst Loop
                 const sendLoop = async () => {
+                    // Try to send continuously
                     while (offset < ab.byteLength) {
-                        if (conn.dataChannel.bufferedAmount > 8 * 1024 * 1024) { // Wait if buffer > 8MB
-                            setTimeout(sendLoop, 50);
+                        // Max Buffer Backpressure (16MB)
+                        if (conn.dataChannel.bufferedAmount > 16 * 1024 * 1024) {
+                            setTimeout(sendLoop, 20); // Wait for drain
                             return;
                         }
                         
                         const chunk = ab.slice(offset, offset + CHUNK_SIZE);
                         const encChunk = await CryptoLayer.encryptBin(chunk, key);
-                        conn.send(encChunk);
+                        
+                        try {
+                            conn.send(encChunk);
+                        } catch(e) {
+                            console.error("Send fail", e);
+                            break;
+                        }
                         offset += CHUNK_SIZE;
                     }
                     
+                    // Finished
                     document.getElementById('upload-progress').classList.add('hidden');
                     clearFileSelection();
                     const m = messages[activeChatId].find(x => x.id === msgId);
                     if(m) { m.status = 'sent'; renderMessages(activeChatId); }
                 };
-                setTimeout(sendLoop, 50); // Start after meta
+                
+                // Start bursting after slight delay for meta processing
+                setTimeout(sendLoop, 50);
 
             } else {
                 const text = textInput.value.trim();
@@ -546,7 +596,7 @@
                                 </div>
                             </div>`;
                     } else {
-                        const sizeStr = (m.fileData.size/1024).toFixed(1) + ' KB';
+                        const sizeStr = formatBytes(m.fileData.size);
                         content = `
                             <div class="flex items-center gap-3 min-w-[200px] p-1">
                                 <div class="w-10 h-10 bg-black/20 rounded-lg flex items-center justify-center text-[#00a884]"><i data-lucide="file" class="w-5 h-5"></i></div>
@@ -660,7 +710,7 @@
         };
         document.getElementById('btn-send').onclick = sendMessage;
         
-        // FIXED INPUT HANDLER
+        // FIXED INPUT
         document.getElementById('message-input').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
