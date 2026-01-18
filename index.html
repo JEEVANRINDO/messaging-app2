@@ -25,28 +25,24 @@
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         
-        .file-card-inner { background-color: rgba(0, 0, 0, 0.15); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.05); }
-        .file-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
+        /* FILE CARD */
+        .file-card-inner { background-color: rgba(0, 0, 0, 0.2); border-radius: 6px; padding: 10px; margin-top: 2px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .file-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; text-transform: uppercase; }
         
-        /* Creative Status Orbs */
-        .status-orb { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-left: 4px; transition: all 0.3s ease; }
-        .status-pending { border: 2px solid #8696a0; border-top-color: transparent; animation: spin 1s linear infinite; }
-        .status-sent { border: 1.5px solid #8696a0; background: transparent; }
-        .status-delivered { border: 1.5px solid #8696a0; background: #8696a0; }
-        .status-read { border: 2px solid #53bdeb; background: #53bdeb; box-shadow: 0 0 6px #53bdeb; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* Audio Player */
-        .audio-card { display: flex; align-items: center; gap: 12px; min-width: 220px; padding: 4px 0; }
-        .audio-play-btn { width: 36px; height: 36px; background: rgba(0,0,0,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
-        .audio-play-btn:hover { background: rgba(0,0,0,0.3); }
-        .waveform { display: flex; align-items: center; gap: 2px; height: 24px; flex: 1; }
-        .bar { width: 3px; background-color: rgba(255,255,255,0.4); border-radius: 2px; height: 40%; transition: height 0.2s; }
-        .playing .bar { animation: soundWave 0.8s ease-in-out infinite alternate; }
-        .playing .bar:nth-child(odd) { animation-duration: 0.6s; }
-        .playing .bar:nth-child(2n) { animation-duration: 0.9s; }
-        .playing .bar:nth-child(3n) { animation-duration: 1.1s; }
-        @keyframes soundWave { 0% { height: 20%; opacity: 0.5; } 100% { height: 100%; opacity: 1; } }
+        /* TICKS (WhatsApp Style) */
+        .tick-container { display: flex; align-items: flex-end; gap: 3px; margin-left: 6px; font-size: 10px; color: #8696a0; height: 14px; }
+        .tick-svg { width: 16px; height: 11px; display: inline-block; }
+        .tick-pending path { fill: #8696a0; opacity: 0.6; } /* Clock */
+        .tick-sent path { fill: #8696a0; } /* One check */
+        .tick-delivered path { fill: #8696a0; } /* Two checks grey */
+        .tick-read path { fill: #53bdeb; } /* Two checks blue */
+
+        /* AUDIO PLAYER (Uniform) */
+        .audio-player { display: flex; align-items: center; gap: 10px; padding: 6px 0; width: 220px; }
+        .audio-btn { width: 34px; height: 34px; border-radius: 50%; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .audio-track { flex: 1; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; position: relative; }
+        .audio-progress { height: 100%; width: 0%; background: #aebac1; border-radius: 2px; }
+        .audio-time { font-size: 10px; color: #aebac1; min-width: 32px; text-align: right; }
 
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
         .mic-active { animation: pulseRed 1.5s infinite; background-color: #ef4444 !important; }
@@ -67,7 +63,7 @@
         <div class="w-full max-w-sm space-y-4">
             <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
             <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <button id="btn-create-profile" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
+            <button id="btn-create-profile" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
         </div>
     </div>
 
@@ -113,7 +109,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v5.5 Stable</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v5.7 Fix</span>
             </div>
         </div>
 
@@ -217,20 +213,19 @@
                 const k=1024, i=Math.floor(Math.log(bytes)/Math.log(k));
                 return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + ['B','KB','MB','GB'][i];
             },
-            getStatusHtml: (status) => {
-                let cl = 'status-orb';
-                if(status === 'pending') cl += ' status-pending';
-                else if(status === 'sent') cl += ' status-sent';
-                else if(status === 'delivered') cl += ' status-delivered';
-                else if(status === 'read') cl += ' status-read';
-                return `<div class="status-orb ${cl}"></div>`;
+            getTickIcon: (status) => {
+                if (status === 'pending') return `<svg class="tick-icon tick-pending" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 14A6 6 0 118 2a6 6 0 010 12zm.5-6.5V4h-1v4.2l3.2 1.9.5-.8-2.7-1.3z"/></svg>`;
+                if (status === 'sent') return `<svg class="tick-icon tick-sent" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/></svg>`;
+                if (status === 'delivered') return `<svg class="tick-icon tick-delivered" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
+                if (status === 'read') return `<svg class="tick-icon tick-read" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
+                return '';
             }
         };
 
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
-                const req = indexedDB.open("GhostMeshSecure", 5); // Version 5 Force Update
+                const req = indexedDB.open("GhostMeshSecure", 5);
                 req.onupgradeneeded = e => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains("config")) db.createObjectStore("config");
@@ -425,25 +420,28 @@
                         const dec = await Crypto.decryptBin(data, connObj.key);
                         tracker.chunks.push(dec);
                         tracker.received += data.byteLength;
+                        
                         if (App.state.activeChat === sender) {
                             const pct = Math.round((tracker.received / tracker.encSize) * 100);
                             document.getElementById('download-progress').classList.remove('hidden');
                             document.getElementById('dl-progress-bar').style.width = pct + "%";
                             document.getElementById('dl-progress-percent').innerText = pct + "%";
                         }
+
                         if (tracker.received >= tracker.encSize) {
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             
-                            // FORCE UPDATE EXISTING BUBBLE
+                            // FORCE UPDATE EXISTING BUBBLE using the explicit msgId from sender
                             App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
                             delete App.fileChunks[sender];
                         }
                     } catch(e){}
                 }
                 if (data.type === 'file-start') {
+                     // Store the message ID from sender to match the bubbles later
                      App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
-                     // Create Receiving Bubble with ID
+                     // Create Initial Receiving Bubble with the SAME ID
                      App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'pending', data.id);
                 }
             },
@@ -464,7 +462,8 @@
                     const numChunks = Math.ceil(file.size / CHUNK);
                     const totalEncSize = file.size + (numChunks * overhead);
 
-                    const msgId = Date.now();
+                    const msgId = Date.now().toString(); // Use String ID
+                    // OPTIMISTIC RENDER: Pending
                     App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
                     UI.clearFile();
 
@@ -481,6 +480,7 @@
 
                         if(offset >= file.size) {
                              document.getElementById('upload-progress').classList.add('hidden');
+                             // Update to SENT locally after upload done
                              const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
                              if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
                              return;
@@ -502,15 +502,22 @@
                 else if (input.value.trim()) {
                     const text = input.value.trim();
                     const connObj = Network.connections[peerId];
-                    const msgId = Date.now();
-                    if (connObj?.conn?.open) {
-                        connObj.conn.send({ type: 'msg', id: msgId, payload: await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key) });
-                        App.addMessage(peerId, text, 'out', 'text', 'sent', msgId);
-                    } else {
-                        App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
-                    }
+                    const msgId = Date.now().toString();
+                    
+                    // OPTIMISTIC RENDER: Pending
+                    App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
                     input.value = '';
-                    UI.handleInputKey({key:'a'});
+                    UI.toggleSendIcon();
+
+                    if (connObj?.conn?.open) {
+                        try {
+                            const encPayload = await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key);
+                            connObj.conn.send({ type: 'msg', id: msgId, payload: encPayload });
+                            // Update to Sent
+                            const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
+                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                        } catch(e) { console.error("Encryption Failed", e); alert("Encryption Error"); }
+                    }
                 }
             }
         };
@@ -623,50 +630,27 @@
             fileChunks: {},
             init: async () => {
                 lucide.createIcons();
-                // Add event listener safely after DOM load
-                document.getElementById('btn-create-profile').addEventListener('click', App.createProfile);
-                
-                try {
-                    await Store.init();
-                    const name = await Store.get('config', 'name');
-                    const id = await Store.get('config', 'id');
-                    if (name && id) {
-                        document.getElementById('onboarding-screen').classList.add('hidden');
-                        document.getElementById('login-screen').classList.remove('hidden');
-                        App.state.id = id;
-                        App.state.name = name;
-                    }
-                } catch(e) { console.error("App Init", e); }
+                await Store.init();
+                const name = await Store.get('config', 'name');
+                const id = await Store.get('config', 'id');
+                if (name && id) {
+                    document.getElementById('onboarding-screen').classList.add('hidden');
+                    document.getElementById('login-screen').classList.remove('hidden');
+                    App.state.id = id;
+                    App.state.name = name;
+                }
             },
             createProfile: async () => {
                 const name = document.getElementById('setup-name').value;
                 const pass = document.getElementById('setup-password').value;
                 if(!name || !pass) return alert("Required");
-                
-                const btn = document.getElementById('btn-create-profile');
-                btn.innerText = "Generating...";
-                btn.disabled = true;
-
-                try {
-                    // Force re-init if store is null
-                    if(!Store.db) await Store.init();
-
-                    const id = 'ghost-' + Math.floor(Math.random() * 1000000);
-                    const kp = await Crypto.generateIdentity();
-                    const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass);
-                    const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey);
-                    
-                    await Store.put('config', 'name', name); 
-                    await Store.put('config', 'id', id); 
-                    await Store.put('config', 'encPrivateKey', encPriv); 
-                    await Store.put('config', 'publicKey', pubJWK);
-                    
-                    App.loadMain(id, name, kp.privateKey, kp.publicKey);
-                } catch(e) {
-                    alert("Error: " + e.message);
-                    btn.innerText = "Initialize Identity";
-                    btn.disabled = false;
-                }
+                const id = 'ghost-' + Math.floor(Math.random() * 1000000);
+                const kp = await Crypto.generateIdentity();
+                const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass);
+                const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey);
+                await Store.put('config', 'name', name); await Store.put('config', 'id', id);
+                await Store.put('config', 'encPrivateKey', encPriv); await Store.put('config', 'publicKey', pubJWK);
+                App.loadMain(id, name, kp.privateKey, kp.publicKey);
             },
             login: async () => {
                 const pass = document.getElementById('login-password').value;
@@ -701,7 +685,7 @@
                 UI.renderContacts();
             },
             addMessage: (peerId, content, dir, type, status, id) => {
-                const msg = { id: id || Date.now(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
+                const msg = { id: id || Date.now().toString(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
                 // 10MB limit for IDB blobs to prevent crash
                 if (type === 'file' && content.blob && content.size > 10 * 1024 * 1024) {
                      content.blob = null; // Don't store huge blob
@@ -844,7 +828,7 @@
                  if(el) {
                      const tickContainer = el.querySelector('.tick-container');
                      if(tickContainer) {
-                        let html = Utils.getStatusHtml(status);
+                        let html = Utils.getTickHtml(status);
                         // Preserve time, just update icon
                         const time = el.dataset.time;
                         tickContainer.innerHTML = `${time} ${html}`;
@@ -870,7 +854,7 @@
                     const sizeStr = Utils.formatBytes(msg.content.size);
                     if (msg.content.mime.startsWith('image')) {
                          content = `<div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')"><img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy"></div>`;
-                         const icon = isMe ? Utils.getStatusHtml(msg.status) : '';
+                         const icon = isMe ? Utils.getTickHtml(msg.status) : '';
                          const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
                          div.innerHTML = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
                          c.appendChild(div); c.scrollTop = c.scrollHeight; return;
@@ -885,7 +869,7 @@
                     }
                 }
 
-                let icon = isMe ? Utils.getStatusHtml(msg.status) : '';
+                let icon = isMe ? Utils.getTickHtml(msg.status) : '';
                 const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
                 
                 // Smart Update: Replace if existing
