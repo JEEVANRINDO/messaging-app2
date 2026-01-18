@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- CSP: Allow data/blob for images/files -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
     
@@ -24,6 +25,9 @@
         
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; }
+        .img-overlay { background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%); }
+        .bubble-constraint { max-width: 85%; }
+        @media (min-width: 768px) { .bubble-constraint { max-width: 65%; } }
         
         .tick-icon { width: 16px; height: 16px; margin-left: 2px; display: inline-block; vertical-align: middle; }
         .tick-pending { color: #8696a0; opacity: 0.6; }
@@ -78,6 +82,10 @@
                 </div>
             </div>
             
+            <div class="p-2 bg-[#111b21] border-b border-[#2a3942]">
+                <input id="search-contacts" onkeyup="UI.filterContacts()" placeholder="Search contacts..." class="w-full bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none placeholder-[#8696a0]">
+            </div>
+
             <div id="new-chat-panel" class="hidden p-2 bg-[#111b21] border-b border-[#2a3942] flex gap-2">
                 <input id="input-peer-id" placeholder="Paste Peer ID..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none">
                 <button onclick="Network.connectToInput()" class="bg-[#00a884] p-2 rounded-lg"><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i></button>
@@ -245,14 +253,14 @@
                 const req = Store.db.transaction(store, "readonly").objectStore(store).get(key);
                 req.onsuccess = () => r(req.result);
             }),
+            getAllMessages: async () => new Promise(r => {
+                const req = Store.db.transaction("messages", "readonly").objectStore("messages").getAll();
+                req.onsuccess = () => r(req.result);
+            }),
             getMessages: async (peerId) => new Promise(r => {
                 const tx = Store.db.transaction("messages", "readonly");
                 const req = tx.objectStore("messages").index("peerId").getAll(peerId);
                 req.onsuccess = () => r(req.result || []);
-            }),
-            getAllMessages: async () => new Promise(r => {
-                const req = Store.db.transaction("messages", "readonly").objectStore("messages").getAll();
-                req.onsuccess = () => r(req.result);
             }),
             getPendingMessages: async (peerId) => (await Store.getMessages(peerId)).filter(m => m.status === 'pending'),
             deleteMessagesForPeer: async (peerId) => new Promise(r => {
@@ -337,6 +345,7 @@
                 if (Network.connections[id]?.conn?.open) return;
                 const conn = Network.peer.connect(id, { reliable: true });
                 conn.on('open', () => {
+                    // Send Handshake
                     conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
                     Network.processQueue(id);
                 });
@@ -365,25 +374,37 @@
                     const pub = await Crypto.importKey(data.key);
                     const shared = await Crypto.deriveShared(pub);
                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                    
                     App.addContact(sender, data.name, pubStr);
+                    
                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                    
+                    // FIXED: Auto-Reply Handshake Ack
                     conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
+
                     if (!App.state.activeChat) UI.loadChat(sender);
                     else if (App.state.activeChat === sender) UI.loadChat(sender);
+
                     UI.showToast(`Connected with ${data.name}!`);
                 }
+                
                 if (data.type === 'handshake-ack') {
                      const pub = await Crypto.importKey(data.key);
                      const shared = await Crypto.deriveShared(pub);
                      const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                     
                      App.addContact(sender, data.name, pubStr);
                      Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                     
                      if (App.state.activeChat === sender) UI.loadChat(sender);
+                     else if (!App.state.activeChat) UI.loadChat(sender);
                      UI.showToast("Connection Secured");
                 }
-                const connObj = Network.connections[sender];
-                if (!connObj) return;
 
+                const connObj = Network.connections[sender];
+                if (!connObj || !connObj.key) return;
+
+                // Handle Receipt
                 if (data.type === 'receipt') {
                      const msgs = await Store.getMessages(sender);
                      const msg = msgs.find(m => m.id === data.msgId);
@@ -405,6 +426,7 @@
                         }
                     } catch(e) {}
                 }
+                
                 if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
                     const tracker = App.fileChunks[sender];
                     if (!tracker) return;
@@ -412,12 +434,14 @@
                         const dec = await Crypto.decryptBin(data, connObj.key);
                         tracker.chunks.push(dec);
                         tracker.received += data.byteLength;
+                        
                         if (App.state.activeChat === sender) {
                             const pct = Math.round((tracker.received / tracker.encSize) * 100);
                             document.getElementById('download-progress').classList.remove('hidden');
                             document.getElementById('dl-progress-bar').style.width = pct + "%";
                             document.getElementById('dl-progress-percent').innerText = pct + "%";
                         }
+
                         if (tracker.received >= tracker.encSize) {
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
@@ -458,6 +482,7 @@
                              UI.clearFile();
                              return;
                         }
+
                         if(offset >= file.size) {
                              document.getElementById('upload-progress').classList.add('hidden');
                              const url = URL.createObjectURL(file);
@@ -499,12 +524,22 @@
 
         const Media = {
             localStream: null, call: null, scanner: null, recording: false, recorder: null, audioChunks: [],
-            openCamera: async () => { document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}}); },
-            closeCamera: () => { document.getElementById('camera-modal').classList.add('hidden'); const v = document.getElementById('camera-preview'); if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop()); },
+            openCamera: async () => {
+                document.getElementById('camera-modal').classList.remove('hidden');
+                document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
+            },
+            closeCamera: () => {
+                document.getElementById('camera-modal').classList.add('hidden');
+                const v = document.getElementById('camera-preview');
+                if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop());
+            },
             takePhoto: () => {
-                const v = document.getElementById('camera-preview'); const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0);
+                const v = document.getElementById('camera-preview');
+                const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
+                c.getContext('2d').drawImage(v,0,0);
                 c.toBlob(b => {
-                    const dt = new DataTransfer(); dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
+                    const dt = new DataTransfer(); 
+                    dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
                     document.getElementById('file-input').files = dt.files;
                     UI.handleFileSelect({target: {files: dt.files}});
                     Media.closeCamera();
@@ -544,8 +579,8 @@
                      };
                      Media.recorder.start();
                      Media.recording = true;
-                     // UI timer logic here
-                 } catch(e) { alert("Mic Error"); Media.cancelRecord(); }
+                     document.getElementById('btn-main-action').classList.add('mic-active');
+                 } catch(e) { alert("Mic Error"); }
             },
             stopRecord: () => {
                  // Trigger stop, save flag true
@@ -640,7 +675,7 @@
                 UI.renderContacts();
             },
             deleteContact: async (id) => {
-                if(!confirm("Delete contact?")) return;
+                if(!confirm("Delete contact and all messages?")) return;
                 delete App.state.contacts[id];
                 await Store.put('config', 'contacts', App.state.contacts);
                 await Store.deleteMessagesForPeer(id);
@@ -655,7 +690,11 @@
                 if(App.state.activeChat === peerId) UI.renderMessage(msg);
             },
             exportIdentity: async () => {
-                const data = { id: App.state.id, name: App.state.name, priv: await Store.get('config', 'encPrivateKey'), contacts: App.state.contacts, msgs: await Store.getAllMessages() };
+                const data = {
+                    id: App.state.id, name: App.state.name,
+                    priv: await Store.get('config', 'encPrivateKey'),
+                    contacts: App.state.contacts, msgs: await Store.getAllMessages()
+                };
                 const url = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: "application/json"}));
                 const a = document.createElement('a'); a.href = url; a.download = "ghost_backup.json"; a.click();
             }
@@ -663,32 +702,84 @@
 
         const UI = {
             updateSelf: (name) => { document.getElementById('my-display-name').innerText = name; document.getElementById('my-avatar').innerText = name[0]; },
+            setStatus: (s) => document.getElementById('status-indicator').className = `w-3 h-3 rounded-full ${s==='online'?'bg-green-500':'bg-red-500'}`,
             copyId: () => { navigator.clipboard.writeText(App.state.id); alert("ID Copied"); },
             toggleAddContact: () => document.getElementById('new-chat-panel').classList.toggle('hidden'),
-            showQR: () => { if(!App.state.id) return; document.getElementById('qr-modal').classList.remove('hidden'); document.getElementById('qrcode-container').innerHTML = ''; setTimeout(() => { new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 }); }, 50); },
+            showQR: () => {
+                // Ensure ID is available
+                if(!App.state.id) return;
+                document.getElementById('qr-modal').classList.remove('hidden');
+                document.getElementById('qrcode-container').innerHTML = '';
+                // Wait for modal to render to get correct dimensions
+                setTimeout(() => {
+                     new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 });
+                }, 50);
+            },
             startScanner: () => {
                 document.getElementById('scanner-modal').classList.remove('hidden');
                 if(!Media.scanner) Media.scanner = new Html5Qrcode("reader");
-                Media.scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, (decodedText) => { Media.scanner.stop(); document.getElementById('scanner-modal').classList.add('hidden'); Network.connectWithRetry(decodedText.trim()); }).catch(err => { alert("Camera failed"); document.getElementById('scanner-modal').classList.add('hidden'); });
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                Media.scanner.start({ facingMode: "environment" }, config, (decodedText) => {
+                    Media.scanner.stop();
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                    const id = decodedText.trim();
+                    if(id) Network.connectWithRetry(id);
+                }).catch(err => {
+                    console.error("Scanner Error", err);
+                    alert("Camera access failed or not supported.");
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                });
             },
-            stopScanner: () => { if(Media.scanner) Media.scanner.stop().then(() => document.getElementById('scanner-modal').classList.add('hidden')); else document.getElementById('scanner-modal').classList.add('hidden'); },
-            showSafetyNumber: async () => { if(!App.state.activeChat) return; const c = App.state.contacts[App.state.activeChat]; if(c && c.pubKey) { document.getElementById('safety-number').innerText = await Crypto.generateFingerprint(c.pubKey); document.getElementById('safety-modal').classList.remove('hidden'); } },
-            showToast: (msg) => { const t = document.createElement('div'); t.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade-in z-[150]"; t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); },
+            stopScanner: () => {
+                if(Media.scanner) {
+                    Media.scanner.stop().then(() => {
+                         document.getElementById('scanner-modal').classList.add('hidden');
+                    }).catch(console.error);
+                } else {
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                }
+            },
+            showSafetyNumber: async () => {
+                if(!App.state.activeChat) return;
+                const c = App.state.contacts[App.state.activeChat];
+                if(c && c.pubKey) {
+                    document.getElementById('safety-number').innerText = await Crypto.generateFingerprint(c.pubKey);
+                    document.getElementById('safety-modal').classList.remove('hidden');
+                }
+            },
+            showToast: (msg) => {
+                const t = document.createElement('div');
+                t.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade-in z-[150]";
+                t.innerText = msg;
+                document.body.appendChild(t);
+                setTimeout(() => t.remove(), 3000);
+            },
             renderContacts: () => {
-                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div></div>`).join('');
+                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `
+                    <div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div>
+                        <div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div>
+                        <button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                `).join('');
                 lucide.createIcons();
             },
             filterContacts: () => {
                 const term = document.getElementById('search-contacts').value.toLowerCase();
-                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).filter(c => c.name.toLowerCase().includes(term) || c.id.includes(term)).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div></div>`).join('');
+                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts)
+                    .filter(c => c.name.toLowerCase().includes(term) || c.id.includes(term))
+                    .map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join('');
                 lucide.createIcons();
             },
             loadChat: async (id) => {
                 Utils.revokeBlobs(); App.state.activeChat = id; const c = App.state.contacts[id];
                 if(window.innerWidth < 768) { document.getElementById('sidebar-panel').classList.add('hidden'); document.getElementById('chat-area').classList.remove('hidden'); document.getElementById('chat-area').classList.add('flex'); }
                 document.getElementById('chat-empty-state').classList.add('hidden'); document.getElementById('chat-interface').classList.remove('hidden'); document.getElementById('chat-interface').classList.add('flex');
+                
                 document.getElementById('chat-header-name').innerText = c.name; 
-                document.getElementById('chat-header-status').innerText = Network.connections[id] ? "Online" : "Offline";
+                const status = Network.connections[id] ? "Online" : "Offline";
+                document.getElementById('chat-header-status').innerText = status;
+                
                 document.getElementById('chat-header-avatar').innerText = c.name[0];
                 const msgs = await Store.getMessages(id); document.getElementById('messages-container').innerHTML = ''; msgs.forEach(UI.renderMessage);
             },
@@ -739,10 +830,13 @@
             },
             renderMessage: (msg) => {
                 const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
+                
                 let content = '';
-                if (msg.type === 'text') content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`;
-                else if (msg.type === 'voice') content = `<audio controls src="${msg.content.url}" class="w-48"></audio>`;
-                else if (msg.type === 'file') {
+                if (msg.type === 'text') {
+                    content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`;
+                } else if (msg.type === 'voice') {
+                     content = `<audio controls src="${msg.content.url}" class="w-48"></audio>`;
+                } else if (msg.type === 'file') {
                     const sizeStr = Utils.formatBytes(msg.content.size);
                     if (msg.content.mime.startsWith('image')) {
                          content = `<div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')"><img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy"></div>`;
