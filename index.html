@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- CSP -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
     
@@ -30,8 +31,7 @@
         .file-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
         
         /* Creative Status Orbs */
-        .status-container { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-left: 4px; vertical-align: text-bottom; }
-        .status-orb { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; transition: all 0.3s ease; }
+        .status-orb { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-left: 4px; transition: all 0.3s ease; }
         .status-pending { border: 2px solid #8696a0; border-top-color: transparent; animation: spin 1s linear infinite; }
         .status-sent { border: 1.5px solid #8696a0; background: transparent; }
         .status-delivered { border: 1.5px solid #8696a0; background: #8696a0; }
@@ -39,11 +39,16 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         /* Audio Player */
-        .audio-player { display: flex; align-items: center; gap: 10px; min-width: 200px; max-width: 250px; padding: 4px 0; }
-        .play-btn { width: 36px; height: 36px; background: rgba(0,0,0,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
-        .play-btn:hover { background: rgba(0,0,0,0.3); }
-        .audio-track { flex: 1; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; position: relative; overflow: hidden; }
-        .audio-fill { height: 100%; background: #aebac1; width: 0%; transition: width 0.1s linear; }
+        .audio-card { display: flex; align-items: center; gap: 12px; min-width: 220px; padding: 4px 0; }
+        .audio-play-btn { width: 36px; height: 36px; background: rgba(0,0,0,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.2s; }
+        .audio-play-btn:hover { background: rgba(0,0,0,0.3); }
+        .waveform { display: flex; align-items: center; gap: 2px; height: 24px; flex: 1; }
+        .bar { width: 3px; background-color: rgba(255,255,255,0.4); border-radius: 2px; height: 40%; transition: height 0.2s; }
+        .playing .bar { animation: soundWave 0.8s ease-in-out infinite alternate; }
+        .playing .bar:nth-child(odd) { animation-duration: 0.6s; }
+        .playing .bar:nth-child(2n) { animation-duration: 0.9s; }
+        .playing .bar:nth-child(3n) { animation-duration: 1.1s; }
+        @keyframes soundWave { 0% { height: 20%; opacity: 0.5; } 100% { height: 100%; opacity: 1; } }
 
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
         .mic-active { animation: pulseRed 1.5s infinite; background-color: #ef4444 !important; }
@@ -110,7 +115,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v4.3 Final</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v5.0 Fixed</span>
             </div>
         </div>
 
@@ -195,7 +200,7 @@
 
     <!-- MODALS -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3><div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit flex justify-center items-center"></div><button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
-    <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><button onclick="UI.stopScanner()" class="mt-4 w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold">Cancel</button></div></div>
+    <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><div class="flex gap-2 mt-4"><button onclick="Media.toggleScannerMirror()" class="flex-1 py-3 bg-blue-500/20 text-blue-400 rounded-xl font-bold border border-blue-500/50">Flip</button><button onclick="UI.stopScanner()" class="flex-1 py-3 bg-red-500/20 text-red-400 rounded-xl font-bold border border-red-500/50">Cancel</button></div></div></div>
     <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3><p class="text-[#8696a0] text-xs mb-4">Verify this number with your peer.</p><div id="safety-number" class="font-mono-safe text-[#00a884] text-2xl font-bold mb-6 tracking-widest break-all"></div><button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
     <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col"><video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video><div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe"><button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button><button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button><button onclick="Media.flipCameraView()" class="p-4 text-white"><i data-lucide="flip-horizontal" class="w-8 h-8"></i></button></div></div>
     <div id="video-overlay" class="hidden fixed inset-0 z-[140] bg-[#0b141a] flex flex-col p-4 pb-safe"><div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4"><video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video><div class="absolute top-4 right-4 w-28 h-40 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-30"><video id="local-video" autoplay playsinline muted class="w-full h-full object-cover"></video></div></div><div class="h-24 flex items-center justify-center"><button onclick="Media.endCall()" class="p-5 bg-red-500 rounded-full text-white shadow-xl"><i data-lucide="phone-off" class="w-8 h-8"></i></button></div></div>
@@ -456,17 +461,12 @@
                     if (!connObj?.conn?.open) return alert("Peer Offline");
 
                     Network.uploadCancelled = false;
-                    const CHUNK = 512 * 1024; // 512KB for speed
+                    const CHUNK = 256 * 1024;
                     const overhead = 28;
                     const numChunks = Math.ceil(file.size / CHUNK);
                     const totalEncSize = file.size + (numChunks * overhead);
 
-                    const msgId = Date.now();
-                    // OPTIMISTIC RENDER: Pending
-                    App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
-                    UI.clearFile();
-
-                    connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: file.type, encSize: totalEncSize });
+                    connObj.conn.send({ type: 'file-start', name: file.name, mime: file.type, encSize: totalEncSize });
                     
                     let offset = 0;
                     document.getElementById('upload-progress').classList.remove('hidden');
@@ -474,14 +474,15 @@
                     const streamLoop = async () => {
                         if (Network.uploadCancelled) {
                              document.getElementById('upload-progress').classList.add('hidden');
+                             UI.clearFile();
                              return;
                         }
-
                         if(offset >= file.size) {
                              document.getElementById('upload-progress').classList.add('hidden');
-                             // Update to SENT locally after upload done
-                             const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
-                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                             // PERSIST FILE AS BLOB
+                             const msgId = Date.now();
+                             App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'sent', msgId);
+                             UI.clearFile();
                              return;
                         }
                         if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
@@ -494,9 +495,7 @@
                         const pct = Math.round((offset/file.size)*100);
                         document.getElementById('progress-bar').style.width = pct + "%";
                         document.getElementById('progress-percent').innerText = pct + "%";
-                        
-                        // Breathable Loop (Async delay)
-                        setTimeout(streamLoop, 10);
+                        requestAnimationFrame(streamLoop);
                     };
                     streamLoop();
                 } 
@@ -504,21 +503,14 @@
                     const text = input.value.trim();
                     const connObj = Network.connections[peerId];
                     const msgId = Date.now();
-                    
-                    // OPTIMISTIC RENDER: Pending
-                    App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
-                    input.value = '';
-                    UI.toggleSendIcon();
-
                     if (connObj?.conn?.open) {
-                        try {
-                            const encPayload = await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key);
-                            connObj.conn.send({ type: 'msg', id: msgId, payload: encPayload });
-                            // Update to Sent
-                            const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
-                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
-                        } catch(e) { console.error("Encryption Failed", e); alert("Encryption Error"); }
+                        connObj.conn.send({ type: 'msg', id: msgId, payload: await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key) });
+                        App.addMessage(peerId, text, 'out', 'text', 'sent', msgId);
+                    } else {
+                        App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
                     }
+                    input.value = '';
+                    UI.handleInputKey({key:'a'});
                 }
             }
         };
@@ -687,11 +679,8 @@
             },
             addMessage: (peerId, content, dir, type, status, id) => {
                 const msg = { id: id || Date.now(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
-                // 10MB limit for IDB blobs to prevent crash
-                if (type === 'file' && content.blob && content.size > 10 * 1024 * 1024) {
-                     content.blob = null; // Don't store huge blob
-                }
-                Store.put('messages', null, msg);
+                // Persist the actual Blob object in IDB, not just the URL
+                Store.put('messages', null, msg); // Use null key for IDB keyPath
                 if(App.state.activeChat === peerId) UI.renderMessage(msg);
             },
             exportIdentity: async () => {
