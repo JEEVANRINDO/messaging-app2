@@ -1,12 +1,10 @@
-<!DOCTYPE html>
++<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- CSP -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -15,7 +13,7 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #111b21; color: #e9edef; height: 100dvh; width: 100vw; overflow: hidden; position: fixed; inset: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: #0b141a; color: #e9edef; height: 100dvh; width: 100vw; overflow: hidden; position: fixed; inset: 0; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #374045; border-radius: 2px; }
@@ -26,17 +24,17 @@
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         
-        /* File Card */
         .file-card-inner { background-color: rgba(0, 0, 0, 0.15); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; }
         .file-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
         
-        /* Ticks */
-        .tick-icon { width: 16px; height: 11px; margin-left: 4px; display: inline-block; vertical-align: bottom; }
-        .tick-pending { color: #8696a0; opacity: 0.6; }
-        .tick-sent { color: #8696a0; }
-        .tick-delivered { color: #8696a0; }
-        .tick-read { color: #53bdeb; }
+        /* Creative Status Orbs */
+        .status-orb { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-left: 4px; transition: all 0.3s ease; }
+        .status-pending { border: 2px solid #8696a0; border-top-color: transparent; animation: spin 1s linear infinite; }
+        .status-sent { border: 2px solid #8696a0; background: transparent; }
+        .status-delivered { border: 2px solid #8696a0; background: #8696a0; }
+        .status-read { border: 2px solid #53bdeb; background: #53bdeb; box-shadow: 0 0 4px #53bdeb; }
         
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
         .mic-active { animation: pulseRed 1.5s infinite; background-color: #ef4444 !important; }
         @keyframes pulseRed { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -100,7 +98,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v2.9 Live</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v3.0 Ultra</span>
             </div>
         </div>
 
@@ -135,6 +133,19 @@
 
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full pb-20"></div>
                 
+                <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
+                    <div class="flex justify-between text-xs text-[#00a884] mb-1">
+                        <span>Uploading... <button onclick="Network.cancelUpload()" class="ml-2 text-red-400 font-bold hover:underline">CANCEL</button></span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                    <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="progress-bar" class="bg-[#00a884] h-1 rounded-full" style="width: 0%"></div></div>
+                </div>
+
+                <div id="download-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
+                    <div class="flex justify-between text-xs text-blue-400 mb-1"><span>Downloading...</span><span id="dl-progress-percent">0%</span></div>
+                    <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="dl-progress-bar" class="bg-blue-400 h-1 rounded-full" style="width: 0%"></div></div>
+                </div>
+
                 <div class="bg-[#202c33] shrink-0 w-full pb-safe">
                     <div id="recording-ui" class="hidden px-4 py-3 bg-[#202c33] flex items-center gap-4 border-t border-[#2a3942]">
                         <div class="text-red-500 animate-pulse flex-1 font-mono">Recording Audio...</div>
@@ -144,10 +155,7 @@
 
                     <div id="normal-input-ui">
                         <div id="file-preview-area" class="hidden px-4 py-2 bg-[#2a3942] flex items-center justify-between border-b border-[#111b21]">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="file" class="text-[#00a884]"></i>
-                                <span id="file-preview-name" class="text-sm text-[#e9edef] truncate max-w-[200px]"></span>
-                            </div>
+                            <span id="file-preview-name" class="text-sm text-[#e9edef] truncate"></span>
                             <button onclick="UI.clearFile()" class="text-red-400"><i data-lucide="x" class="w-5 h-5"></i></button>
                         </div>
                         <div class="flex items-end gap-2 p-2">
@@ -174,7 +182,6 @@
     </div>
 
     <!-- MODALS -->
-    <!-- QR, Scanner, Safety, Camera, Video -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3><div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit flex justify-center items-center"></div><button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
     <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><button onclick="UI.stopScanner()" class="mt-4 w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold">Cancel</button></div></div>
     <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3><p class="text-[#8696a0] text-xs mb-4">Verify this number with your peer.</p><div id="safety-number" class="font-mono-safe text-[#00a884] text-2xl font-bold mb-6 tracking-widest break-all"></div><button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
@@ -191,11 +198,11 @@
             revokeBlobs: () => { Utils.blobRegistry.forEach(u => URL.revokeObjectURL(u)); Utils.blobRegistry.clear(); },
             bufferToHex: (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''),
             formatBytes: (bytes) => { if (bytes === 0) return '0 B'; const k=1024, i=Math.floor(Math.log(bytes)/Math.log(k)); return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + ['B','KB','MB','GB'][i]; },
-            getTickIcon: (status) => {
-                if (status === 'pending') return `<svg class="tick-icon tick-pending" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 14A6 6 0 118 2a6 6 0 010 12zm.5-6.5V4h-1v4.2l3.2 1.9.5-.8-2.7-1.3z"/></svg>`;
-                if (status === 'sent') return `<svg class="tick-icon tick-sent" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/></svg>`;
-                if (status === 'delivered') return `<svg class="tick-icon tick-delivered" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
-                if (status === 'read') return `<svg class="tick-icon tick-read" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
+            getStatusHtml: (status) => {
+                if (status === 'pending') return `<div class="status-orb status-pending"></div>`;
+                if (status === 'sent') return `<div class="status-orb status-sent"></div>`;
+                if (status === 'delivered') return `<div class="status-orb status-delivered"></div>`;
+                if (status === 'read') return `<div class="status-orb status-read"></div>`;
                 return '';
             }
         };
@@ -265,23 +272,25 @@
                     const tracker = App.fileChunks[sender]; if (!tracker) return;
                     try {
                         const dec = await Crypto.decryptBin(data, connObj.key); tracker.chunks.push(dec); tracker.received += data.byteLength;
-                        if (App.state.activeChat === sender) { /* ... progress UI ... */ }
+                        if (App.state.activeChat === sender) { const pct = Math.round((tracker.received / tracker.encSize) * 100); document.getElementById('download-progress').classList.remove('hidden'); document.getElementById('dl-progress-bar').style.width = pct + "%"; document.getElementById('dl-progress-percent').innerText = pct + "%"; }
                         if (tracker.received >= tracker.encSize) {
+                            document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             
-                            // *** CRITICAL FIX: Add "Receiving" Bubble NOW if not already present ***
-                            // Note: We normally add it at file-start, but if user reloaded, they might miss it.
-                            // However, we need to UPDATE it here.
+                            // *** CRITICAL: Find existing 'receiving' message and UPDATE it ***
+                            // Note: For simplicity in this unified file, we add a new 'finished' bubble and assume 
+                            // the user can see the progress bar hide. A full replacement logic requires DOM searching by ID.
+                            // To prevent duplicates, we simply add the finished file.
                             
-                            App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read');
+                            App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId); // Use MsgID from tracker
                             delete App.fileChunks[sender];
                         }
                     } catch(e){}
                 }
                 if (data.type === 'file-start') {
-                    App.fileChunks[sender] = { ...data, received: 0, chunks: [] };
-                    // *** CRITICAL FIX: Show "Receiving..." Bubble IMMEDIATELY ***
-                    App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'read'); 
+                    App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
+                    // Add Receiving Bubble
+                    App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'pending', data.id);
                 }
             },
             cancelUpload: () => { Network.uploadCancelled = true; },
@@ -299,7 +308,7 @@
 
                     Network.uploadCancelled = false;
                     const CHUNK = 256 * 1024; const overhead = 28; const numChunks = Math.ceil(file.size / CHUNK); const totalEncSize = file.size + (numChunks * overhead);
-                    connObj.conn.send({ type: 'file-start', name: file.name, mime: file.type, encSize: totalEncSize });
+                    connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: file.type, encSize: totalEncSize });
                     
                     let offset = 0;
                     const streamLoop = async () => {
@@ -407,8 +416,18 @@
                 }
                 let icon = isMe ? Utils.getTickIcon(msg.status) : '';
                 const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
-                div.innerHTML = `<div class="p-2 ${bg} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">${content}<div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">${msg.time} ${icon}</div></div>`;
-                c.appendChild(div); c.scrollTop = c.scrollHeight; lucide.createIcons();
+                // FIX: REPLACE existing message if exists (for file progress update)
+                const existing = document.getElementById(`msg-${msg.id}`);
+                const innerHTML = `<div class="p-2 ${bg} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">${content}<div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">${msg.time} ${icon}</div></div>`;
+                
+                if (existing) {
+                    existing.innerHTML = innerHTML;
+                } else {
+                    div.innerHTML = innerHTML;
+                    c.appendChild(div);
+                    c.scrollTop = c.scrollHeight;
+                }
+                lucide.createIcons();
             }
         };
 
