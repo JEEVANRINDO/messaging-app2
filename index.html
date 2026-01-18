@@ -60,7 +60,7 @@
         <!-- Sidebar -->
         <div id="sidebar-panel" class="w-full md:w-96 border-r border-[#2a3942] flex flex-col bg-[#111b21] h-full">
             <div class="p-4 border-b border-[#2a3942] flex justify-between items-center shrink-0 bg-[#202c33]">
-                <!-- User Info: Flex shrink allowed to prevent overflow -->
+                <!-- User Info -->
                 <div class="flex items-center space-x-3 cursor-pointer min-w-0 overflow-hidden" onclick="UI.copyId()">
                     <div class="w-10 h-10 rounded-full bg-[#00a884] flex-shrink-0 flex items-center justify-center text-white font-bold" id="my-avatar">ME</div>
                     <div class="flex flex-col items-start min-w-0 overflow-hidden">
@@ -88,12 +88,12 @@
             </div>
             <div id="chat-list" class="flex-1 overflow-y-auto"></div>
             
-            <!-- Footer: Backup Button Moved Here -->
+            <!-- Footer: Backup Button -->
             <div class="p-3 bg-[#111b21] border-t border-[#2a3942] flex justify-between items-center pb-safe shrink-0">
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v1.2 Secure</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v1.3 Secure</span>
             </div>
         </div>
 
@@ -252,7 +252,22 @@
                 const req = tx.objectStore("messages").index("peerId").getAll(peerId);
                 req.onsuccess = () => r(req.result || []);
             }),
-            getPendingMessages: async (peerId) => (await Store.getMessages(peerId)).filter(m => m.status === 'pending')
+            getPendingMessages: async (peerId) => (await Store.getMessages(peerId)).filter(m => m.status === 'pending'),
+            
+            // Delete messages for a specific peer
+            deleteMessagesForPeer: async (peerId) => {
+                return new Promise(r => {
+                    const tx = Store.db.transaction("messages", "readwrite");
+                    const index = tx.objectStore("messages").index("peerId");
+                    const req = index.getAllKeys(peerId);
+                    req.onsuccess = () => {
+                        req.result.forEach(key => {
+                            tx.objectStore("messages").delete(key);
+                        });
+                        tx.oncomplete = r;
+                    };
+                });
+            }
         };
 
         const Crypto = {
@@ -331,6 +346,7 @@
                 if (Network.connections[id] && Network.connections[id].conn.open) return;
                 const conn = Network.peer.connect(id, { reliable: true });
                 conn.on('open', () => {
+                    // Send Handshake
                     conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name });
                     Network.processQueue(id);
                 });
@@ -359,30 +375,34 @@
                     const pub = await Crypto.importKey(data.key);
                     const shared = await Crypto.deriveShared(pub);
                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                    
+                    // Add/Update Contact & Force Refresh
                     App.addContact(sender, data.name, pubStr);
+                    
                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
                     
-                    // FIXED: Send Handshake Back if I didn't initiate
-                    if (!Network.connections[sender].conn.open) { 
-                       // Wait, if I received handshake, conn is open. 
-                       // But the *other side* needs MY key. 
-                       // Simple logic: Always reply handshake if we just set it up and haven't sent one recently? 
-                       // Better: Just send one back always. It's idempotent.
-                       conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name });
-                    }
+                    // FIXED: Auto-Reply Handshake Ack if we didn't initiate
+                    // (Checking connection state or just relying on idempotent nature)
+                    conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name });
 
-                    if (App.state.activeChat === sender) UI.loadChat(sender);
-                    alert(`Connected with ${data.name}!`); // Alert Connection
+                    // Auto Open Chat if empty
+                    if (!App.state.activeChat) UI.loadChat(sender);
+                    else if (App.state.activeChat === sender) UI.loadChat(sender); // Refresh header
+
+                    // Toast/Alert
+                    console.log(`Connected with ${data.name}!`);
                 }
                 
-                // Handle handshake ack (same as handshake but don't reply loops)
                 if (data.type === 'handshake-ack') {
                      const pub = await Crypto.importKey(data.key);
                      const shared = await Crypto.deriveShared(pub);
                      const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                     
                      App.addContact(sender, data.name, pubStr);
                      Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                     
                      if (App.state.activeChat === sender) UI.loadChat(sender);
+                     else if (!App.state.activeChat) UI.loadChat(sender);
                 }
 
                 const connObj = Network.connections[sender];
@@ -593,11 +613,20 @@
                 UI.renderContacts(); UI.updateSelf(name); Network.init(id);
             },
             addContact: (id, name, pubKey) => {
-                if(!App.state.contacts[id]) {
-                    App.state.contacts[id] = { id, name: name || "Unknown", pubKey };
-                    Store.put('config', 'contacts', App.state.contacts);
-                    UI.renderContacts();
-                }
+                // Update even if exists to capture name/key updates
+                App.state.contacts[id] = { id, name: name || "Unknown", pubKey: pubKey || App.state.contacts[id]?.pubKey };
+                Store.put('config', 'contacts', App.state.contacts);
+                UI.renderContacts();
+            },
+            deleteContact: async (id) => {
+                if(!confirm("Delete contact and all messages?")) return;
+                delete App.state.contacts[id];
+                await Store.put('config', 'contacts', App.state.contacts);
+                await Store.deleteMessagesForPeer(id);
+                if(Network.connections[id]) Network.connections[id].conn.close();
+                delete Network.connections[id];
+                if(App.state.activeChat === id) UI.closeChat();
+                UI.renderContacts();
             },
             addMessage: (peerId, content, dir, type, status) => {
                 const msg = { id: Date.now(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
@@ -667,13 +696,21 @@
                 }
             },
             renderContacts: () => {
-                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0]}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div></div>`).join('');
+                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `
+                    <div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0]}</div>
+                        <div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div>
+                        <button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                `).join('');
+                lucide.createIcons(); // FIX: Re-render icons
             },
             filterContacts: () => {
                 const term = document.getElementById('search-contacts').value.toLowerCase();
                 document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts)
                     .filter(c => c.name.toLowerCase().includes(term) || c.id.includes(term))
-                    .map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0]}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div></div>`).join('');
+                    .map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0]}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join('');
+                lucide.createIcons();
             },
             loadChat: async (id) => {
                 Utils.revokeBlobs(); App.state.activeChat = id; const c = App.state.contacts[id];
