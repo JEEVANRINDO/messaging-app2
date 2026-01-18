@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -54,7 +53,26 @@
         .bubble-constraint { max-width: 85%; }
         @media (min-width: 768px) { .bubble-constraint { max-width: 60%; } }
         
+        /* Mirror utility for self-view */
         .mirror-x { transform: scaleX(-1); }
+        
+        /* File download progress overlay */
+        .file-download-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; border-radius: 6px; backdrop-filter: blur(2px); }
+        .download-circle { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #00a884; border-top-color: transparent; animation: spin 1s linear infinite; }
+        
+        /* Pulsing animation for new messages */
+        @keyframes gentlePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        .new-message { animation: gentlePulse 0.3s ease; }
+        
+        /* QR Code Scanner Styles */
+        #reader video { width: 100%; height: auto; border-radius: 8px; }
+        
+        /* Connection Status */
+        .connection-status { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+        .connection-online { background-color: #00a884; box-shadow: 0 0 8px #00a884; }
+        .connection-offline { background-color: #8696a0; }
+        .connection-connecting { background-color: #f59e0b; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -89,7 +107,10 @@
                     <div class="w-10 h-10 rounded-full bg-[#00a884] flex-shrink-0 flex items-center justify-center text-white font-bold" id="my-avatar">ME</div>
                     <div class="flex flex-col items-start min-w-0 overflow-hidden">
                         <span id="my-display-name" class="font-bold text-[#e9edef] text-sm truncate w-full">Me</span>
-                        <div class="flex items-center text-xs text-[#00a884]"><div class="w-2 h-2 rounded-full bg-[#00a884] mr-1 animate-pulse"></div> Online</div>
+                        <div class="flex items-center text-xs text-[#00a884]">
+                            <span id="connection-status" class="connection-status connection-online"></span>
+                            <span id="connection-text">Online</span>
+                        </div>
                     </div>
                 </div>
                 <div class="flex space-x-1 flex-shrink-0 ml-2">
@@ -113,7 +134,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v4.9 Fix</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v4.8 Fixed</span>
             </div>
         </div>
 
@@ -200,11 +221,16 @@
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3><div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit flex justify-center items-center"></div><button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
     <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><button onclick="UI.stopScanner()" class="mt-4 w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold">Cancel</button></div></div>
     <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3><p class="text-[#8696a0] text-xs mb-4">Verify this number with your peer.</p><div id="safety-number" class="font-mono-safe text-[#00a884] text-2xl font-bold mb-6 tracking-widest break-all"></div><button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
-    <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col"><video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video><div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe"><button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button><button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button><button onclick="Media.flipCameraView()" class="p-4 text-white"><i data-lucide="flip-horizontal" class="w-8 h-8"></i></button></div></div>
+    <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col"><video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover mirror-x"></video><div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe"><button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button><button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button><button onclick="Media.flipCameraView()" class="p-4 text-white"><i data-lucide="flip-horizontal" class="w-8 h-8"></i></button></div></div>
     <div id="video-overlay" class="hidden fixed inset-0 z-[140] bg-[#0b141a] flex flex-col p-4 pb-safe"><div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4"><video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video><div class="absolute top-4 right-4 w-28 h-40 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-30"><video id="local-video" autoplay playsinline muted class="w-full h-full object-cover mirror-x"></video></div></div><div class="h-24 flex items-center justify-center"><button onclick="Media.endCall()" class="p-5 bg-red-500 rounded-full text-white shadow-xl"><i data-lucide="phone-off" class="w-8 h-8"></i></button></div></div>
     <div id="incoming-call-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full animate-bounce-slight"><div class="w-20 h-20 bg-[#2a3942] rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-[#00a884]"><i data-lucide="phone-incoming" class="w-10 h-10 text-[#00a884] animate-pulse"></i></div><h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3><p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4"></p><div class="flex space-x-8 justify-center"><button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400"><div class="p-4 bg-red-500/20 rounded-full"><i data-lucide="phone-off" class="w-8 h-8"></i></div><span class="text-xs">Decline</span></button><button id="btn-accept-call" class="flex flex-col items-center gap-2 text-[#00a884]"><div class="p-4 bg-[#00a884]/20 rounded-full"><i data-lucide="phone" class="w-8 h-8"></i></div><span class="text-xs">Accept</span></button></div></div></div>
 
     <script>
+        // Debug logging
+        const DEBUG = true;
+        const log = (...args) => DEBUG && console.log('[GhostMesh]', ...args);
+        const error = (...args) => console.error('[GhostMesh]', ...args);
+
         const Utils = {
             escapeHTML: str => str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]),
             linkify: str => str.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-blue-400 hover:underline">$1</a>'),
@@ -223,7 +249,7 @@
                 else if(status === 'sent') cl += ' status-sent';
                 else if(status === 'delivered') cl += ' status-delivered';
                 else if(status === 'read') cl += ' status-read';
-                return `<div class="status-container"><div class="${cl}"></div></div>`;
+                return `<div class="status-orb-container"><div class="${cl}"></div></div>`;
             }
         };
 
@@ -333,133 +359,309 @@
             peer: null, connections: {}, uploadCancelled: false,
             init: async (id) => {
                 if(Network.peer) return;
-                Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
-                Network.peer.on('open', () => UI.updateHeaderStatus(App.state.activeChat, "Online"));
+                log('Initializing Peer with ID:', id);
+                Network.peer = new Peer(id, { 
+                    debug: 2,
+                    pingInterval: 5000, 
+                    config: { 
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' }, 
+                            { urls: 'stun:global.stun.twilio.com:3478' }
+                        ] 
+                    } 
+                });
+                
+                Network.peer.on('open', (id) => {
+                    log('Peer opened with ID:', id);
+                    UI.updateHeaderStatus(App.state.activeChat, "Online");
+                    UI.updateConnectionStatus('online');
+                    UI.showToast("Connected to network");
+                });
+                
                 Network.peer.on('connection', Network.handleConn);
                 Network.peer.on('call', Media.handleIncoming);
-                Network.peer.on('disconnected', () => { UI.updateHeaderStatus(App.state.activeChat, "Offline"); setTimeout(() => !Network.peer.destroyed && Network.peer.reconnect(), 2000); });
+                
+                Network.peer.on('disconnected', () => { 
+                    UI.updateHeaderStatus(App.state.activeChat, "Offline");
+                    UI.updateConnectionStatus('offline');
+                    setTimeout(() => {
+                        if (!Network.peer.destroyed) {
+                            log('Attempting to reconnect...');
+                            Network.peer.reconnect();
+                        }
+                    }, 2000); 
+                });
+                
+                Network.peer.on('error', (err) => {
+                    error('Peer error:', err);
+                    if (err.type === 'unavailable-id') {
+                        UI.showToast("ID already in use, generating new one...");
+                        App.generateNewId();
+                    } else if (err.type === 'network') {
+                        UI.showToast("Network error");
+                    }
+                });
             },
+            
             connectToInput: () => {
                 const id = document.getElementById('input-peer-id').value.trim();
-                if(id) Network.connectWithRetry(id);
+                if(id) {
+                    log('Connecting to input ID:', id);
+                    Network.connectWithRetry(id);
+                }
             },
+            
             connectWithRetry: async (id, retries = 0) => {
-                if (Network.connections[id]?.conn?.open) return;
-                const conn = Network.peer.connect(id, { reliable: true });
-                conn.on('open', () => {
-                    // Send Handshake
-                    conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-                    Network.processQueue(id);
-                });
-                conn.on('error', () => { if (retries < 3) setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000); });
-                Network.handleConn(conn);
+                log(`Attempting to connect to ${id}, retry ${retries}`);
+                
+                if (Network.connections[id]?.conn?.open) {
+                    log('Already connected to', id);
+                    return;
+                }
+                
+                try {
+                    const conn = Network.peer.connect(id, { 
+                        reliable: true,
+                        serialization: 'json',
+                        metadata: { name: App.state.name }
+                    });
+                    
+                    if (!conn) {
+                        throw new Error('Failed to create connection');
+                    }
+                    
+                    conn.on('open', () => {
+                        log('Connection opened to', id);
+                        // Send handshake
+                        conn.send({ 
+                            type: 'handshake', 
+                            key: App.state.pubStr, 
+                            name: App.state.name, 
+                            id: App.state.id 
+                        });
+                        Network.processQueue(id);
+                        UI.showToast(`Connected to ${id.substring(0, 10)}...`);
+                    });
+                    
+                    conn.on('error', (err) => {
+                        error('Connection error:', err);
+                        if (retries < 3) {
+                            setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000);
+                        }
+                    });
+                    
+                    Network.handleConn(conn);
+                    
+                } catch(err) {
+                    error('Connection failed:', err);
+                    if (retries < 3) {
+                        setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000);
+                    } else {
+                        UI.showToast("Failed to connect after multiple attempts");
+                    }
+                }
             },
+            
             handleConn: (conn) => {
+                log('Handling connection from:', conn.peer);
                 conn.on('data', data => Network.handleData(conn.peer, data, conn));
-                conn.on('close', () => { delete Network.connections[conn.peer]; UI.updateHeaderStatus(conn.peer, "Offline"); });
+                conn.on('close', () => { 
+                    delete Network.connections[conn.peer]; 
+                    UI.updateHeaderStatus(conn.peer, "Offline");
+                    log('Connection closed with:', conn.peer);
+                });
+                conn.on('error', (err) => {
+                    error('Connection error with', conn.peer, ':', err);
+                });
             },
+            
             processQueue: async (peerId) => {
                 const pending = await Store.getPendingMessages(peerId);
                 const connObj = Network.connections[peerId];
                 if(!connObj?.conn?.open) return;
+                
                 for (const msg of pending) {
                     if (msg.type === 'text') {
-                        connObj.conn.send({ type: 'msg', payload: await Crypto.encryptPayload({ content: msg.content, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key), id: msg.id });
+                        connObj.conn.send({ 
+                            type: 'msg', 
+                            payload: await Crypto.encryptPayload({ 
+                                content: msg.content, 
+                                seq: ++connObj.seqOut, 
+                                ts: Date.now(), 
+                                type: 'text' 
+                            }, connObj.key), 
+                            id: msg.id 
+                        });
                     }
                     msg.status = 'sent';
                     await Store.put('messages', null, msg); 
                 }
+                
                 if(App.state.activeChat === peerId) UI.loadChat(peerId);
             },
+            
             handleData: async (sender, data, conn) => {
+                log('Received data from', sender, 'type:', data?.type || 'binary');
+                
                 if (data.type === 'handshake') {
-                    const pub = await Crypto.importKey(data.key);
-                    const shared = await Crypto.deriveShared(pub);
-                    const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                    App.addContact(sender, data.name, pubStr);
-                    Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
-                    conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-                    if (!App.state.activeChat) UI.loadChat(sender);
-                    else if (App.state.activeChat === sender) UI.loadChat(sender);
-                    UI.showToast(`Connected with ${data.name}!`);
+                    log('Processing handshake from', sender);
+                    try {
+                        const pub = await Crypto.importKey(data.key);
+                        const shared = await Crypto.deriveShared(pub);
+                        const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                        
+                        App.addContact(sender, data.name, pubStr);
+                        Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                        
+                        conn.send({ 
+                            type: 'handshake-ack', 
+                            key: App.state.pubStr, 
+                            name: App.state.name, 
+                            id: App.state.id 
+                        });
+                        
+                        if (!App.state.activeChat) UI.loadChat(sender);
+                        else if (App.state.activeChat === sender) UI.loadChat(sender);
+                        
+                        UI.showToast(`Connected with ${data.name}!`);
+                    } catch(e) {
+                        error('Handshake failed:', e);
+                        UI.showToast("Security handshake failed");
+                    }
+                    return;
                 }
+                
                 if (data.type === 'handshake-ack') {
-                     const pub = await Crypto.importKey(data.key);
-                     const shared = await Crypto.deriveShared(pub);
-                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                     App.addContact(sender, data.name, pubStr);
-                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
-                     if (App.state.activeChat === sender) UI.loadChat(sender);
-                     else if (!App.state.activeChat) UI.loadChat(sender);
-                     UI.showToast("Connection Secured");
+                    log('Processing handshake-ack from', sender);
+                    try {
+                        const pub = await Crypto.importKey(data.key);
+                        const shared = await Crypto.deriveShared(pub);
+                        const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                        
+                        App.addContact(sender, data.name, pubStr);
+                        Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                        
+                        if (App.state.activeChat === sender) UI.loadChat(sender);
+                        else if (!App.state.activeChat) UI.loadChat(sender);
+                        
+                        UI.showToast("Connection Secured");
+                    } catch(e) {
+                        error('Handshake-ack failed:', e);
+                    }
+                    return;
                 }
+                
                 const connObj = Network.connections[sender];
                 if (!connObj || !connObj.key) return;
 
                 if (data.type === 'receipt') {
-                     const msgs = await Store.getMessages(sender);
-                     const msg = msgs.find(m => m.id === data.msgId);
-                     if (msg) {
-                         msg.status = data.status;
-                         await Store.put('messages', null, msg);
-                         if (App.state.activeChat === sender) UI.updateMessageTick(msg.id, data.status);
-                     }
-                     return;
+                    const msgs = await Store.getMessages(sender);
+                    const msg = msgs.find(m => m.id === data.msgId);
+                    if (msg) {
+                        msg.status = data.status;
+                        await Store.put('messages', null, msg);
+                        if (App.state.activeChat === sender) UI.updateMessageTick(msg.id, data.status);
+                    }
+                    return;
                 }
 
                 if (data.type === 'msg') {
                     try {
                         const dec = await Crypto.decryptPayload(data.payload, connObj.key);
                         if(dec.type === 'text') {
-                             App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', data.id || data.payload.id);
-                             conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'delivered' });
-                             if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'read' });
+                            App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', data.id || data.payload.id);
+                            conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'delivered' });
+                            if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: data.id || data.payload.id, status: 'read' });
                         }
-                    } catch(e) {}
+                    } catch(e) {
+                        error('Failed to decrypt message:', e);
+                    }
+                    return;
                 }
                 
                 if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
                     const tracker = App.fileChunks[sender];
                     if (!tracker) return;
+                    
                     try {
                         const dec = await Crypto.decryptBin(data, connObj.key);
                         tracker.chunks.push(dec);
                         tracker.received += data.byteLength;
+                        
                         if (App.state.activeChat === sender) {
                             const pct = Math.round((tracker.received / tracker.encSize) * 100);
                             document.getElementById('download-progress').classList.remove('hidden');
                             document.getElementById('dl-progress-bar').style.width = pct + "%";
                             document.getElementById('dl-progress-percent').innerText = pct + "%";
                         }
+
                         if (tracker.received >= tracker.encSize) {
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
+                            const url = URL.createObjectURL(blob);
+                            Utils.addBlob(url);
                             
-                            // *** CRITICAL FIX: Add "Receiving" Bubble NOW if not already present ***
-                            // Note: We normally add it at file-start, but if user reloaded, they might miss it.
-                            // However, we need to UPDATE it here.
+                            // Update the message with the actual file
+                            App.addMessage(sender, { 
+                                name: tracker.name, 
+                                url: url, 
+                                blob: blob, 
+                                mime: tracker.mime, 
+                                size: blob.size 
+                            }, 'in', tracker.mime.startsWith('audio') ? 'voice' : 'file', 'read', tracker.msgId);
                             
-                            App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
                             delete App.fileChunks[sender];
                         }
-                    } catch(e){}
+                    } catch(e) {
+                        error('Failed to process file chunk:', e);
+                    }
+                    return;
                 }
+                
                 if (data.type === 'file-start') {
-                     App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
-                     // Show Receiving Bubble
-                     App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'pending', data.id);
+                    log('Starting file transfer from', sender);
+                    App.fileChunks[sender] = { 
+                        ...data, 
+                        received: 0, 
+                        chunks: [], 
+                        msgId: data.id 
+                    };
+                    
+                    // Create receiving message
+                    App.addMessage(sender, { 
+                        name: data.name, 
+                        mime: data.mime, 
+                        size: 0, 
+                        blob: null 
+                    }, 'in', 'file-receiving', 'pending', data.id);
                 }
             },
-            cancelUpload: () => { Network.uploadCancelled = true; },
+            
+            cancelUpload: () => { 
+                Network.uploadCancelled = true; 
+                document.getElementById('upload-progress').classList.add('hidden');
+            },
+            
             sendMessage: async () => {
                 if (!App.state.activeChat) return;
-                const peerId = App.state.activeChat, input = document.getElementById('message-input'), fileInput = document.getElementById('file-input');
+                const peerId = App.state.activeChat;
+                const input = document.getElementById('message-input');
+                const fileInput = document.getElementById('file-input');
                 
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
-                    if (file.size > 50*1024*1024) { alert("File > 50MB"); UI.clearFile(); return; }
+                    if (file.size > 50*1024*1024) { 
+                        alert("File > 50MB"); 
+                        UI.clearFile(); 
+                        return; 
+                    }
+                    
                     const connObj = Network.connections[peerId];
-                    if (!connObj?.conn?.open) return alert("Peer Offline");
+                    if (!connObj?.conn?.open) {
+                        UI.showToast("Peer is offline");
+                        UI.clearFile();
+                        return;
+                    }
 
                     Network.uploadCancelled = false;
                     const CHUNK = 256 * 1024;
@@ -467,111 +669,198 @@
                     const numChunks = Math.ceil(file.size / CHUNK);
                     const totalEncSize = file.size + (numChunks * overhead);
 
-                    connObj.conn.send({ type: 'file-start', name: file.name, mime: file.type, encSize: totalEncSize });
+                    const msgId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                     
-                    let offset = 0;
+                    // Create optimistic message
+                    App.addMessage(peerId, { 
+                        name: file.name, 
+                        mime: file.type, 
+                        size: file.size 
+                    }, 'out', 'file', 'pending', msgId);
+                    
+                    UI.clearFile();
+
+                    // Send file metadata
+                    connObj.conn.send({ 
+                        type: 'file-start', 
+                        id: msgId, 
+                        name: file.name, 
+                        mime: file.type, 
+                        encSize: totalEncSize 
+                    });
+                    
+                    // Show upload progress
                     document.getElementById('upload-progress').classList.remove('hidden');
                     
-                    const streamLoop = async () => {
-                        if (Network.uploadCancelled) {
-                             document.getElementById('upload-progress').classList.add('hidden');
-                             UI.clearFile();
-                             return;
+                    let offset = 0;
+                    const uploadNextChunk = async () => {
+                        if (Network.uploadCancelled || offset >= file.size) {
+                            document.getElementById('upload-progress').classList.add('hidden');
+                            return;
                         }
-
-                        if(offset >= file.size) {
-                             document.getElementById('upload-progress').classList.add('hidden');
-                             // PERSIST FILE AS BLOB (Not just URL)
-                             const msgId = Date.now();
-                             App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'sent', msgId);
-                             UI.clearFile();
-                             return;
-                        }
-                        if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
 
                         const slice = file.slice(offset, offset + CHUNK);
                         const buf = await slice.arrayBuffer();
-                        const enc = await Crypto.encryptBin(buf, connObj.key);
-                        connObj.conn.send(enc);
-                        offset += CHUNK;
-                        const pct = Math.round((offset/file.size)*100);
-                        document.getElementById('progress-bar').style.width = pct + "%";
-                        document.getElementById('progress-percent').innerText = pct + "%";
-                        requestAnimationFrame(streamLoop);
+                        
+                        try {
+                            const enc = await Crypto.encryptBin(buf, connObj.key);
+                            connObj.conn.send(enc);
+                            
+                            offset += CHUNK;
+                            const pct = Math.round((offset / file.size) * 100);
+                            document.getElementById('progress-bar').style.width = pct + "%";
+                            document.getElementById('progress-percent').innerText = pct + "%";
+                            
+                            if (offset < file.size) {
+                                setTimeout(uploadNextChunk, 0);
+                            } else {
+                                document.getElementById('upload-progress').classList.add('hidden');
+                                // Update message status
+                                const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
+                                if (msg) { 
+                                    msg.status = 'sent'; 
+                                    await Store.put('messages', null, msg); 
+                                    UI.updateMessageTick(msgId, 'sent'); 
+                                }
+                            }
+                        } catch(e) {
+                            error('Upload failed:', e);
+                            document.getElementById('upload-progress').classList.add('hidden');
+                        }
                     };
-                    streamLoop();
+                    
+                    uploadNextChunk();
                 } 
                 else if (input.value.trim()) {
                     const text = input.value.trim();
                     const connObj = Network.connections[peerId];
-                    const msgId = Date.now();
-                    if (connObj?.conn?.open) {
-                        connObj.conn.send({ type: 'msg', id: msgId, payload: await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key) });
-                        App.addMessage(peerId, text, 'out', 'text', 'sent', msgId);
-                    } else {
-                        App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
-                    }
+                    const msgId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    
+                    // Optimistic render
+                    App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
                     input.value = '';
-                    UI.handleInputKey({key:'a'});
+                    UI.toggleSendIcon();
+
+                    if (connObj?.conn?.open) {
+                        try {
+                            const encPayload = await Crypto.encryptPayload({ 
+                                content: text, 
+                                seq: ++connObj.seqOut, 
+                                ts: Date.now(), 
+                                type: 'text' 
+                            }, connObj.key);
+                            
+                            connObj.conn.send({ 
+                                type: 'msg', 
+                                id: msgId, 
+                                payload: encPayload 
+                            });
+                            
+                            // Update status
+                            const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
+                            if(msg) { 
+                                msg.status = 'sent'; 
+                                await Store.put('messages', null, msg); 
+                                UI.updateMessageTick(msgId, 'sent'); 
+                            }
+                        } catch(e) { 
+                            error("Encryption Failed", e); 
+                            UI.showToast("Message failed to send");
+                        }
+                    } else {
+                        UI.showToast("Peer is offline");
+                    }
                 }
             }
         };
 
         const Media = {
             localStream: null, call: null, scanner: null, recording: false, recorder: null, audioChunks: [],
-            openCamera: async () => { document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}}); },
-            closeCamera: () => { document.getElementById('camera-modal').classList.add('hidden'); const v = document.getElementById('camera-preview'); if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop()); },
+            
+            openCamera: async () => { 
+                try {
+                    document.getElementById('camera-modal').classList.remove('hidden'); 
+                    const stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
+                    document.getElementById('camera-preview').srcObject = stream;
+                } catch(e) {
+                    alert("Camera access denied");
+                    Media.closeCamera();
+                }
+            },
+            
+            closeCamera: () => { 
+                document.getElementById('camera-modal').classList.add('hidden'); 
+                const v = document.getElementById('camera-preview'); 
+                if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop()); 
+            },
+            
             takePhoto: () => {
-                const v = document.getElementById('camera-preview'); const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0);
+                const v = document.getElementById('camera-preview'); 
+                const c = document.createElement('canvas'); 
+                c.width = v.videoWidth; 
+                c.height = v.videoHeight; 
+                c.getContext('2d').drawImage(v, 0, 0);
                 c.toBlob(b => {
-                    const dt = new DataTransfer(); dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
+                    const dt = new DataTransfer(); 
+                    dt.items.add(new File([b], `IMG_${Date.now()}.jpg`, {type: "image/jpeg"}));
                     document.getElementById('file-input').files = dt.files;
                     UI.handleFileSelect({target: {files: dt.files}});
                     Media.closeCamera();
                 }, 'image/jpeg');
             },
+            
             toggleRecordUI: () => {
-                 const normal = document.getElementById('normal-input-ui');
-                 const rec = document.getElementById('recording-ui');
-                 if(normal && rec) {
-                     normal.classList.add('hidden');
-                     rec.classList.remove('hidden');
-                     Media.startRecord();
-                 }
+                const normal = document.getElementById('normal-input-ui');
+                const rec = document.getElementById('recording-ui');
+                if(normal && rec) {
+                    normal.classList.add('hidden');
+                    rec.classList.remove('hidden');
+                    Media.startRecord();
+                }
             },
+            
             cancelRecord: () => {
                 if (Media.recorder) Media.recorder.stop();
                 Media.recording = false;
                 document.getElementById('recording-ui').classList.add('hidden');
                 document.getElementById('normal-input-ui').classList.remove('hidden');
+                document.getElementById('btn-main-action').classList.remove('mic-active');
             },
+            
             startRecord: async () => {
-                 try {
-                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                     Media.recorder = new MediaRecorder(stream);
-                     Media.audioChunks = [];
-                     Media.recorder.ondataavailable = e => Media.audioChunks.push(e.data);
-                     Media.recorder.onstop = () => {
-                         if (Media.recording) {
-                             const blob = new Blob(Media.audioChunks, { type: 'audio/webm' });
-                             const file = new File([blob], `Voice.webm`, { type: 'audio/webm' });
-                             const dt = new DataTransfer(); dt.items.add(file);
-                             document.getElementById('file-input').files = dt.files;
-                             Network.sendMessage();
-                             UI.handleFileSelect({target: {files: dt.files}});
-                         }
-                         stream.getTracks().forEach(t => t.stop());
-                     };
-                     Media.recorder.start();
-                     Media.recording = true;
-                     document.getElementById('btn-main-action').classList.add('mic-active');
-                 } catch(e) { alert("Mic Error"); }
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    Media.recorder = new MediaRecorder(stream);
+                    Media.audioChunks = [];
+                    Media.recorder.ondataavailable = e => Media.audioChunks.push(e.data);
+                    Media.recorder.onstop = () => {
+                        if (Media.recording && Media.audioChunks.length > 0) {
+                            const blob = new Blob(Media.audioChunks, { type: 'audio/webm' });
+                            const file = new File([blob], `Voice.webm`, { type: 'audio/webm' });
+                            const dt = new DataTransfer(); 
+                            dt.items.add(file);
+                            document.getElementById('file-input').files = dt.files;
+                            UI.handleFileSelect({target: {files: dt.files}});
+                        }
+                        stream.getTracks().forEach(t => t.stop());
+                    };
+                    Media.recorder.start();
+                    Media.recording = true;
+                    document.getElementById('btn-main-action').classList.add('mic-active');
+                } catch(e) { 
+                    alert("Microphone access denied"); 
+                    Media.cancelRecord();
+                }
             },
+            
             stopRecord: () => {
-                 if(Media.recorder) Media.recorder.stop();
-                 document.getElementById('recording-ui').classList.add('hidden');
-                 document.getElementById('normal-input-ui').classList.remove('hidden');
+                Media.recording = false;
+                if (Media.recorder) Media.recorder.stop();
+                document.getElementById('recording-ui').classList.add('hidden');
+                document.getElementById('normal-input-ui').classList.remove('hidden');
+                document.getElementById('btn-main-action').classList.remove('mic-active');
             },
+            
             startCall: async (video) => {
                 if(!App.state.activeChat) return;
                 try {
@@ -581,48 +870,57 @@
                     document.getElementById('video-overlay').classList.remove('hidden');
                     const call = Network.peer.call(App.state.activeChat, stream, { metadata: { video } });
                     Media.setupCall(call, video);
-                } catch(e) { alert("Call Error: " + e); }
+                } catch(e) { 
+                    alert("Call Error: " + e.message); 
+                }
             },
+            
             handleIncoming: (call) => {
-                if(confirm(`Incoming ${call.metadata.video?'Video':'Audio'} Call`)) {
+                const peerName = App.state.contacts[call.peer]?.name || call.peer;
+                if(confirm(`Incoming ${call.metadata.video?'Video':'Audio'} Call from ${peerName}`)) {
                     navigator.mediaDevices.getUserMedia({ video: call.metadata.video, audio: true }).then(stream => {
                         Media.localStream = stream;
                         if(call.metadata.video) document.getElementById('local-video').srcObject = stream;
                         document.getElementById('video-overlay').classList.remove('hidden');
                         call.answer(stream);
                         Media.setupCall(call, call.metadata.video);
-                    });
+                    }).catch(() => alert("Could not access media devices"));
                 } else call.close();
             },
+            
             setupCall: (call, video) => {
                 Media.call = call;
                 call.on('stream', r => {
                     const v = document.getElementById('remote-video');
-                    if(video) v.srcObject = r; else { const a = new Audio(); a.srcObject = r; a.play(); }
+                    if(video) {
+                        v.srcObject = r;
+                        v.play().catch(console.error);
+                    } else { 
+                        const a = new Audio(); 
+                        a.srcObject = r; 
+                        a.play().catch(console.error); 
+                    }
                 });
                 call.on('close', Media.endCall);
+                call.on('error', console.error);
             },
+            
             endCall: () => {
                 if(Media.localStream) Media.localStream.getTracks().forEach(t=>t.stop());
                 if(Media.call) Media.call.close();
                 document.getElementById('video-overlay').classList.add('hidden');
             },
-            // FLIP Logic
+            
             flipCameraView: () => {
                 const v = document.getElementById('camera-preview');
-                v.classList.toggle('mirror-x'); // Toggle CSS mirror
-            },
-            toggleScannerMirror: () => {
-                const reader = document.getElementById('reader');
-                // The actual video element is inside reader
-                const video = reader.querySelector('video');
-                if(video) video.classList.toggle('mirror-x');
+                v.classList.toggle('mirror-x');
             }
         };
 
         const App = {
             state: { id: null, name: null, activeChat: null, contacts: {}, pubStr: null },
             fileChunks: {},
+            
             init: async () => {
                 lucide.createIcons();
                 await Store.init();
@@ -633,241 +931,550 @@
                     document.getElementById('login-screen').classList.remove('hidden');
                     App.state.id = id;
                     App.state.name = name;
+                    log('Found existing profile:', name, id);
+                } else {
+                    log('No existing profile found');
                 }
             },
+            
             createProfile: async () => {
-                const name = document.getElementById('setup-name').value;
+                const name = document.getElementById('setup-name').value.trim();
                 const pass = document.getElementById('setup-password').value;
-                if(!name || !pass) return alert("Required");
-                const id = 'ghost-' + Math.floor(Math.random() * 1000000);
+                if(!name || !pass || pass.length < 6) {
+                    alert("Name and password (min 6 chars) required");
+                    return;
+                }
+                
+                // Generate a more unique ID
+                const id = 'ghost-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                
                 const kp = await Crypto.generateIdentity();
                 const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass);
                 const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey);
-                await Store.put('config', 'name', name); await Store.put('config', 'id', id);
-                await Store.put('config', 'encPrivateKey', encPriv); await Store.put('config', 'publicKey', pubJWK);
+                
+                await Store.put('config', 'name', name); 
+                await Store.put('config', 'id', id);
+                await Store.put('config', 'encPrivateKey', encPriv); 
+                await Store.put('config', 'publicKey', pubJWK);
+                
                 App.loadMain(id, name, kp.privateKey, kp.publicKey);
+                log('Profile created:', name, id);
             },
+            
+            generateNewId: async () => {
+                const newId = 'ghost-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                App.state.id = newId;
+                await Store.put('config', 'id', newId);
+                
+                if (Network.peer) {
+                    Network.peer.destroy();
+                    Network.peer = null;
+                }
+                
+                await Network.init(newId);
+                UI.showToast("New ID generated");
+                log('Generated new ID:', newId);
+            },
+            
             login: async () => {
                 const pass = document.getElementById('login-password').value;
+                if (!pass) {
+                    alert("Enter password");
+                    return;
+                }
+                
                 try {
                     const priv = await Crypto.decryptPrivateKey(await Store.get('config', 'encPrivateKey'), pass);
                     const pub = await window.crypto.subtle.importKey("spki", await Store.get('config', 'publicKey'), {name:"ECDH",namedCurve:"P-256"}, true, []);
                     App.loadMain(App.state.id, App.state.name, priv, pub);
-                } catch(e) { alert("Wrong Password"); }
+                    log('Login successful');
+                } catch(e) { 
+                    alert("Wrong Password"); 
+                    log('Login failed: wrong password');
+                }
             },
+            
             loadMain: async (id, name, priv, pub) => {
                 Crypto.keyPair = { privateKey: priv, publicKey: pub };
                 App.state.pubStr = await Crypto.exportKey(pub);
+                
                 document.getElementById('onboarding-screen').classList.add('hidden');
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-layout').classList.remove('hidden');
+                
                 App.state.contacts = await Store.get('config', 'contacts') || {};
-                UI.renderContacts(); UI.updateSelf(name); Network.init(id);
+                UI.renderContacts(); 
+                UI.updateSelf(name); 
+                await Network.init(id);
+                log('Main interface loaded');
             },
+            
             addContact: (id, name, pubKey) => {
+                if (App.state.contacts[id]) return;
                 App.state.contacts[id] = { id, name: name || "Unknown", pubKey: pubKey || App.state.contacts[id]?.pubKey };
                 Store.put('config', 'contacts', App.state.contacts);
                 UI.renderContacts();
+                log('Added contact:', id, name);
             },
+            
             deleteContact: async (id) => {
                 if(!confirm("Delete contact and all messages?")) return;
                 delete App.state.contacts[id];
                 await Store.put('config', 'contacts', App.state.contacts);
                 await Store.deleteMessagesForPeer(id);
+                
                 if(Network.connections[id]) Network.connections[id].conn.close();
                 delete Network.connections[id];
+                
                 if(App.state.activeChat === id) UI.closeChat();
                 UI.renderContacts();
+                UI.showToast("Contact deleted");
+                log('Deleted contact:', id);
             },
+            
             addMessage: (peerId, content, dir, type, status, id) => {
-                const msg = { id: id || Date.now(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
-                // Persist the actual Blob object in IDB, not just the URL
-                Store.put('messages', null, msg); // Use null key for IDB keyPath
+                const msg = { 
+                    id: id || Date.now() + '-' + Math.random().toString(36).substr(2, 9), 
+                    peerId, 
+                    content, 
+                    dir, 
+                    type, 
+                    status, 
+                    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) 
+                };
+                
+                Store.put('messages', null, msg);
                 if(App.state.activeChat === peerId) UI.renderMessage(msg);
+                
+                log('Added message:', msg.id, 'to', peerId, 'type:', type);
             },
+            
             exportIdentity: async () => {
                 const data = {
-                    id: App.state.id, name: App.state.name,
+                    id: App.state.id, 
+                    name: App.state.name,
                     priv: await Store.get('config', 'encPrivateKey'),
-                    contacts: App.state.contacts, msgs: await Store.getAllMessages()
+                    contacts: App.state.contacts, 
+                    msgs: await Store.getAllMessages()
                 };
-                const url = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: "application/json"}));
-                const a = document.createElement('a'); a.href = url; a.download = "ghost_backup.json"; a.click();
+                const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type: "application/json"}));
+                const a = document.createElement('a'); 
+                a.href = url; 
+                a.download = `ghost_backup_${new Date().toISOString().split('T')[0]}.json`; 
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                UI.showToast("Backup downloaded");
+                log('Identity exported');
             }
         };
 
         const UI = {
-            updateSelf: (name) => { document.getElementById('my-display-name').innerText = name; document.getElementById('my-avatar').innerText = name[0]; },
-            setStatus: (s) => document.getElementById('status-indicator').className = `w-3 h-3 rounded-full ${s==='online'?'bg-green-500':'bg-red-500'}`,
-            copyId: () => { navigator.clipboard.writeText(App.state.id); alert("ID Copied"); },
-            toggleAddContact: () => document.getElementById('new-chat-panel').classList.toggle('hidden'),
+            updateSelf: (name) => { 
+                document.getElementById('my-display-name').textContent = name; 
+                document.getElementById('my-avatar').textContent = name[0].toUpperCase(); 
+            },
+            
+            updateConnectionStatus: (status) => {
+                const el = document.getElementById('connection-status');
+                const text = document.getElementById('connection-text');
+                el.className = 'connection-status';
+                if (status === 'online') {
+                    el.classList.add('connection-online');
+                    text.textContent = 'Online';
+                } else if (status === 'offline') {
+                    el.classList.add('connection-offline');
+                    text.textContent = 'Offline';
+                } else if (status === 'connecting') {
+                    el.classList.add('connection-connecting');
+                    text.textContent = 'Connecting...';
+                }
+            },
+            
+            copyId: () => { 
+                navigator.clipboard.writeText(App.state.id); 
+                UI.showToast("ID Copied"); 
+            },
+            
+            toggleAddContact: () => {
+                const panel = document.getElementById('new-chat-panel');
+                panel.classList.toggle('hidden');
+                if (!panel.classList.contains('hidden')) {
+                    setTimeout(() => document.getElementById('input-peer-id').focus(), 100);
+                }
+            },
+            
             showQR: () => {
                 if(!App.state.id) return;
                 document.getElementById('qr-modal').classList.remove('hidden');
-                document.getElementById('qrcode-container').innerHTML = '';
+                const container = document.getElementById('qrcode-container');
+                container.innerHTML = '';
+                
+                // Generate QR code with just the ID
                 setTimeout(() => { 
-                    try { new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 }); }
-                    catch(e) { console.error("QR Error", e); }
+                    try { 
+                        new QRCode(container, { 
+                            text: App.state.id, 
+                            width: 200, 
+                            height: 200,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        }); 
+                    }
+                    catch(e) { 
+                        console.error("QR Error", e); 
+                    }
                 }, 100);
+                
+                log('QR code shown for ID:', App.state.id);
             },
+            
             startScanner: () => {
+                log('Starting QR scanner');
                 document.getElementById('scanner-modal').classList.remove('hidden');
-                if(!Media.scanner) Media.scanner = new Html5Qrcode("reader");
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                Media.scanner.start({ facingMode: "environment" }, config, (decodedText) => {
-                    Media.scanner.stop();
+                
+                // Clear previous scanner
+                if (Media.scanner) {
+                    Media.scanner.stop().catch(() => {});
+                    Media.scanner = null;
+                }
+                
+                try {
+                    Media.scanner = new Html5Qrcode("reader");
+                    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                    
+                    Media.scanner.start(
+                        { facingMode: "environment" }, 
+                        config, 
+                        (decodedText) => {
+                            log('QR scanned:', decodedText);
+                            Media.scanner.stop().then(() => {
+                                document.getElementById('scanner-modal').classList.add('hidden');
+                                const id = decodedText.trim();
+                                if(id && id.startsWith('ghost-')) {
+                                    UI.showToast("Connecting...");
+                                    Network.connectWithRetry(id);
+                                } else {
+                                    UI.showToast("Invalid QR code");
+                                }
+                            }).catch(() => {
+                                document.getElementById('scanner-modal').classList.add('hidden');
+                            });
+                        }
+                    ).catch(err => {
+                        console.error("Scanner Error", err);
+                        // Try user camera if environment fails
+                        Media.scanner.start(
+                            { facingMode: "user" }, 
+                            config, 
+                            (decodedText) => {
+                                log('QR scanned with user camera:', decodedText);
+                                Media.scanner.stop().then(() => {
+                                    document.getElementById('scanner-modal').classList.add('hidden');
+                                    const id = decodedText.trim();
+                                    if(id && id.startsWith('ghost-')) {
+                                        UI.showToast("Connecting...");
+                                        Network.connectWithRetry(id);
+                                    } else {
+                                        UI.showToast("Invalid QR code");
+                                    }
+                                }).catch(() => {
+                                    document.getElementById('scanner-modal').classList.add('hidden');
+                                });
+                            }
+                        ).catch(err2 => {
+                            console.error("User camera also failed:", err2);
+                            document.getElementById('scanner-modal').classList.add('hidden');
+                            alert("Camera access failed or not supported.");
+                        });
+                    });
+                } catch(err) {
+                    console.error("Scanner init failed:", err);
                     document.getElementById('scanner-modal').classList.add('hidden');
-                    const id = decodedText.trim();
-                    if(id) Network.connectWithRetry(id);
-                }).catch(err => {
-                    console.error("Scanner Error", err);
-                    alert("Camera access failed or not supported.");
-                    document.getElementById('scanner-modal').classList.add('hidden');
-                });
+                }
             },
+            
             stopScanner: () => {
-                if(Media.scanner) {
+                if (Media.scanner) {
                     Media.scanner.stop().then(() => {
-                         document.getElementById('scanner-modal').classList.add('hidden');
-                    }).catch(console.error);
+                        document.getElementById('scanner-modal').classList.add('hidden');
+                    }).catch(() => {
+                        document.getElementById('scanner-modal').classList.add('hidden');
+                    });
                 } else {
                     document.getElementById('scanner-modal').classList.add('hidden');
                 }
             },
+            
+            toggleSendIcon: () => {
+                const val = document.getElementById('message-input').value.trim();
+                const hasFile = document.getElementById('file-input').files.length > 0;
+                if(val || hasFile) { 
+                    document.getElementById('icon-mic').classList.add('hidden'); 
+                    document.getElementById('icon-send').classList.remove('hidden'); 
+                }
+                else { 
+                    document.getElementById('icon-mic').classList.remove('hidden'); 
+                    document.getElementById('icon-send').classList.add('hidden'); 
+                }
+            },
+            
             showSafetyNumber: async () => {
                 if(!App.state.activeChat) return;
                 const c = App.state.contacts[App.state.activeChat];
                 if(c && c.pubKey) {
-                    document.getElementById('safety-number').innerText = await Crypto.generateFingerprint(c.pubKey);
+                    document.getElementById('safety-number').textContent = await Crypto.generateFingerprint(c.pubKey);
                     document.getElementById('safety-modal').classList.remove('hidden');
                 }
             },
+            
             showToast: (msg) => {
                 const t = document.createElement('div');
                 t.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade-in z-[150]";
-                t.innerText = msg;
+                t.textContent = msg;
                 document.body.appendChild(t);
                 setTimeout(() => t.remove(), 3000);
+                log('Toast:', msg);
             },
+            
             renderContacts: () => {
-                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `
-                    <div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div>
-                        <div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div>
-                        <button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                `).join('');
+                const contacts = Object.values(App.state.contacts);
+                const chatList = document.getElementById('chat-list');
+                
+                if (contacts.length === 0) {
+                    chatList.innerHTML = `
+                        <div class="p-8 text-center text-[#8696a0]">
+                            <i data-lucide="users" class="w-12 h-12 mx-auto mb-4 opacity-30"></i>
+                            <p>No contacts yet</p>
+                            <p class="text-sm mt-2">Scan a QR code or enter a Peer ID</p>
+                        </div>
+                    `;
+                } else {
+                    chatList.innerHTML = contacts.map(c => `
+                        <div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold flex-shrink-0">${c.name[0].toUpperCase()}</div>
+                            <div class="flex-1 overflow-hidden min-w-0">
+                                <div class="font-medium text-[#e9edef] truncate">${c.name}</div>
+                                <div class="text-sm text-[#8696a0] truncate">${Network.connections[c.id] ? 'Online' : 'Offline'}</div>
+                            </div>
+                            <button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `).join('');
+                }
                 lucide.createIcons();
+                log('Rendered contacts:', contacts.length);
             },
+            
             filterContacts: () => {
                 const term = document.getElementById('search-contacts').value.toLowerCase();
-                document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts)
-                    .filter(c => c.name.toLowerCase().includes(term) || c.id.includes(term))
-                    .map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join('');
+                const contacts = Object.values(App.state.contacts);
+                const filtered = contacts.filter(c => 
+                    c.name.toLowerCase().includes(term) || 
+                    c.id.toLowerCase().includes(term)
+                );
+                
+                const chatList = document.getElementById('chat-list');
+                if (filtered.length === 0) {
+                    chatList.innerHTML = `
+                        <div class="p-8 text-center text-[#8696a0]">
+                            <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-4 opacity-30"></i>
+                            <p>No contacts found</p>
+                        </div>
+                    `;
+                } else {
+                    chatList.innerHTML = filtered.map(c => `
+                        <div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div>
+                            <div class="flex-1 overflow-hidden">
+                                <div class="font-medium text-[#e9edef] truncate">${c.name}</div>
+                                <div class="text-sm text-[#8696a0] truncate">${Network.connections[c.id] ? 'Online' : 'Offline'}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
                 lucide.createIcons();
             },
+            
             loadChat: async (id) => {
-                Utils.revokeBlobs(); App.state.activeChat = id; const c = App.state.contacts[id];
-                if(window.innerWidth < 768) { document.getElementById('sidebar-panel').classList.add('hidden'); document.getElementById('chat-area').classList.remove('hidden'); document.getElementById('chat-area').classList.add('flex'); }
-                document.getElementById('chat-empty-state').classList.add('hidden'); document.getElementById('chat-interface').classList.remove('hidden'); document.getElementById('chat-interface').classList.add('flex');
+                log('Loading chat with:', id);
+                Utils.revokeBlobs(); 
+                App.state.activeChat = id; 
+                const c = App.state.contacts[id];
                 
-                document.getElementById('chat-header-name').innerText = c.name; 
-                const status = Network.connections[id] ? "Online" : "Offline";
-                document.getElementById('chat-header-status').innerText = status;
+                if(!c) {
+                    log('Contact not found:', id);
+                    return;
+                }
                 
-                document.getElementById('chat-header-avatar').innerText = c.name[0];
-                const msgs = await Store.getMessages(id); document.getElementById('messages-container').innerHTML = ''; msgs.forEach(UI.renderMessage);
+                if(window.innerWidth < 768) { 
+                    document.getElementById('sidebar-panel').classList.add('hidden'); 
+                    document.getElementById('chat-area').classList.remove('hidden'); 
+                    document.getElementById('chat-area').classList.add('flex'); 
+                }
+                
+                document.getElementById('chat-empty-state').classList.add('hidden'); 
+                document.getElementById('chat-interface').classList.remove('hidden'); 
+                document.getElementById('chat-interface').classList.add('flex');
+                
+                document.getElementById('chat-header-name').textContent = c.name; 
+                const status = Network.connections[id]?.conn?.open ? "Online" : "Offline";
+                document.getElementById('chat-header-status').textContent = status;
+                document.getElementById('chat-header-avatar').textContent = c.name[0].toUpperCase();
+                
+                const msgs = await Store.getMessages(id); 
+                const container = document.getElementById('messages-container');
+                container.innerHTML = ''; 
+                
+                msgs.forEach(UI.renderMessage);
+                
+                // Scroll to bottom
+                setTimeout(() => {
+                    container.scrollTop = container.scrollHeight;
+                }, 100);
+                
+                log('Chat loaded:', msgs.length, 'messages');
             },
-            closeChat: () => { document.getElementById('chat-area').classList.add('hidden'); document.getElementById('sidebar-panel').classList.remove('hidden'); },
+            
+            closeChat: () => { 
+                document.getElementById('chat-area').classList.add('hidden'); 
+                document.getElementById('sidebar-panel').classList.remove('hidden'); 
+                App.state.activeChat = null;
+            },
+            
             handleFileSelect: (e) => { 
                 if(e.target.files[0]) { 
+                    const file = e.target.files[0];
                     document.getElementById('file-preview-area').classList.remove('hidden'); 
-                    document.getElementById('file-preview-name').innerText = e.target.files[0].name; 
-                    // Force Show Send
+                    document.getElementById('file-preview-name').textContent = `${file.name} (${Utils.formatBytes(file.size)})`; 
                     document.getElementById('icon-mic').classList.add('hidden');
                     document.getElementById('icon-send').classList.remove('hidden');
                 } 
             },
+            
             clearFile: () => { 
                 document.getElementById('file-input').value = ''; 
                 document.getElementById('file-preview-area').classList.add('hidden'); 
-                // Reset Icon
-                const val = document.getElementById('message-input').value.trim();
-                if(!val) { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); }
+                UI.toggleSendIcon();
             },
+            
             handleInputKey: (e) => { 
-                const val = document.getElementById('message-input').value.trim();
-                if(val) { document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); }
-                else { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); }
-                if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Network.sendMessage(); }
+                UI.toggleSendIcon();
+                if(e.key === 'Enter' && !e.shiftKey) { 
+                    e.preventDefault(); 
+                    Network.sendMessage(); 
+                }
             },
+            
             handleMainAction: () => {
                 const val = document.getElementById('message-input').value.trim();
                 const file = document.getElementById('file-input').files.length > 0;
                 if(val || file) Network.sendMessage();
                 else Media.toggleRecordUI();
             },
-            updateHeaderStatus: (id, s) => { if(App.state.activeChat === id) document.getElementById('chat-header-status').innerText = s; },
-            updateMessageTick: (id, status) => {
-                 const el = document.getElementById(`msg-${id}`);
-                 if(el) {
-                     const tickContainer = el.querySelector('.tick-container');
-                     if(tickContainer) {
-                        let html = Utils.getStatusHtml(status);
-                        // Preserve time, just update icon
-                        const time = el.dataset.time;
-                        tickContainer.innerHTML = `${time} ${html}`;
-                     }
-                 }
+            
+            updateHeaderStatus: (id, status) => { 
+                if(App.state.activeChat === id) {
+                    document.getElementById('chat-header-status').textContent = status;
+                }
             },
+            
+            updateMessageTick: (id, status) => {
+                const el = document.getElementById(`msg-${id}`);
+                if(el) {
+                    const tickContainer = el.querySelector('.tick-container');
+                    if(tickContainer) {
+                        const time = el.dataset.time || new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                        tickContainer.innerHTML = `${time} ${Utils.getStatusHtml(status)}`;
+                    }
+                }
+            },
+            
             renderMessage: (msg) => {
-                const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
+                const container = document.getElementById('messages-container');
+                if (!container) return;
+                
+                const isMe = msg.dir === 'out';
+                const bg = isMe ? 'msg-sent' : 'msg-received';
+                const align = isMe ? 'justify-end' : 'justify-start';
                 
                 let content = '';
-                // Hydrate Blob URLs from DB Blobs
-                if ((msg.type === 'file' || msg.type === 'voice') && msg.content.blob && !msg.content.url) {
-                     msg.content.url = URL.createObjectURL(msg.content.blob);
-                }
-
-                // Placeholder for incoming file stream
+                
                 if (msg.type === 'file-receiving') {
-                     content = `<div class="file-card-inner"><div class="file-icon-box bg-gray-600"><i data-lucide="loader" class="animate-spin w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0]">Receiving...</div></div></div>`;
+                    content = `<div class="file-card-inner"><div class="file-icon-box bg-gray-600"><i data-lucide="loader" class="animate-spin w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0]">Receiving...</div></div></div>`;
                 }
-                else if (msg.type === 'text') { content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`; }
-                else if (msg.type === 'voice') { content = `<div class="audio-card"><div class="audio-play-btn" onclick="this.nextElementSibling.play()"><i data-lucide="play" class="w-4 h-4 text-white"></i></div><audio src="${msg.content.url}" class="hidden" onended="this.previousElementSibling.innerHTML='<svg...><path d=\\'M5 3l14 9-14 9V3z\\'/></svg>'"></audio><div class="waveform"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>`; }
+                else if (msg.type === 'text') { 
+                    content = `<div class="text-sm whitespace-pre-wrap">${Utils.linkify(msg.content)}</div>`; 
+                }
+                else if (msg.type === 'voice') { 
+                    content = `<div class="audio-card"><div class="audio-play-btn" onclick="this.nextElementSibling.play()"><i data-lucide="play" class="w-4 h-4 text-white"></i></div><audio src="${msg.content.url}" class="hidden" onended="this.previousElementSibling.innerHTML='<i data-lucide=\\'play\\' class=\\'w-4 h-4 text-white\\'></i>'"></audio><div class="waveform"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>`; 
+                }
                 else if (msg.type === 'file') {
                     const sizeStr = Utils.formatBytes(msg.content.size);
-                    if (msg.content.mime.startsWith('image')) {
-                         content = `<div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')"><img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy"></div>`;
-                         const icon = isMe ? Utils.getStatusHtml(msg.status) : '';
-                         const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
-                         div.innerHTML = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
-                         c.appendChild(div); c.scrollTop = c.scrollHeight; return;
+                    if (msg.content.mime && msg.content.mime.startsWith('image')) {
+                        content = `<div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')"><img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy"></div>`;
+                        const icon = isMe ? Utils.getStatusHtml(msg.status) : '';
+                        const div = document.createElement('div');
+                        div.className = `flex ${align} animate-fade-in mb-1`;
+                        div.id = `msg-${msg.id}`;
+                        div.dataset.time = msg.time;
+                        div.innerHTML = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
+                        container.appendChild(div);
+                        container.scrollTop = container.scrollHeight;
+                        return;
                     } else {
-                        // Styled File Card
                         const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
-                        let iconName = 'file'; let colorClass = 'bg-[#00a884]';
-                        if(msg.content.mime.includes('pdf')) { iconName = 'file-text'; colorClass = 'bg-red-500'; }
-                        else if(msg.content.mime.includes('word')) { iconName = 'file-text'; colorClass = 'bg-blue-500'; }
-                        else if(msg.content.mime.startsWith('video/')) { iconName = 'video'; colorClass = 'bg-purple-600'; }
-                        content = `<div class="file-card-inner cursor-pointer" onclick="window.open('${msg.content.url}')"><div class="file-icon-box" style="background-color: ${colorClass.replace('bg-','')}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${msg.content.name}</div><div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,3)}</div></div><div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></div></div>`;
+                        let iconName = 'file';
+                        let colorClass = 'bg-[#00a884]';
+                        if(msg.content.mime && msg.content.mime.includes('pdf')) { 
+                            iconName = 'file-text'; 
+                            colorClass = 'bg-red-500'; 
+                        }
+                        else if(msg.content.mime && msg.content.mime.includes('word')) { 
+                            iconName = 'file-text'; 
+                            colorClass = 'bg-blue-500'; 
+                        }
+                        else if(msg.content.mime && msg.content.mime.startsWith('video/')) { 
+                            iconName = 'video'; 
+                            colorClass = 'bg-purple-600'; 
+                        }
+                        content = `<div class="file-card-inner cursor-pointer" onclick="window.open('${msg.content.url}')"><div class="file-icon-box" style="background-color: ${colorClass.replace('bg-','')}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${msg.content.name}</div><div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime ? msg.content.mime.split('/')[1].toUpperCase().slice(0,3) : 'FILE'}</div></div><div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></div></div>`;
                     }
                 }
 
                 let icon = isMe ? Utils.getStatusHtml(msg.status) : '';
-                const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
-                
-                // Smart Update: Replace if existing
                 const existing = document.getElementById(`msg-${msg.id}`);
+                
                 const inner = `<div class="p-2 ${bg} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">${content}<div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">${msg.time} ${icon}</div></div>`;
                 
-                if(existing) { existing.innerHTML = inner; }
-                else { div.innerHTML = inner; c.appendChild(div); c.scrollTop = c.scrollHeight; }
+                if(existing) {
+                    existing.innerHTML = inner;
+                } else {
+                    const div = document.createElement('div');
+                    div.className = `flex ${align} animate-fade-in mb-1 new-message`;
+                    div.id = `msg-${msg.id}`;
+                    div.dataset.time = msg.time;
+                    div.innerHTML = inner;
+                    container.appendChild(div);
+                    container.scrollTop = container.scrollHeight;
+                }
                 lucide.createIcons();
             }
         };
 
-        App.init();
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            log('DOM loaded, initializing app...');
+            App.init();
+        });
+
+        // Cleanup on unload
+        window.addEventListener('beforeunload', () => {
+            log('Cleaning up...');
+            Utils.revokeBlobs();
+            if (Network.peer) Network.peer.destroy();
+        });
     </script>
 </body>
 </html>
