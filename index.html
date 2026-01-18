@@ -25,7 +25,6 @@
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         
-        /* File Card */
         .file-card-inner { background-color: rgba(0, 0, 0, 0.15); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.05); }
         .file-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
         
@@ -78,6 +77,7 @@
         <h2 class="text-2xl font-bold mb-4">Unlock Identity</h2>
         <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center">
         <button onclick="App.login()" class="w-full max-w-sm p-4 bg-[#00a884] rounded-xl font-bold">Unlock</button>
+        <div id="lockout-msg" class="text-red-400 mt-4 hidden text-sm bg-red-900/20 p-2 rounded border border-red-900"></div>
     </div>
 
     <!-- 3. MAIN UI -->
@@ -113,6 +113,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v6.2 Stable</span>
             </div>
         </div>
 
@@ -424,23 +425,22 @@
                         const dec = await Crypto.decryptBin(data, connObj.key);
                         tracker.chunks.push(dec);
                         tracker.received += data.byteLength;
+                        
                         if (App.state.activeChat === sender) {
                             const pct = Math.round((tracker.received / tracker.encSize) * 100);
                             document.getElementById('download-progress').classList.remove('hidden');
                             document.getElementById('dl-progress-bar').style.width = pct + "%";
                             document.getElementById('dl-progress-percent').innerText = pct + "%";
                         }
+
                         if (tracker.received >= tracker.encSize) {
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             
                             // *** CRITICAL: Fix "Double Bubble" by passing MsgID to Update ***
+                            // We use the ID saved in tracker.msgId to find and replace the "receiving" bubble.
                             App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
                             
-                            // Send Receipt
-                            conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'delivered' });
-                            if(App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'read' });
-
                             delete App.fileChunks[sender];
                         }
                     } catch(e){}
@@ -864,12 +864,10 @@
                 const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
                 
                 let content = '';
-                // Hydrate Blob URLs from DB Blobs
                 if ((msg.type === 'file' || msg.type === 'voice') && msg.content.blob && !msg.content.url) {
                      msg.content.url = URL.createObjectURL(msg.content.blob);
                 }
 
-                // Placeholder for incoming file stream
                 if (msg.type === 'file-receiving') {
                      content = `<div class="file-card-inner"><div class="file-icon-box bg-gray-600"><i data-lucide="loader" class="animate-spin w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0]">Receiving...</div></div></div>`;
                 }
@@ -884,7 +882,6 @@
                          div.innerHTML = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
                          c.appendChild(div); c.scrollTop = c.scrollHeight; return;
                     } else {
-                        // Styled File Card
                         const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
                         let iconName = 'file'; let colorClass = 'bg-[#00a884]';
                         if(msg.content.mime.includes('pdf')) { iconName = 'file-text'; colorClass = 'bg-red-500'; }
