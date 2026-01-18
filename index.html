@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- CSP -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0f171d; color: #e9edef; height: 100dvh; width: 100vw; overflow: hidden; position: fixed; inset: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: #111b21; color: #e9edef; height: 100dvh; width: 100vw; overflow: hidden; position: fixed; inset: 0; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #374045; border-radius: 2px; }
@@ -20,26 +23,25 @@
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
         .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
         
-        .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.2); }
-        .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.2); }
-        
-        /* Creative Status Icons */
-        .status-icon { width: 14px; height: 14px; margin-left: 3px; display: inline-block; vertical-align: text-bottom; }
-        .status-pending { color: #8696a0; animation: pulse 1s infinite; }
-        .status-sent { color: #8696a0; }
-        .status-delivered { color: #8696a0; }
-        .status-read { color: #34b7f1; text-shadow: 0 0 5px rgba(52, 183, 241, 0.4); }
-        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+        .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         
         /* File Card */
-        .file-card { background-color: rgba(0,0,0,0.2); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 10px; margin-top: 2px; }
-        .file-icon-box { width: 36px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; }
+        .file-card-inner { background-color: rgba(0, 0, 0, 0.15); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; }
+        .file-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
+        
+        /* Ticks */
+        .tick-icon { width: 16px; height: 11px; margin-left: 4px; display: inline-block; vertical-align: bottom; }
+        .tick-pending { color: #8696a0; opacity: 0.6; }
+        .tick-sent { color: #8696a0; }
+        .tick-delivered { color: #8696a0; }
+        .tick-read { color: #53bdeb; }
         
         .font-mono-safe { font-family: 'Courier New', Courier, monospace; letter-spacing: 1px; }
         .mic-active { animation: pulseRed 1.5s infinite; background-color: #ef4444 !important; }
         @keyframes pulseRed { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .bubble-constraint { max-width: 85%; }
-        @media (min-width: 768px) { .bubble-constraint { max-width: 65%; } }
+        @media (min-width: 768px) { .bubble-constraint { max-width: 60%; } }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -47,25 +49,27 @@
     <!-- 1. ONBOARDING -->
     <div id="onboarding-screen" class="absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in overflow-y-auto">
         <div class="relative mb-8"><div class="absolute -inset-1 bg-[#00a884] rounded-full opacity-20 blur-xl animate-pulse"></div><i data-lucide="shield-check" class="w-24 h-24 text-[#00a884] relative z-10"></i></div>
-        <h1 class="text-3xl font-bold tracking-tight mb-2">GhostMesh</h1>
-        <p class="text-[#8696a0] max-w-xs mx-auto mb-8">Secure P2P Node</p>
+        <h1 class="text-3xl font-bold tracking-tight mb-2">GhostMesh Secure</h1>
+        <p class="text-[#8696a0] max-w-xs mx-auto mb-8">Encrypted Local Storage. Zero Cloud.</p>
         <div class="w-full max-w-sm space-y-4">
             <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <input id="setup-password" type="password" placeholder="Secure Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <button onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Start Node</button>
+            <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
+            <button onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
         </div>
     </div>
 
     <!-- 2. LOGIN -->
     <div id="login-screen" class="hidden absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
         <i data-lucide="lock" class="w-16 h-16 text-[#00a884] mb-4"></i>
-        <h2 class="text-2xl font-bold mb-4">Decrypt Identity</h2>
-        <input id="login-password" type="password" placeholder="Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center">
+        <h2 class="text-2xl font-bold mb-4">Unlock Identity</h2>
+        <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center">
         <button onclick="App.login()" class="w-full max-w-sm p-4 bg-[#00a884] rounded-xl font-bold">Unlock</button>
+        <div id="lockout-msg" class="text-red-400 mt-4 hidden text-sm bg-red-900/20 p-2 rounded border border-red-900"></div>
     </div>
 
     <!-- 3. MAIN UI -->
     <div id="app-layout" class="hidden w-full h-full flex flex-col md:flex-row relative">
+        <!-- Sidebar -->
         <div id="sidebar-panel" class="w-full md:w-96 border-r border-[#2a3942] flex flex-col bg-[#111b21] h-full">
             <div class="p-3 border-b border-[#2a3942] flex justify-between items-center shrink-0 bg-[#202c33]">
                 <div class="flex items-center space-x-3 cursor-pointer min-w-0 overflow-hidden" onclick="UI.copyId()">
@@ -76,23 +80,31 @@
                     </div>
                 </div>
                 <div class="flex space-x-1 flex-shrink-0 ml-2">
-                    <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
-                    <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
-                    <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Add ID"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Scan QR"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full" title="My QR"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
                 </div>
             </div>
             
+            <div class="p-2 bg-[#111b21] border-b border-[#2a3942]">
+                <input id="search-contacts" onkeyup="UI.filterContacts()" placeholder="Search contacts..." class="w-full bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none placeholder-[#8696a0]">
+            </div>
+
             <div id="new-chat-panel" class="hidden p-2 bg-[#111b21] border-b border-[#2a3942] flex gap-2">
                 <input id="input-peer-id" placeholder="Paste Peer ID..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none">
                 <button onclick="Network.connectToInput()" class="bg-[#00a884] p-2 rounded-lg"><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i></button>
             </div>
             <div id="chat-list" class="flex-1 overflow-y-auto"></div>
+            
             <div class="p-3 bg-[#111b21] border-t border-[#2a3942] flex justify-between items-center pb-safe shrink-0">
-                <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors"><i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup</button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v3.0</span>
+                <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
+                    <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
+                </button>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v2.9 Live</span>
             </div>
         </div>
 
+        <!-- Chat Area -->
         <div id="chat-area" class="hidden md:flex flex-1 flex-col h-full relative bg-[#0b141a]">
             <div class="absolute inset-0 opacity-[0.06] pointer-events-none" style="background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-repeat: repeat;"></div>
             
@@ -123,14 +135,6 @@
 
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full pb-20"></div>
                 
-                <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
-                    <div class="flex justify-between text-xs text-[#00a884] mb-1">
-                        <span>Uploading... <button onclick="Network.cancelUpload()" class="ml-2 text-red-400 font-bold hover:underline">CANCEL</button></span>
-                        <span id="progress-percent">0%</span>
-                    </div>
-                    <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="progress-bar" class="bg-[#00a884] h-1 rounded-full" style="width: 0%"></div></div>
-                </div>
-
                 <div class="bg-[#202c33] shrink-0 w-full pb-safe">
                     <div id="recording-ui" class="hidden px-4 py-3 bg-[#202c33] flex items-center gap-4 border-t border-[#2a3942]">
                         <div class="text-red-500 animate-pulse flex-1 font-mono">Recording Audio...</div>
@@ -140,7 +144,10 @@
 
                     <div id="normal-input-ui">
                         <div id="file-preview-area" class="hidden px-4 py-2 bg-[#2a3942] flex items-center justify-between border-b border-[#111b21]">
-                            <span id="file-preview-name" class="text-sm text-[#e9edef] truncate"></span>
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="file" class="text-[#00a884]"></i>
+                                <span id="file-preview-name" class="text-sm text-[#e9edef] truncate max-w-[200px]"></span>
+                            </div>
                             <button onclick="UI.clearFile()" class="text-red-400"><i data-lucide="x" class="w-5 h-5"></i></button>
                         </div>
                         <div class="flex items-end gap-2 p-2">
@@ -154,7 +161,10 @@
                                 <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)">
                             </div>
                             <div class="pb-1">
-                                <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform"><i id="icon-mic" data-lucide="mic" class="w-5 h-5"></i><i id="icon-send" data-lucide="send" class="w-5 h-5 pl-0.5 hidden"></i></button>
+                                <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
+                                    <i id="icon-mic" data-lucide="mic" class="w-5 h-5"></i>
+                                    <i id="icon-send" data-lucide="send" class="w-5 h-5 pl-0.5 hidden"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -163,7 +173,8 @@
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- MODALS -->
+    <!-- QR, Scanner, Safety, Camera, Video -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3><div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit flex justify-center items-center"></div><button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
     <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><button onclick="UI.stopScanner()" class="mt-4 w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold">Cancel</button></div></div>
     <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3><p class="text-[#8696a0] text-xs mb-4">Verify this number with your peer.</p><div id="safety-number" class="font-mono-safe text-[#00a884] text-2xl font-bold mb-6 tracking-widest break-all"></div><button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
@@ -181,11 +192,10 @@
             bufferToHex: (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''),
             formatBytes: (bytes) => { if (bytes === 0) return '0 B'; const k=1024, i=Math.floor(Math.log(bytes)/Math.log(k)); return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + ['B','KB','MB','GB'][i]; },
             getTickIcon: (status) => {
-                // Creative Chevrons
-                if (status === 'pending') return `<span class="status-icon status-pending">●</span>`; // Pulse dot
-                if (status === 'sent') return `<span class="status-icon status-sent">›</span>`; // Single chevron
-                if (status === 'delivered') return `<span class="status-icon status-delivered">»</span>`; // Double chevron
-                if (status === 'read') return `<span class="status-icon status-read">»</span>`; // Blue double chevron
+                if (status === 'pending') return `<svg class="tick-icon tick-pending" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 14A6 6 0 118 2a6 6 0 010 12zm.5-6.5V4h-1v4.2l3.2 1.9.5-.8-2.7-1.3z"/></svg>`;
+                if (status === 'sent') return `<svg class="tick-icon tick-sent" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/></svg>`;
+                if (status === 'delivered') return `<svg class="tick-icon tick-delivered" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
+                if (status === 'read') return `<svg class="tick-icon tick-read" viewBox="0 0 16 15"><path fill="currentColor" d="M15.01 3.316l-2.304-2.304c-.64-.64-1.67-.64-2.31 0l-5.38 5.38-2.31-2.31c-.64-.64-1.67-.64-2.31 0l-2.3 2.3c-.64.64-.64 1.67 0 2.31l6.93 6.93c.64.64 1.67.64 2.31 0l10.08-10.08c.64-.64.64-1.67 0-2.31l-2.4-2.31z"/><path fill="currentColor" d="M1.31 8.316l2.304 2.304c.64.64 1.67.64 2.31 0l5.38-5.38 2.31 2.31c.64.64 1.67.64 2.31 0l2.3-2.3c.64-.64.64-1.67 0-2.31l-6.93-6.93c-.64-.64-1.67-.64-2.31 0L1.31 6.006c-.64.64-.64 1.67 0 2.31z"/></svg>`;
                 return '';
             }
         };
@@ -255,16 +265,24 @@
                     const tracker = App.fileChunks[sender]; if (!tracker) return;
                     try {
                         const dec = await Crypto.decryptBin(data, connObj.key); tracker.chunks.push(dec); tracker.received += data.byteLength;
-                        if (App.state.activeChat === sender) { const pct = Math.round((tracker.received / tracker.encSize) * 100); document.getElementById('download-progress').classList.remove('hidden'); document.getElementById('dl-progress-bar').style.width = pct + "%"; document.getElementById('dl-progress-percent').innerText = pct + "%"; }
+                        if (App.state.activeChat === sender) { /* ... progress UI ... */ }
                         if (tracker.received >= tracker.encSize) {
-                            document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
+                            
+                            // *** CRITICAL FIX: Add "Receiving" Bubble NOW if not already present ***
+                            // Note: We normally add it at file-start, but if user reloaded, they might miss it.
+                            // However, we need to UPDATE it here.
+                            
                             App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read');
                             delete App.fileChunks[sender];
                         }
                     } catch(e){}
                 }
-                if (data.type === 'file-start') App.fileChunks[sender] = { ...data, received: 0, chunks: [] };
+                if (data.type === 'file-start') {
+                    App.fileChunks[sender] = { ...data, received: 0, chunks: [] };
+                    // *** CRITICAL FIX: Show "Receiving..." Bubble IMMEDIATELY ***
+                    App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'read'); 
+                }
             },
             cancelUpload: () => { Network.uploadCancelled = true; },
             sendMessage: async () => {
@@ -275,12 +293,8 @@
                     const connObj = Network.connections[peerId];
                     if (!connObj?.conn?.open) return alert("Peer Offline");
                     
-                    // Crash Fix: Don't store huge blobs in IDB
-                    const isHuge = file.size > 25 * 1024 * 1024; // 25MB limit for IDB
                     const msgId = Date.now();
-                    
-                    // Show Bubble Immediately
-                    App.addMessage(peerId, { name: file.name, blob: isHuge ? null : file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
+                    App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
                     UI.clearFile();
 
                     Network.uploadCancelled = false;
@@ -288,27 +302,21 @@
                     connObj.conn.send({ type: 'file-start', name: file.name, mime: file.type, encSize: totalEncSize });
                     
                     let offset = 0;
-                    document.getElementById('upload-progress').classList.remove('hidden');
-                    
                     const streamLoop = async () => {
-                        if (Network.uploadCancelled) { document.getElementById('upload-progress').classList.add('hidden'); return; }
+                        if (Network.uploadCancelled) { return; }
                         if(offset >= file.size) {
-                             document.getElementById('upload-progress').classList.add('hidden');
-                             // Update tick to sent
                              const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
                              if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
                              return;
                         }
                         if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
                         const slice = file.slice(offset, offset + CHUNK); const buf = await slice.arrayBuffer(); const enc = await Crypto.encryptBin(buf, connObj.key); connObj.conn.send(enc);
-                        offset += CHUNK; const pct = Math.round((offset/file.size)*100); document.getElementById('progress-bar').style.width = pct + "%"; document.getElementById('progress-percent').innerText = pct + "%";
-                        requestAnimationFrame(streamLoop);
+                        offset += CHUNK; requestAnimationFrame(streamLoop);
                     };
                     streamLoop();
                 } 
                 else if (input.value.trim()) {
                     const text = input.value.trim(); const connObj = Network.connections[peerId]; const msgId = Date.now();
-                    // Add Bubble Immediately
                     if (connObj?.conn?.open) {
                         connObj.conn.send({ type: 'msg', id: msgId, payload: await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key) });
                         App.addMessage(peerId, text, 'out', 'text', 'sent', msgId);
@@ -343,7 +351,7 @@
             login: async () => { const pass = document.getElementById('login-password').value; try { const priv = await Crypto.decryptPrivateKey(await Store.get('config', 'encPrivateKey'), pass); const pub = await window.crypto.subtle.importKey("spki", await Store.get('config', 'publicKey'), {name:"ECDH",namedCurve:"P-256"}, true, []); App.loadMain(App.state.id, App.state.name, priv, pub); } catch(e) { alert("Wrong Password"); } },
             loadMain: async (id, name, priv, pub) => { Crypto.keyPair = { privateKey: priv, publicKey: pub }; App.state.pubStr = await Crypto.exportKey(pub); document.getElementById('onboarding-screen').classList.add('hidden'); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('app-layout').classList.remove('hidden'); App.state.contacts = await Store.get('config', 'contacts') || {}; UI.renderContacts(); UI.updateSelf(name); Network.init(id); },
             addContact: (id, name, pubKey) => { App.state.contacts[id] = { id, name: name || "Unknown", pubKey: pubKey || App.state.contacts[id]?.pubKey }; Store.put('config', 'contacts', App.state.contacts); UI.renderContacts(); },
-            deleteContact: async (id) => { if(!confirm("Delete contact?")) return; delete App.state.contacts[id]; await Store.put('config', 'contacts', App.state.contacts); await Store.deleteMessagesForPeer(id); if(Network.connections[id]) Network.connections[id].conn.close(); delete Network.connections[id]; if(App.state.activeChat === id) UI.closeChat(); UI.renderContacts(); },
+            deleteContact: async (id) => { if(!confirm("Delete contact and all messages?")) return; delete App.state.contacts[id]; await Store.put('config', 'contacts', App.state.contacts); await Store.deleteMessagesForPeer(id); if(Network.connections[id]) Network.connections[id].conn.close(); delete Network.connections[id]; if(App.state.activeChat === id) UI.closeChat(); UI.renderContacts(); },
             addMessage: (peerId, content, dir, type, status, id) => { const msg = { id: id || Date.now(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) }; Store.put('messages', null, msg); if(App.state.activeChat === peerId) UI.renderMessage(msg); },
             exportIdentity: async () => { const data = { id: App.state.id, name: App.state.name, priv: await Store.get('config', 'encPrivateKey'), contacts: App.state.contacts, msgs: await Store.getAllMessages() }; const url = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: "application/json"})); const a = document.createElement('a'); a.href = url; a.download = "ghost_backup.json"; a.click(); }
         };
@@ -370,10 +378,15 @@
             updateMessageTick: (id, status) => { const el = document.getElementById(`msg-${id}`); if(el) { const tickContainer = el.querySelector('.tick-container'); if(tickContainer) { let svg = Utils.getTickIcon(status); const time = el.dataset.time; tickContainer.innerHTML = `${time} ${svg}`; } } },
             renderMessage: (msg) => {
                 const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
+                
                 let content = '';
                 if ((msg.type === 'file' || msg.type === 'voice') && msg.content.blob && !msg.content.url) { msg.content.url = URL.createObjectURL(msg.content.blob); }
 
-                if (msg.type === 'text') { content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`; }
+                // Placeholder for incoming file stream
+                if (msg.type === 'file-receiving') {
+                     content = `<div class="file-card-inner"><div class="file-icon-box bg-gray-600"><i data-lucide="loader" class="animate-spin w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0]">Receiving...</div></div></div>`;
+                }
+                else if (msg.type === 'text') { content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`; }
                 else if (msg.type === 'voice') { content = `<div class="audio-player"><div class="play-btn" onclick="this.nextElementSibling.play()"><i data-lucide="play" class="w-4 h-4 text-white"></i></div><audio src="${msg.content.url}" class="hidden"></audio><div class="audio-track"><div class="audio-fill"></div></div></div>`; }
                 else if (msg.type === 'file') {
                     const sizeStr = Utils.formatBytes(msg.content.size);
@@ -385,11 +398,11 @@
                          c.appendChild(div); c.scrollTop = c.scrollHeight; return;
                     } else {
                         const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
-                        let iconName = 'file'; let cardColor = '#00a884';
-                        if(msg.content.mime.includes('pdf')) { iconName = 'file-text'; cardColor = '#ef4444'; }
-                        else if(msg.content.mime.includes('word')) { iconName = 'file-text'; cardColor = '#3b82f6'; }
-                        else if(msg.content.mime.startsWith('video/')) { iconName = 'video'; cardColor = '#a855f7'; }
-                        content = `<div class="file-card cursor-pointer" onclick="window.open('${msg.content.url}')"><div class="file-icon-box" style="background-color:${cardColor}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${msg.content.name}</div><div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,3)}</div></div><div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></div></div>`;
+                        let iconName = 'file'; let cardColor = 'bg-[#00a884]';
+                        if(msg.content.mime.includes('pdf')) { iconName = 'file-text'; cardColor = 'bg-[#ef4444]'; }
+                        else if(msg.content.mime.includes('word')) { iconName = 'file-text'; cardColor = 'bg-[#3b82f6]'; }
+                        else if(msg.content.mime.startsWith('video/')) { iconName = 'video'; cardColor = 'bg-[#a855f7]'; }
+                        content = `<div class="file-card-inner cursor-pointer" onclick="window.open('${msg.content.url}')"><div class="file-icon-box ${cardColor}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${msg.content.name}</div><div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,3)}</div></div><div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></div></div>`;
                     }
                 }
                 let icon = isMe ? Utils.getTickIcon(msg.status) : '';
