@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- CSP -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
     <title>GhostMesh | Pro Secure</title>
     
@@ -110,7 +111,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v8.0</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v7.0 Fixed</span>
             </div>
         </div>
 
@@ -227,24 +228,21 @@
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
-                // FORCE VERSION 7 to clear broken schemas
-                const req = indexedDB.open("GhostMeshSecure", 7);
+                const req = indexedDB.open("GhostMeshSecure", 6); // Version 6 - Force Clean
                 req.onupgradeneeded = e => {
                     const db = e.target.result;
-                    // Nuke old stores if corrupt
-                    if(db.objectStoreNames.contains("config")) db.deleteObjectStore("config");
-                    if(db.objectStoreNames.contains("messages")) db.deleteObjectStore("messages");
-                    
-                    db.createObjectStore("config");
-                    const store = db.createObjectStore("messages", { keyPath: "id" });
-                    store.createIndex("peerId", "peerId", { unique: false });
+                    if (!db.objectStoreNames.contains("config")) db.createObjectStore("config");
+                    if (!db.objectStoreNames.contains("messages")) {
+                        const store = db.createObjectStore("messages", { keyPath: "id" });
+                        store.createIndex("peerId", "peerId", { unique: false });
+                    }
                 };
                 req.onsuccess = () => { Store.db = req.result; resolve(); };
                 req.onerror = (e) => { 
                     console.error("DB Error", e);
-                    // Critical Fallback: Nuke DB and retry
+                    // CRITICAL FAILSAFE: If DB corrupt, nuke and retry
                     indexedDB.deleteDatabase("GhostMeshSecure");
-                    location.reload(); 
+                    setTimeout(() => location.reload(), 500);
                 };
             }),
             put: async (store, key, val) => new Promise(r => {
@@ -353,6 +351,7 @@
                 if (Network.connections[id]?.conn?.open) return;
                 const conn = Network.peer.connect(id, { reliable: true });
                 conn.on('open', () => {
+                    // Send Handshake
                     conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
                     Network.processQueue(id);
                 });
@@ -440,15 +439,16 @@
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             
-                            // *** ID MATCHING FIX: Use tracker.msgId to replace the receiving bubble ***
+                            // *** CRITICAL: Force REPLACE using msgId from tracker ***
                             App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
                             delete App.fileChunks[sender];
                         }
                     } catch(e){}
                 }
                 if (data.type === 'file-start') {
+                     // Store the message ID from sender to match the bubbles later
                      App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
-                     // *** ID MATCHING FIX: Pass data.id when creating Receiving bubble ***
+                     // Create Initial Receiving Bubble with the SAME ID
                      App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'pending', data.id);
                 }
             },
@@ -707,7 +707,8 @@
             }
         };
 
-        App.init();
+        // Defer init to ensure DOM ready
+        window.addEventListener('load', App.init);
     </script>
 </body>
 </html>
