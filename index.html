@@ -1422,7 +1422,7 @@
                         inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 relative"><div class="audio-card"><button class="audio-play-btn" onclick="UI.playAudio(this, '${url}')"><i data-lucide="play" class="w-4 h-4"></i></button><div class="waveform">${Array(15).fill('<div class="bar"></div>').join('')}</div></div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
                     } else {
                         // Fallback for voice messages without URL
-                        inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 text-sm relative"><div class="text-[#8696a0] italic">🎤 Voice message (loading...)</div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div></div>`;
+                        inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 text-sm relative"><div class="text-[#8696a0] italic">🎤 Voice message (loading...)</div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
                     }
                 } else if (msg.type === 'file' || msg.type === 'file-receiving') {
                     // BUG FIX #2: Use only pre-created URL from message object
