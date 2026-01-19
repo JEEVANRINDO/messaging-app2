@@ -57,6 +57,50 @@
         
         .mirror-x { transform: scaleX(-1); }
         .status-container { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-left: 5px; vertical-align: text-bottom; }
+        
+        /* Typing Indicator */
+        .typing-indicator { display: flex; align-items: center; gap: 3px; padding: 8px 12px; background-color: #202c33; border-radius: 8px 8px 8px 0; width: fit-content; margin: 4px 0; }
+        .typing-dot { width: 6px; height: 6px; background-color: #8696a0; border-radius: 50%; animation: typingDot 1.4s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingDot { 0%, 60%, 100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-6px); } }
+        
+        /* Reactions */
+        .reaction-picker { background: #202c33; border: 1px solid #2a3942; border-radius: 20px; padding: 4px 8px; display: flex; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .reaction-btn { font-size: 20px; cursor: pointer; transition: transform 0.2s; padding: 4px 8px; border-radius: 12px; }
+        .reaction-btn:hover { transform: scale(1.3); background: #2a3942; }
+        .message-reactions { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+        .reaction-badge { background: #2a3942; border-radius: 12px; padding: 2px 6px; font-size: 12px; display: flex; align-items: center; gap: 3px; border: 1px solid #374045; cursor: pointer; transition: all 0.2s; }
+        .reaction-badge:hover { background: #374045; transform: scale(1.05); }
+        .reaction-badge.my-reaction { border-color: #00a884; background: rgba(0, 168, 132, 0.2); }
+        
+        /* Theme Switcher */
+        body.light-theme { background-color: #f0f2f5; color: #111b21; }
+        .light-theme #onboarding-screen, .light-theme #login-screen { background-color: #ffffff; color: #111b21; }
+        .light-theme #app-layout, .light-theme #sidebar-panel { background-color: #ffffff; }
+        .light-theme #chat-area { background-color: #efeae2; }
+        .light-theme .msg-sent { background-color: #dcf8c6; color: #111b21; }
+        .light-theme .msg-received { background-color: #ffffff; color: #111b21; }
+        .light-theme input, .light-theme button, .light-theme .bg-\\[\\#202c33\\] { background-color: #ffffff; color: #111b21; }
+        .light-theme .bg-\\[\\#111b21\\] { background-color: #f0f2f5; }
+        .light-theme .text-\\[\\#e9edef\\] { color: #111b21; }
+        .light-theme .text-\\[\\#8696a0\\] { color: #54656f; }
+        .light-theme .border-\\[\\#2a3942\\] { border-color: #e9edef; }
+        .light-theme .typing-indicator { background-color: #ffffff; }
+        
+        /* Draft Indicator */
+        .draft-badge { background: #00a884; color: white; font-size: 10px; padding: 2px 6px; border-radius: 8px; margin-left: 4px; }
+        
+        /* Unread Counter */
+        .unread-badge { background: #00a884; color: white; font-size: 11px; padding: 2px 7px; border-radius: 12px; font-weight: bold; min-width: 20px; text-align: center; }
+        
+        /* Smart Reply */
+        .smart-replies { display: flex; gap: 8px; padding: 8px 16px; overflow-x: auto; background: #202c33; border-top: 1px solid #2a3942; }
+        .smart-reply-chip { background: #2a3942; color: #e9edef; padding: 8px 16px; border-radius: 16px; white-space: nowrap; cursor: pointer; font-size: 14px; transition: all 0.2s; border: 1px solid #374045; }
+        .smart-reply-chip:hover { background: #374045; transform: scale(1.05); }
+        .light-theme .smart-replies { background: #f0f2f5; border-top-color: #d1d7db; }
+        .light-theme .smart-reply-chip { background: #ffffff; color: #111b21; border-color: #d1d7db; }
+        .light-theme .smart-reply-chip:hover { background: #e9edef; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -97,6 +141,7 @@
                     </div>
                 </div>
                 <div class="flex space-x-1 flex-shrink-0 ml-2">
+                    <button onclick="UI.toggleTheme()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Toggle Theme"><i data-lucide="sun" id="theme-icon" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Add ID"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Scan QR"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full" title="My QR"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
@@ -150,6 +195,16 @@
                     </div>
                 </div>
 
+                <!-- Typing Indicator (below header) -->
+                <div id="typing-indicator-container" class="hidden px-4 py-2 bg-[#0b141a] border-b border-[#2a3942]">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <span class="text-xs text-[#8696a0] ml-2">typing...</span>
+                    </div>
+                </div>
+                
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full pb-20"></div>
                 
                 <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
@@ -166,6 +221,11 @@
                 </div>
 
                 <div class="bg-[#202c33] shrink-0 w-full pb-safe">
+                    <!-- Smart Reply Suggestions -->
+                    <div id="smart-replies-container" class="hidden smart-replies">
+                        <!-- Populated dynamically -->
+                    </div>
+                    
                     <div id="recording-ui" class="hidden px-4 py-3 bg-[#202c33] flex items-center gap-4 border-t border-[#2a3942]">
                         <div class="text-red-500 animate-pulse flex-1 font-mono">Recording Audio...</div>
                         <button onclick="Media.cancelRecord()" class="text-[#8696a0]">Cancel</button>
@@ -185,7 +245,7 @@
                                 <button onclick="UI.sendLocation()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="map-pin" class="w-6 h-6"></i></button>
                             </div>
                             <div class="flex-1 bg-[#2a3942] rounded-lg min-h-[42px] flex items-center px-4 py-2 mb-1">
-                                <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)" oninput="UI.toggleSendIcon()">
+                                <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)" oninput="UI.handleInputChange()">
                             </div>
                             <div class="pb-1">
                                 <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
@@ -234,13 +294,18 @@
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
-                const req = indexedDB.open("GhostMeshSecure", 17);
+                const req = indexedDB.open("GhostMeshSecure", 18);
                 req.onupgradeneeded = e => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains("config")) db.createObjectStore("config");
                     if (!db.objectStoreNames.contains("messages")) {
                         const store = db.createObjectStore("messages", { keyPath: "id" });
                         store.createIndex("peerId", "peerId", { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains("drafts")) db.createObjectStore("drafts");
+                    if (!db.objectStoreNames.contains("reactions")) {
+                        const store = db.createObjectStore("reactions", { keyPath: "id" });
+                        store.createIndex("msgId", "msgId", { unique: false });
                     }
                 };
                 req.onsuccess = () => { Store.db = req.result; resolve(); };
@@ -278,6 +343,19 @@
                 const tx = Store.db.transaction("messages", "readwrite");
                 const index = tx.objectStore("messages").index("peerId");
                 index.getAllKeys(peerId).onsuccess = e => { e.target.result.forEach(k => tx.objectStore("messages").delete(k)); tx.oncomplete = r; };
+            }),
+            getReactions: async (msgId) => new Promise(r => {
+                if(!Store.db) return r([]);
+                const tx = Store.db.transaction("reactions", "readonly");
+                const req = tx.objectStore("reactions").index("msgId").getAll(msgId);
+                req.onsuccess = () => r(req.result || []);
+            }),
+            putReaction: async (reaction) => Store.put('reactions', null, reaction),
+            deleteReaction: async (id) => new Promise(r => {
+                if(!Store.db) return r();
+                const tx = Store.db.transaction("reactions", "readwrite");
+                tx.objectStore("reactions").delete(id);
+                tx.oncomplete = r;
             })
         };
 
@@ -339,7 +417,7 @@
         };
 
         const Network = {
-            peer: null, connections: {}, uploadCancelled: false,
+            peer: null, connections: {}, uploadCancelled: false, typingTimers: {},
             init: async (id) => {
                 if(Network.peer) return;
                 if (typeof Peer === 'undefined') {
@@ -432,6 +510,39 @@
                          }
                      }
                      return;
+                }
+                
+                if (data.type === 'typing') {
+                    if (App.state.activeChat === sender) {
+                        UI.showTypingIndicator(true);
+                        clearTimeout(Network.typingTimers[sender]);
+                        Network.typingTimers[sender] = setTimeout(() => UI.showTypingIndicator(false), 3000);
+                    }
+                    return;
+                }
+                
+                if (data.type === 'reaction') {
+                    const reaction = {
+                        id: `${data.msgId}-${sender}-${data.emoji}`,
+                        msgId: data.msgId,
+                        userId: sender,
+                        emoji: data.emoji,
+                        timestamp: Date.now()
+                    };
+                    await Store.putReaction(reaction);
+                    if (App.state.activeChat === sender) {
+                        UI.updateReactions(data.msgId);
+                    }
+                    return;
+                }
+                
+                if (data.type === 'unreact') {
+                    const reactionId = `${data.msgId}-${sender}-${data.emoji}`;
+                    await Store.deleteReaction(reactionId);
+                    if (App.state.activeChat === sender) {
+                        UI.updateReactions(data.msgId);
+                    }
+                    return;
                 }
 
                 if (data.type === 'msg') {
@@ -561,6 +672,12 @@
                     App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
                     input.value = '';
                     UI.toggleSendIcon();
+                    
+                    // Clear draft
+                    await UI.clearDraft(peerId);
+                    
+                    // Hide smart replies
+                    document.getElementById('smart-replies-container').classList.add('hidden');
 
                     if (connObj?.conn?.open && connObj.key) {
                         try {
@@ -571,12 +688,46 @@
                         } catch(e) { console.error("Encryption Failed", e); alert("Encryption Error"); }
                     }
                 }
+            },
+            sendTyping: () => {
+                if (!App.state.activeChat) return;
+                const connObj = Network.connections[App.state.activeChat];
+                if (connObj?.conn?.open) {
+                    connObj.conn.send({ type: 'typing' });
+                }
+            },
+            sendReaction: async (msgId, emoji) => {
+                if (!App.state.activeChat) return;
+                const connObj = Network.connections[App.state.activeChat];
+                if (connObj?.conn?.open) {
+                    connObj.conn.send({ type: 'reaction', msgId, emoji });
+                    const reaction = {
+                        id: `${msgId}-${App.state.id}-${emoji}`,
+                        msgId,
+                        userId: App.state.id,
+                        emoji,
+                        timestamp: Date.now()
+                    };
+                    await Store.putReaction(reaction);
+                    UI.updateReactions(msgId);
+                }
+            },
+            removeReaction: async (msgId, emoji) => {
+                if (!App.state.activeChat) return;
+                const connObj = Network.connections[App.state.activeChat];
+                if (connObj?.conn?.open) {
+                    connObj.conn.send({ type: 'unreact', msgId, emoji });
+                    const reactionId = `${msgId}-${App.state.id}-${emoji}`;
+                    await Store.deleteReaction(reactionId);
+                    UI.updateReactions(msgId);
+                }
             }
         };
 
         const App = {
-            state: { id: null, name: null, pubStr: null, password: null, activeChat: null, contacts: {}, loginAttempts: 0, lockoutUntil: null },
+            state: { id: null, name: null, pubStr: null, password: null, activeChat: null, contacts: {}, loginAttempts: 0, lockoutUntil: null, lastSeen: {} },
             fileChunks: {},
+            notificationPermission: false,
             
             init: async () => {
                 await Store.init();
@@ -626,6 +777,13 @@
                     Network.init(id);
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     UI.showToast("Identity created successfully!");
+                    
+                    // Request notification permission
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission().then(permission => {
+                            App.notificationPermission = permission === 'granted';
+                        });
+                    }
                 } catch(e) {
                     console.error(e);
                     alert("Error creating profile. Please try again.");
@@ -672,6 +830,24 @@
                     UI.renderContactList();
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     UI.showToast("Unlocked successfully!");
+                    
+                    // Load theme preference
+                    const savedTheme = await Store.get('config', 'theme');
+                    if (savedTheme === 'light') {
+                        document.body.classList.add('light-theme');
+                        const themeIcon = document.getElementById('theme-icon');
+                        if (themeIcon) themeIcon.setAttribute('data-lucide', 'moon');
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    }
+                    
+                    // Request notification permission if not asked
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission().then(permission => {
+                            App.notificationPermission = permission === 'granted';
+                        });
+                    } else {
+                        App.notificationPermission = Notification?.permission === 'granted';
+                    }
                 } catch(e) {
                     App.state.loginAttempts++;
                     if (App.state.loginAttempts >= 3) {
@@ -690,7 +866,7 @@
             
             addContact: async (peerId, name, pubStr) => {
                 if (!App.state.contacts[peerId]) {
-                    App.state.contacts[peerId] = { name, pubStr, lastMessage: null, unread: 0 };
+                    App.state.contacts[peerId] = { name, pubStr, lastMessage: null, unread: 0, lastSeen: Date.now() };
                     await Store.put('config', 'contacts', App.state.contacts);
                     UI.renderContactList();
                 }
@@ -716,6 +892,27 @@
                                    type === 'voice' ? '🎤 Voice' : 
                                    type === 'location' ? '📍 Location' : 'Message';
                     App.state.contacts[peerId].lastMessage = preview;
+                    
+                    // Increment unread count for incoming messages
+                    if (direction === 'in' && App.state.activeChat !== peerId) {
+                        App.state.contacts[peerId].unread = (App.state.contacts[peerId].unread || 0) + 1;
+                        
+                        // Show desktop notification
+                        if (App.notificationPermission && document.hidden) {
+                            const notification = new Notification(App.state.contacts[peerId].name, {
+                                body: preview,
+                                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%2300a884" width="100" height="100"/><text y="70" x="50" text-anchor="middle" font-size="60" fill="white">💬</text></svg>',
+                                tag: peerId,
+                                requireInteraction: false
+                            });
+                            notification.onclick = () => {
+                                window.focus();
+                                UI.loadChat(peerId);
+                                notification.close();
+                            };
+                        }
+                    }
+                    
                     await Store.put('config', 'contacts', App.state.contacts);
                     UI.renderContactList();
                 }
@@ -724,6 +921,11 @@
                     UI.renderMessage(msg);
                     const container = document.getElementById('messages-container');
                     setTimeout(() => container.scrollTop = container.scrollHeight, 50);
+                    
+                    // Show smart replies for incoming messages
+                    if (direction === 'in' && type === 'text') {
+                        UI.showSmartReplies();
+                    }
                 }
             },
             
@@ -752,6 +954,93 @@
         };
 
         const UI = {
+            typingTimeout: null,
+            
+            toggleTheme: async () => {
+                const body = document.body;
+                const themeIcon = document.getElementById('theme-icon');
+                
+                if (body.classList.contains('light-theme')) {
+                    body.classList.remove('light-theme');
+                    themeIcon.setAttribute('data-lucide', 'sun');
+                    await Store.put('config', 'theme', 'dark');
+                } else {
+                    body.classList.add('light-theme');
+                    themeIcon.setAttribute('data-lucide', 'moon');
+                    await Store.put('config', 'theme', 'light');
+                }
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            showTypingIndicator: (show) => {
+                const container = document.getElementById('typing-indicator-container');
+                if (show) {
+                    container.classList.remove('hidden');
+                } else {
+                    container.classList.add('hidden');
+                }
+            },
+            
+            showSmartReplies: () => {
+                const container = document.getElementById('smart-replies-container');
+                const replies = ['Thanks! 👍', 'OK', 'Sure', '😊', 'Got it'];
+                
+                container.innerHTML = replies.map(reply => 
+                    `<div class="smart-reply-chip" onclick="UI.sendSmartReply('${Utils.escapeHTML(reply)}')">${Utils.escapeHTML(reply)}</div>`
+                ).join('');
+                
+                container.classList.remove('hidden');
+                
+                // Auto-hide after 10 seconds
+                setTimeout(() => container.classList.add('hidden'), 10000);
+            },
+            
+            sendSmartReply: (text) => {
+                const input = document.getElementById('message-input');
+                input.value = text;
+                Network.sendMessage();
+                document.getElementById('smart-replies-container').classList.add('hidden');
+            },
+            
+            saveDraft: async () => {
+                if (!App.state.activeChat) return;
+                const input = document.getElementById('message-input');
+                const text = input.value.trim();
+                
+                if (text) {
+                    await Store.put('drafts', App.state.activeChat, text);
+                    if (App.state.contacts[App.state.activeChat]) {
+                        App.state.contacts[App.state.activeChat].draft = true;
+                        UI.renderContactList();
+                    }
+                } else {
+                    await Store.put('drafts', App.state.activeChat, null);
+                    if (App.state.contacts[App.state.activeChat]) {
+                        App.state.contacts[App.state.activeChat].draft = false;
+                        UI.renderContactList();
+                    }
+                }
+            },
+            
+            loadDraft: async (peerId) => {
+                const draft = await Store.get('drafts', peerId);
+                const input = document.getElementById('message-input');
+                if (draft && input) {
+                    input.value = draft;
+                    UI.toggleSendIcon();
+                }
+            },
+            
+            clearDraft: async (peerId) => {
+                await Store.put('drafts', peerId, null);
+                if (App.state.contacts[peerId]) {
+                    App.state.contacts[peerId].draft = false;
+                    await Store.put('config', 'contacts', App.state.contacts);
+                    UI.renderContactList();
+                }
+            },
+            
             copyId: () => {
                 if (App.state.id) {
                     navigator.clipboard.writeText(App.state.id);
@@ -913,6 +1202,13 @@
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     Network.sendMessage();
+                } else {
+                    // Send typing indicator
+                    Network.sendTyping();
+                    
+                    // Save draft after typing stops
+                    clearTimeout(UI.typingTimeout);
+                    UI.typingTimeout = setTimeout(() => UI.saveDraft(), 500);
                 }
             },
             
@@ -929,6 +1225,15 @@
                     micIcon.classList.remove('hidden');
                     sendIcon.classList.add('hidden');
                 }
+            },
+            
+            handleInputChange: () => {
+                UI.toggleSendIcon();
+                Network.sendTyping();
+                
+                // Save draft after typing stops
+                clearTimeout(UI.typingTimeout);
+                UI.typingTimeout = setTimeout(() => UI.saveDraft(), 500);
             },
             
             closeChat: () => {
@@ -958,6 +1263,13 @@
                 
                 if (!contact) return;
                 
+                // Clear unread count
+                if (contact.unread > 0) {
+                    contact.unread = 0;
+                    await Store.put('config', 'contacts', App.state.contacts);
+                    UI.renderContactList();
+                }
+                
                 document.getElementById('chat-empty-state').classList.add('hidden');
                 document.getElementById('chat-interface').classList.remove('hidden');
                 document.getElementById('chat-area').classList.remove('hidden');
@@ -970,7 +1282,25 @@
                 document.getElementById('chat-header-avatar').innerText = UI.generateAvatar(contact.name);
                 
                 const isOnline = Network.connections[peerId]?.conn?.open;
-                UI.updateHeaderStatus(peerId, isOnline ? "Online" : "Offline");
+                if (isOnline) {
+                    UI.updateHeaderStatus(peerId, "Online");
+                } else if (contact.lastSeen) {
+                    const now = Date.now();
+                    const diff = now - contact.lastSeen;
+                    const minutes = Math.floor(diff / 60000);
+                    const hours = Math.floor(minutes / 60);
+                    const days = Math.floor(hours / 24);
+                    
+                    let lastSeenText = "Offline";
+                    if (minutes < 1) lastSeenText = "Last seen just now";
+                    else if (minutes < 60) lastSeenText = `Last seen ${minutes}m ago`;
+                    else if (hours < 24) lastSeenText = `Last seen ${hours}h ago`;
+                    else lastSeenText = `Last seen ${days}d ago`;
+                    
+                    UI.updateHeaderStatus(peerId, lastSeenText);
+                } else {
+                    UI.updateHeaderStatus(peerId, "Offline");
+                }
                 
                 const messages = await Store.getMessages(peerId);
                 const container = document.getElementById('messages-container');
@@ -979,6 +1309,12 @@
                 messages.forEach(msg => UI.renderMessage(msg));
                 
                 setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+                
+                // Load draft
+                await UI.loadDraft(peerId);
+                
+                // Hide smart replies
+                document.getElementById('smart-replies-container').classList.add('hidden');
                 
                 document.querySelectorAll('#chat-list > div').forEach(el => {
                     el.classList.remove('bg-[#2a3942]');
@@ -996,26 +1332,32 @@
                 setTimeout(() => toast.remove(), 3000);
             },
             
-            renderMessage: (msg) => {
+            renderMessage: async (msg) => {
                 const container = document.getElementById('messages-container');
                 const existing = document.getElementById(`msg-${msg.id}`);
                 if (existing) existing.remove();
                 
                 const div = document.createElement('div');
                 div.id = `msg-${msg.id}`;
-                div.className = `flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'}`;
+                div.className = `flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} group relative`;
                 
                 let inner = '';
                 const bubbleClass = msg.direction === 'out' ? 'msg-sent' : 'msg-received';
                 
                 if (msg.type === 'text') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
-                    inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2 text-sm">
-                        <div>${Utils.linkify(msg.content)}</div>
-                        <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            ${statusHtml}
+                    inner = `<div class="bubble-constraint">
+                        <div class="${bubbleClass} px-3 py-2 text-sm relative">
+                            <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                            </button>
+                            <div>${Utils.linkify(msg.content)}</div>
+                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                ${statusHtml}
+                            </div>
                         </div>
+                        <div id="reactions-${msg.id}" class="message-reactions"></div>
                     </div>`;
                 } else if (msg.type === 'file' || msg.type === 'file-receiving') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
@@ -1024,64 +1366,87 @@
                     const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
                     
                     if (isImage && url) {
-                        inner = `<div class="${bubbleClass} bubble-constraint p-1">
-                            <img src="${url}" class="rounded max-w-xs max-h-80 object-contain">
-                            <div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">
-                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                ${statusHtml}
+                        inner = `<div class="bubble-constraint">
+                            <div class="${bubbleClass} p-1 relative">
+                                <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                    <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                                </button>
+                                <img src="${url}" class="rounded max-w-xs max-h-80 object-contain">
+                                <div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">
+                                    ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    ${statusHtml}
+                                </div>
                             </div>
+                            <div id="reactions-${msg.id}" class="message-reactions"></div>
                         </div>`;
                     } else {
                         const downloadBtn = url ? `<a href="${url}" download="${msg.content.name}" class="text-[#00a884] text-xs hover:underline">Download</a>` : '<span class="text-xs text-[#8696a0]">Receiving...</span>';
-                        inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2">
-                            <div class="file-card-inner">
-                                <div class="file-icon-box bg-[#00a884]">${fileExt}</div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="font-medium text-sm truncate">${msg.content.name || 'File'}</div>
-                                    <div class="text-xs text-[#8696a0]">${msg.content.size ? Utils.formatBytes(msg.content.size) : ''}</div>
+                        inner = `<div class="bubble-constraint">
+                            <div class="${bubbleClass} px-3 py-2 relative">
+                                <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                    <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                                </button>
+                                <div class="file-card-inner">
+                                    <div class="file-icon-box bg-[#00a884]">${fileExt}</div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-medium text-sm truncate">${msg.content.name || 'File'}</div>
+                                        <div class="text-xs text-[#8696a0]">${msg.content.size ? Utils.formatBytes(msg.content.size) : ''}</div>
+                                    </div>
+                                    <div class="flex-shrink-0">${downloadBtn}</div>
                                 </div>
-                                <div class="flex-shrink-0">${downloadBtn}</div>
+                                <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                    ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    ${statusHtml}
+                                </div>
                             </div>
-                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                ${statusHtml}
-                            </div>
+                            <div id="reactions-${msg.id}" class="message-reactions"></div>
                         </div>`;
                     }
                 } else if (msg.type === 'voice') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
                     const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
-                    // Sanitize audioId to prevent XSS
                     const audioId = `audio-${msg.id}`.replace(/[^a-zA-Z0-9-_]/g, '');
                     
-                    inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2">
-                        <div class="audio-card">
-                            <div class="audio-play-btn" data-audio-id="${Utils.escapeHTML(audioId)}">
-                                <i data-lucide="play" class="w-4 h-4 text-white"></i>
+                    inner = `<div class="bubble-constraint">
+                        <div class="${bubbleClass} px-3 py-2 relative">
+                            <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                            </button>
+                            <div class="audio-card">
+                                <div class="audio-play-btn" data-audio-id="${Utils.escapeHTML(audioId)}">
+                                    <i data-lucide="play" class="w-4 h-4 text-white"></i>
+                                </div>
+                                <div class="waveform">
+                                    ${Array(12).fill('<div class="bar"></div>').join('')}
+                                </div>
+                                <span class="text-xs text-[#8696a0]" id="${audioId}-duration">0:00</span>
                             </div>
-                            <div class="waveform">
-                                ${Array(12).fill('<div class="bar"></div>').join('')}
+                            <audio id="${audioId}" src="${url || ''}" preload="metadata"></audio>
+                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                ${statusHtml}
                             </div>
-                            <span class="text-xs text-[#8696a0]" id="${audioId}-duration">0:00</span>
                         </div>
-                        <audio id="${audioId}" src="${url || ''}" preload="metadata"></audio>
-                        <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            ${statusHtml}
-                        </div>
+                        <div id="reactions-${msg.id}" class="message-reactions"></div>
                     </div>`;
                 } else if (msg.type === 'location') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
-                    inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2">
-                        <div class="flex items-center gap-2 mb-2">
-                            <i data-lucide="map-pin" class="w-5 h-5 text-[#00a884]"></i>
-                            <span class="font-medium">Location Shared</span>
+                    inner = `<div class="bubble-constraint">
+                        <div class="${bubbleClass} px-3 py-2 relative">
+                            <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                            </button>
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-[#00a884]"></i>
+                                <span class="font-medium">Location Shared</span>
+                            </div>
+                            <a href="${msg.content.url}" target="_blank" class="text-sm text-blue-400 hover:underline">View on Map</a>
+                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                ${statusHtml}
+                            </div>
                         </div>
-                        <a href="${msg.content.url}" target="_blank" class="text-sm text-blue-400 hover:underline">View on Map</a>
-                        <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            ${statusHtml}
-                        </div>
+                        <div id="reactions-${msg.id}" class="message-reactions"></div>
                     </div>`;
                 }
                 
@@ -1089,7 +1454,7 @@
                 container.appendChild(div);
                 if (typeof lucide !== 'undefined') lucide.createIcons();
                 
-                // Add event listener for audio play button (avoid inline onclick for XSS prevention)
+                // Add event listener for audio play button
                 if (msg.type === 'voice') {
                     const playBtn = div.querySelector('.audio-play-btn');
                     if (playBtn) {
@@ -1110,6 +1475,9 @@
                         };
                     }
                 }
+                
+                // Load and display reactions
+                await UI.updateReactions(msg.id);
             },
             
             updateMessageTick: (msgId, status) => {
@@ -1124,6 +1492,87 @@
                         }
                     }
                 }
+            },
+            
+            toggleReactionPicker: (msgId) => {
+                // Remove any existing picker
+                const existingPicker = document.getElementById('reaction-picker');
+                if (existingPicker) existingPicker.remove();
+                
+                const msgEl = document.getElementById(`msg-${msgId}`);
+                if (!msgEl) return;
+                
+                const picker = document.createElement('div');
+                picker.id = 'reaction-picker';
+                picker.className = 'reaction-picker absolute z-50';
+                picker.style.top = '30px';
+                picker.style.left = '50%';
+                picker.style.transform = 'translateX(-50%)';
+                
+                const emojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+                picker.innerHTML = emojis.map(emoji => 
+                    `<span class="reaction-btn" onclick="UI.addReaction('${msgId}', '${emoji}')">${emoji}</span>`
+                ).join('');
+                
+                msgEl.style.position = 'relative';
+                msgEl.appendChild(picker);
+                
+                // Close picker when clicking outside
+                setTimeout(() => {
+                    const closeHandler = (e) => {
+                        if (!picker.contains(e.target)) {
+                            picker.remove();
+                            document.removeEventListener('click', closeHandler);
+                        }
+                    };
+                    document.addEventListener('click', closeHandler);
+                }, 100);
+            },
+            
+            addReaction: async (msgId, emoji) => {
+                const reactions = await Store.getReactions(msgId);
+                const myReaction = reactions.find(r => r.userId === App.state.id && r.emoji === emoji);
+                
+                if (myReaction) {
+                    // Remove reaction
+                    await Network.removeReaction(msgId, emoji);
+                } else {
+                    // Add reaction
+                    await Network.sendReaction(msgId, emoji);
+                }
+                
+                // Close picker
+                const picker = document.getElementById('reaction-picker');
+                if (picker) picker.remove();
+            },
+            
+            updateReactions: async (msgId) => {
+                const reactionsContainer = document.getElementById(`reactions-${msgId}`);
+                if (!reactionsContainer) return;
+                
+                const reactions = await Store.getReactions(msgId);
+                
+                if (reactions.length === 0) {
+                    reactionsContainer.innerHTML = '';
+                    return;
+                }
+                
+                // Group reactions by emoji
+                const grouped = {};
+                reactions.forEach(r => {
+                    if (!grouped[r.emoji]) grouped[r.emoji] = [];
+                    grouped[r.emoji].push(r.userId);
+                });
+                
+                // Render reaction badges
+                reactionsContainer.innerHTML = Object.entries(grouped).map(([emoji, users]) => {
+                    const isMyReaction = users.includes(App.state.id);
+                    const className = isMyReaction ? 'reaction-badge my-reaction' : 'reaction-badge';
+                    return `<div class="${className}" onclick="UI.addReaction('${msgId}', '${emoji}')" title="${users.length} reaction${users.length > 1 ? 's' : ''}">
+                        <span>${emoji}</span>
+                        ${users.length > 1 ? `<span class="text-[10px]">${users.length}</span>` : ''}
+                    </div>`;
+                }).join('');
             },
             
             renderContactList: () => {
@@ -1141,14 +1590,26 @@
                     div.onclick = () => UI.loadChat(peerId);
                     
                     const avatar = UI.generateAvatar(contact.name);
-                    const lastMsg = contact.lastMessage || 'No messages yet';
+                    let lastMsg = contact.lastMessage || 'No messages yet';
+                    
+                    // Add draft indicator
+                    if (contact.draft) {
+                        lastMsg = '<span class="text-red-400">Draft:</span> ' + lastMsg;
+                    }
+                    
+                    // Unread badge
+                    const unreadBadge = contact.unread > 0 ? 
+                        `<div class="unread-badge">${contact.unread > 99 ? '99+' : contact.unread}</div>` : '';
                     
                     div.innerHTML = `
                         <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#00a884] to-[#008f6f] flex items-center justify-center text-white font-bold flex-shrink-0">${avatar}</div>
                         <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-sm text-[#e9edef] truncate">${Utils.escapeHTML(contact.name)}</div>
+                            <div class="font-semibold text-sm text-[#e9edef] truncate flex items-center gap-1">
+                                ${Utils.escapeHTML(contact.name)}
+                            </div>
                             <div class="text-xs text-[#8696a0] truncate">${lastMsg}</div>
                         </div>
+                        ${unreadBadge}
                     `;
                     
                     container.appendChild(div);
