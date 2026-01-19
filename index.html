@@ -746,6 +746,8 @@
             CONFIG: {
                 CONNECTION_TIMEOUT: 15000,        // 15 seconds
                 RECONNECT_INTERVAL: 30000,        // 30 seconds
+                RECONNECT_DELAY: 3000,            // 3 seconds
+                PEER_READY_RETRY_DELAY: 2000,     // 2 seconds
                 PING_INTERVAL: 5000,              // 5 seconds
                 MAX_RETRY_ATTEMPTS: 3,
                 INITIAL_BACKOFF: 1000,            // 1 second
@@ -860,7 +862,7 @@
                         UI.showToast('Server error - trying again...');
                         setTimeout(() => {
                             if (Network.peer) Network.peer.reconnect();
-                        }, 3000);
+                        }, Network.CONFIG.RECONNECT_DELAY);
                     } else {
                         UI.showToast(`Connection error: ${err.type}`);
                     }
@@ -916,7 +918,7 @@
                     }
                     
                     // Retry after peer opens
-                    setTimeout(() => Network.connectWithRetry(cleanId, retries, backoff), 2000);
+                    setTimeout(() => Network.connectWithRetry(cleanId, retries, backoff), Network.CONFIG.PEER_READY_RETRY_DELAY);
                     return;
                 }
                 
