@@ -863,9 +863,15 @@
                 
                 navigator.geolocation.getCurrentPosition(
                     async (position) => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        const locationUrl = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}`;
+                        const lat = parseFloat(position.coords.latitude.toFixed(6));
+                        const lon = parseFloat(position.coords.longitude.toFixed(6));
+                        
+                        // Validate coordinates
+                        if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                            return alert("Invalid location coordinates");
+                        }
+                        
+                        const locationUrl = `https://www.openstreetmap.org/?mlat=${encodeURIComponent(lat)}&mlon=${encodeURIComponent(lon)}#map=15/${encodeURIComponent(lat)}/${encodeURIComponent(lon)}`;
                         
                         const msgId = Date.now().toString();
                         await App.addMessage(App.state.activeChat, { lat, lon, url: locationUrl }, 'out', 'location', 'sent', msgId);
@@ -1045,11 +1051,12 @@
                 } else if (msg.type === 'voice') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
                     const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
-                    const audioId = `audio-${msg.id}`;
+                    // Sanitize audioId to prevent XSS
+                    const audioId = `audio-${msg.id}`.replace(/[^a-zA-Z0-9-_]/g, '');
                     
                     inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2">
                         <div class="audio-card">
-                            <div class="audio-play-btn" onclick="UI.toggleAudio('${audioId}')">
+                            <div class="audio-play-btn" data-audio-id="${Utils.escapeHTML(audioId)}">
                                 <i data-lucide="play" class="w-4 h-4 text-white"></i>
                             </div>
                             <div class="waveform">
@@ -1082,6 +1089,15 @@
                 container.appendChild(div);
                 if (typeof lucide !== 'undefined') lucide.createIcons();
                 
+                // Add event listener for audio play button (avoid inline onclick for XSS prevention)
+                if (msg.type === 'voice') {
+                    const playBtn = div.querySelector('.audio-play-btn');
+                    if (playBtn) {
+                        const audioId = playBtn.getAttribute('data-audio-id');
+                        playBtn.addEventListener('click', () => UI.toggleAudio(audioId));
+                    }
+                }
+                
                 if (msg.type === 'voice') {
                     const audio = document.getElementById(audioId);
                     if (audio) {
@@ -1101,7 +1117,11 @@
                 if (msgEl) {
                     const statusContainer = msgEl.querySelector('.status-container');
                     if (statusContainer) {
-                        statusContainer.innerHTML = Utils.getStatusHtml(status).match(/<div class="status-orb[^"]*"><\/div>/)[0];
+                        const statusHtml = Utils.getStatusHtml(status);
+                        const match = statusHtml.match(/<div class="status-orb[^"]*"><\/div>/);
+                        if (match && match[0]) {
+                            statusContainer.innerHTML = match[0];
+                        }
                     }
                 }
             },
@@ -1150,11 +1170,16 @@
             
             toggleAudio: (audioId) => {
                 const audio = document.getElementById(audioId);
-                const btn = audio?.previousElementSibling?.querySelector('.audio-play-btn');
-                const icon = btn?.querySelector('i');
-                const waveform = audio?.previousElementSibling?.querySelector('.waveform');
+                if (!audio) return;
                 
-                if (!audio || !btn || !icon) return;
+                const container = audio.parentElement;
+                if (!container) return;
+                
+                const btn = container.querySelector('.audio-play-btn');
+                const icon = btn?.querySelector('i');
+                const waveform = container.querySelector('.waveform');
+                
+                if (!btn || !icon) return;
                 
                 if (audio.paused) {
                     audio.play();
