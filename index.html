@@ -8,7 +8,7 @@
     <title>GhostMesh | Pro Secure</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -508,88 +508,344 @@
         };
 
         const Network = {
-            peer: null, connections: {}, uploadCancelled: false, typingTimers: {},
+            peer: null, connections: {}, uploadCancelled: false, typingTimers: {}, connectionStates: {},
+            debugLog: (message, data) => {
+                const timestamp = new Date().toISOString();
+                console.log(`[${timestamp}] ${message}`, data || '');
+            },
             init: async (id) => {
                 if(Network.peer) return;
                 if (typeof Peer === 'undefined') {
                     console.warn('PeerJS not loaded, network features disabled');
+                    UI.showToast('Network features unavailable');
                     return;
                 }
-                Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
-                Network.peer.on('open', () => { 
+                
+                Network.debugLog('Initializing peer', { id });
+                
+                // Enhanced STUN/TURN configuration with fallbacks
+                const config = {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:global.stun.twilio.com:3478' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' }
+                    ]
+                };
+                
+                Network.peer = new Peer(id, { 
+                    pingInterval: 5000,
+                    config: config,
+                    debug: 1 // Enable debug logging
+                });
+                
+                Network.peer.on('open', (peerId) => { 
+                    Network.debugLog('Peer opened', { peerId });
                     UI.updateHeaderStatus(App.state.activeChat, "Online");
                     Network.startPingMonitor();
                 });
-                Network.peer.on('connection', Network.handleConn);
+                
+                Network.peer.on('connection', (conn) => {
+                    Network.debugLog('Incoming connection', { peer: conn.peer });
+                    Network.handleConn(conn);
+                });
+                
                 Network.peer.on('call', Media.handleIncoming);
-                Network.peer.on('disconnected', () => { UI.updateHeaderStatus(App.state.activeChat, "Offline"); setTimeout(() => !Network.peer.destroyed && Network.peer.reconnect(), 2000); });
+                
+                Network.peer.on('disconnected', () => { 
+                    Network.debugLog('Peer disconnected, attempting reconnect');
+                    UI.updateHeaderStatus(App.state.activeChat, "Offline"); 
+                    UI.showToast('Connection lost, reconnecting...');
+                    setTimeout(() => {
+                        if(!Network.peer.destroyed) {
+                            Network.peer.reconnect();
+                        }
+                    }, 2000); 
+                });
+                
+                Network.peer.on('error', (err) => {
+                    Network.debugLog('Peer error', { error: err.type, message: err.message });
+                    
+                    if (err.type === 'peer-unavailable') {
+                        UI.showToast('Peer is unavailable or offline');
+                    } else if (err.type === 'network') {
+                        UI.showToast('Network error - check connection');
+                    } else if (err.type === 'server-error') {
+                        UI.showToast('Server error - trying again...');
+                    } else {
+                        UI.showToast(`Connection error: ${err.type}`);
+                    }
+                });
             },
             connectToInput: () => {
                 const id = document.getElementById('input-peer-id').value.trim();
-                if(id) Network.connectWithRetry(id);
+                if(!id) {
+                    UI.showToast('Please enter a Peer ID');
+                    return;
+                }
+                if(id === App.state.id) {
+                    UI.showToast('Cannot connect to yourself');
+                    return;
+                }
+                UI.showToast('Connecting...');
+                Network.connectWithRetry(id);
             },
-            connectWithRetry: async (id, retries = 0) => {
-                if (Network.connections[id] && Network.connections[id].conn.open) return;
+            connectWithRetry: async (id, retries = 0, backoff = 1000) => {
+                Network.debugLog('Connecting to peer', { id, retries, backoff });
                 
-                const conn = Network.peer.connect(id, { reliable: true });
-                if (!Network.connections[id]) Network.connections[id] = { conn, key: null, seqOut: 0, lastSeq: 0 };
-                else Network.connections[id].conn = conn;
+                // Check if already connected
+                if (Network.connections[id]?.conn?.open) {
+                    Network.debugLog('Already connected', { id });
+                    UI.showToast('Already connected!');
+                    return;
+                }
+                
+                // Set connection state to connecting
+                Network.connectionStates[id] = 'connecting';
+                UI.updateConnectionState(id, 'connecting');
+                
+                try {
+                    const conn = Network.peer.connect(id, { 
+                        reliable: true,
+                        serialization: 'json'
+                    });
+                    
+                    if (!Network.connections[id]) {
+                        Network.connections[id] = { 
+                            conn, 
+                            key: null, 
+                            seqOut: 0, 
+                            lastSeq: 0,
+                            handshakeComplete: false
+                        };
+                    } else {
+                        Network.connections[id].conn = conn;
+                        Network.connections[id].handshakeComplete = false;
+                    }
 
-                conn.on('open', () => {
-                    conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-                    if(Network.connections[id].key) Network.processQueue(id);
-                });
-                conn.on('error', () => { if (retries < 3) setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000); });
-                Network.handleConn(conn);
+                    // Set timeout for connection attempt
+                    const connectionTimeout = setTimeout(() => {
+                        if (!Network.connections[id]?.handshakeComplete) {
+                            Network.debugLog('Connection timeout', { id, retries });
+                            conn.close();
+                            
+                            if (retries < 3) {
+                                const nextBackoff = backoff * 2; // Exponential backoff
+                                UI.showToast(`Retrying connection... (${retries + 1}/3)`);
+                                setTimeout(() => Network.connectWithRetry(id, retries + 1, nextBackoff), nextBackoff);
+                            } else {
+                                Network.connectionStates[id] = 'failed';
+                                UI.updateConnectionState(id, 'failed');
+                                UI.showToast('Connection failed. Peer may be offline.');
+                            }
+                        }
+                    }, 15000); // 15 second timeout
+
+                    conn.on('open', () => {
+                        Network.debugLog('Connection opened', { id });
+                        clearTimeout(connectionTimeout);
+                        Network.connectionStates[id] = 'handshaking';
+                        
+                        // Send handshake
+                        conn.send({ 
+                            type: 'handshake', 
+                            key: App.state.pubStr, 
+                            name: App.state.name, 
+                            id: App.state.id 
+                        });
+                        
+                        UI.showToast('Exchanging encryption keys...');
+                    });
+                    
+                    conn.on('error', (err) => {
+                        Network.debugLog('Connection error', { id, error: err });
+                        clearTimeout(connectionTimeout);
+                        
+                        if (retries < 3) {
+                            const nextBackoff = backoff * 2;
+                            UI.showToast(`Connection error, retrying... (${retries + 1}/3)`);
+                            setTimeout(() => Network.connectWithRetry(id, retries + 1, nextBackoff), nextBackoff);
+                        } else {
+                            Network.connectionStates[id] = 'failed';
+                            UI.updateConnectionState(id, 'failed');
+                            UI.showToast('Connection failed after multiple attempts');
+                        }
+                    });
+                    
+                    Network.handleConn(conn);
+                } catch (err) {
+                    Network.debugLog('Connect exception', { id, error: err });
+                    Network.connectionStates[id] = 'failed';
+                    UI.updateConnectionState(id, 'failed');
+                    UI.showToast('Failed to initiate connection');
+                }
             },
             handleConn: (conn) => {
                 if(conn._hasListeners) return;
                 conn._hasListeners = true;
+                
+                Network.debugLog('Setting up connection handlers', { peer: conn.peer });
+                
                 conn.on('data', data => Network.handleData(conn.peer, data, conn));
+                
                 conn.on('close', () => { 
-                    delete Network.connections[conn.peer]; 
-                    UI.updateHeaderStatus(conn.peer, "Offline"); 
+                    Network.debugLog('Connection closed', { peer: conn.peer });
+                    
+                    if (Network.connections[conn.peer]) {
+                        Network.connections[conn.peer].handshakeComplete = false;
+                        Network.connectionStates[conn.peer] = 'disconnected';
+                    }
+                    
+                    UI.updateHeaderStatus(conn.peer, "Offline");
+                    UI.updateConnectionState(conn.peer, 'disconnected');
+                    
+                    // Auto-reconnect attempt after a delay
+                    setTimeout(() => {
+                        if (App.state.contacts[conn.peer] && !Network.connections[conn.peer]?.conn?.open) {
+                            Network.debugLog('Attempting auto-reconnect', { peer: conn.peer });
+                            UI.showToast('Connection lost, reconnecting...');
+                            Network.connectWithRetry(conn.peer, 0, 2000);
+                        }
+                    }, 5000);
                 });
             },
             processQueue: async (peerId) => {
+                Network.debugLog('Processing message queue', { peerId });
+                
                 const pending = await Store.getPendingMessages(peerId);
                 const connObj = Network.connections[peerId];
-                if(!connObj?.conn?.open || !connObj.key) return; 
+                
+                if(!connObj?.conn?.open || !connObj.key || !connObj.handshakeComplete) {
+                    Network.debugLog('Cannot process queue - connection not ready', { 
+                        peerId,
+                        hasConn: !!connObj?.conn,
+                        isOpen: connObj?.conn?.open,
+                        hasKey: !!connObj?.key,
+                        handshakeComplete: connObj?.handshakeComplete
+                    });
+                    return;
+                }
+                
+                Network.debugLog('Processing pending messages', { peerId, count: pending.length });
+                
                 for (const msg of pending) {
-                    if (msg.type === 'text') {
-                        const enc = await Crypto.encryptPayload({ content: msg.content, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key);
-                        connObj.conn.send({ type: 'msg', payload: enc, id: msg.id });
-                        msg.status = 'sent';
-                        await Store.put('messages', null, msg);
-                        if(App.state.activeChat === peerId) UI.updateMessageTick(msg.id, 'sent');
+                    try {
+                        if (msg.type === 'text') {
+                            const enc = await Crypto.encryptPayload({ 
+                                content: msg.content, 
+                                seq: ++connObj.seqOut, 
+                                ts: Date.now(), 
+                                type: 'text' 
+                            }, connObj.key);
+                            
+                            connObj.conn.send({ type: 'msg', payload: enc, id: msg.id });
+                            msg.status = 'sent';
+                            await Store.put('messages', null, msg);
+                            
+                            if(App.state.activeChat === peerId) {
+                                UI.updateMessageTick(msg.id, 'sent');
+                            }
+                            
+                            Network.debugLog('Sent pending message', { msgId: msg.id });
+                        }
+                    } catch (err) {
+                        Network.debugLog('Error sending pending message', { msgId: msg.id, error: err });
                     }
                 }
             },
             handleData: async (sender, data, conn) => {
                 if (data.type === 'handshake') {
-                    const pub = await Crypto.importKey(data.key);
-                    const shared = await Crypto.deriveShared(pub);
-                    const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                    App.addContact(sender, data.name, pubStr);
-                    Network.connections[sender] = { ...Network.connections[sender], conn, key: shared, seqOut: 0 };
-                    conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-                    if (!App.state.activeChat) UI.loadChat(sender);
-                    else if (App.state.activeChat === sender) UI.loadChat(sender);
-                    UI.showToast(`Connected with ${data.name}!`);
+                    Network.debugLog('Received handshake', { from: sender });
+                    
+                    try {
+                        const pub = await Crypto.importKey(data.key);
+                        const shared = await Crypto.deriveShared(pub);
+                        const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                        
+                        await App.addContact(sender, data.name, pubStr);
+                        
+                        Network.connections[sender] = { 
+                            ...Network.connections[sender], 
+                            conn, 
+                            key: shared, 
+                            seqOut: 0,
+                            handshakeComplete: true
+                        };
+                        
+                        Network.connectionStates[sender] = 'connected';
+                        
+                        conn.send({ 
+                            type: 'handshake-ack', 
+                            key: App.state.pubStr, 
+                            name: App.state.name, 
+                            id: App.state.id 
+                        });
+                        
+                        Network.debugLog('Handshake complete, sending ack', { to: sender });
+                        
+                        if (!App.state.activeChat) {
+                            UI.loadChat(sender);
+                        } else if (App.state.activeChat === sender) {
+                            UI.loadChat(sender);
+                        }
+                        
+                        UI.updateConnectionState(sender, 'connected');
+                        UI.showToast(`Connected with ${data.name}!`);
+                        
+                        // Process any pending messages
+                        await Network.processQueue(sender);
+                    } catch (err) {
+                        Network.debugLog('Handshake error', { error: err });
+                        UI.showToast('Key exchange failed');
+                        conn.close();
+                    }
                 }
+                
                 if (data.type === 'handshake-ack') {
-                     const pub = await Crypto.importKey(data.key);
-                     const shared = await Crypto.deriveShared(pub);
-                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                     App.addContact(sender, data.name, pubStr);
-                     Network.connections[sender] = { ...Network.connections[sender], conn, key: shared, seqOut: 0 };
-                     Network.processQueue(sender); 
-                     if (App.state.activeChat === sender) UI.loadChat(sender);
-                     else if (!App.state.activeChat) UI.loadChat(sender);
-                     UI.showToast("Connection Secured");
+                    Network.debugLog('Received handshake-ack', { from: sender });
+                    
+                    try {
+                        const pub = await Crypto.importKey(data.key);
+                        const shared = await Crypto.deriveShared(pub);
+                        const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                        
+                        await App.addContact(sender, data.name, pubStr);
+                        
+                        Network.connections[sender] = { 
+                            ...Network.connections[sender], 
+                            conn, 
+                            key: shared, 
+                            seqOut: 0,
+                            handshakeComplete: true
+                        };
+                        
+                        Network.connectionStates[sender] = 'connected';
+                        
+                        Network.debugLog('Handshake-ack complete', { with: sender });
+                        
+                        // Process pending messages AFTER key is established
+                        await Network.processQueue(sender);
+                        
+                        if (App.state.activeChat === sender) {
+                            UI.loadChat(sender);
+                        } else if (!App.state.activeChat) {
+                            UI.loadChat(sender);
+                        }
+                        
+                        UI.updateConnectionState(sender, 'connected');
+                        UI.showToast("Connection secured!");
+                    } catch (err) {
+                        Network.debugLog('Handshake-ack error', { error: err });
+                        UI.showToast('Key exchange failed');
+                        conn.close();
+                    }
                 }
+                
                 const connObj = Network.connections[sender];
-                if (!connObj || !connObj.key) return;
+                if (!connObj || !connObj.key) {
+                    Network.debugLog('No encryption key available', { sender });
+                    return;
+                }
 
                 if (data.type === 'receipt') {
                      const msgs = await Store.getMessages(sender);
@@ -730,11 +986,35 @@
                 if (!App.state.activeChat) return;
                 const peerId = App.state.activeChat, input = document.getElementById('message-input'), fileInput = document.getElementById('file-input');
                 
+                // Check connection status first
+                const connObj = Network.connections[peerId];
+                if (!connObj?.conn?.open) {
+                    UI.showToast('Not connected. Message will be sent when online.');
+                    // Message will be queued automatically
+                }
+                
+                if (!connObj?.key || !connObj?.handshakeComplete) {
+                    UI.showToast('Encryption not ready. Message will be sent when secured.');
+                    // Message will be queued automatically
+                }
+                
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
-                    if (file.size > 50*1024*1024) { alert("File > 50MB"); UI.clearFile(); return; }
-                    const connObj = Network.connections[peerId];
-                    if (!connObj?.conn?.open) return alert("Peer Offline");
+                    if (file.size > 50*1024*1024) { 
+                        UI.showToast("File size must be under 50MB"); 
+                        UI.clearFile(); 
+                        return; 
+                    }
+                    
+                    if (!connObj?.conn?.open) {
+                        UI.showToast("Cannot send files while offline");
+                        return;
+                    }
+                    
+                    if (!connObj?.key) {
+                        UI.showToast("Cannot send files - encryption not ready");
+                        return;
+                    }
 
                     Network.uploadCancelled = false;
                     const CHUNK = 256 * 1024;
@@ -754,6 +1034,7 @@
                     const streamLoop = async () => {
                         if (Network.uploadCancelled) {
                              document.getElementById('upload-progress').classList.add('hidden');
+                             UI.showToast('Upload cancelled');
                              return;
                         }
 
@@ -761,6 +1042,7 @@
                              document.getElementById('upload-progress').classList.add('hidden');
                              const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
                              if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                             UI.showToast('File sent successfully');
                              return;
                         }
                         if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
@@ -779,7 +1061,6 @@
                 } 
                 else if (input.value.trim()) {
                     const text = input.value.trim();
-                    const connObj = Network.connections[peerId];
                     const msgId = Date.now().toString();
                     
                     App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
@@ -792,13 +1073,29 @@
                     // Hide smart replies
                     document.getElementById('smart-replies-container').classList.add('hidden');
 
-                    if (connObj?.conn?.open && connObj.key) {
+                    if (connObj?.conn?.open && connObj.key && connObj.handshakeComplete) {
                         try {
-                            const encPayload = await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key);
+                            const encPayload = await Crypto.encryptPayload({ 
+                                content: text, 
+                                seq: ++connObj.seqOut, 
+                                ts: Date.now(), 
+                                type: 'text' 
+                            }, connObj.key);
+                            
                             connObj.conn.send({ type: 'msg', id: msgId, payload: encPayload });
+                            
                             const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
-                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
-                        } catch(e) { console.error("Encryption Failed", e); alert("Encryption Error"); }
+                            if(msg) { 
+                                msg.status = 'sent'; 
+                                await Store.put('messages', null, msg); 
+                                UI.updateMessageTick(msgId, 'sent'); 
+                            }
+                        } catch(e) { 
+                            Network.debugLog('Encryption failed', { error: e });
+                            UI.showToast('Message encryption failed');
+                        }
+                    } else {
+                        Network.debugLog('Message queued - connection not ready', { peerId });
                     }
                 }
             },
@@ -1199,23 +1496,42 @@
                 modal.classList.remove('hidden');
                 
                 try {
+                    UI.showToast('Starting camera...');
                     Media.scanner = new Html5Qrcode("reader");
                     await Media.scanner.start(
                         { facingMode: "environment" },
                         { fps: 10, qrbox: 250 },
                         (decodedText) => {
                             UI.stopScanner();
-                            if (decodedText && decodedText !== App.state.id) {
-                                Network.connectWithRetry(decodedText);
-                                UI.showToast("Connecting to peer...");
+                            
+                            // Validate peer ID
+                            if (!decodedText || decodedText.length < 10) {
+                                UI.showToast('Invalid QR code');
+                                return;
                             }
+                            
+                            if (decodedText === App.state.id) {
+                                UI.showToast('Cannot connect to yourself');
+                                return;
+                            }
+                            
+                            // Check if already connected
+                            if (Network.connections[decodedText]?.conn?.open) {
+                                UI.showToast('Already connected to this peer');
+                                UI.loadChat(decodedText);
+                                return;
+                            }
+                            
+                            UI.showToast(`Connecting to ${decodedText.substring(0, 8)}...`);
+                            Network.connectWithRetry(decodedText);
                         },
                         () => {}
                     );
+                    UI.showToast('Point camera at QR code');
                 } catch(e) {
                     console.error("Scanner error:", e);
                     modal.classList.add('hidden');
-                    alert("Camera access denied or not available");
+                    UI.showToast('Camera access denied or not available');
                 }
             },
             
@@ -1750,6 +2066,36 @@
                         statusEl.innerText = status;
                     }
                 }
+            },
+            
+            updateConnectionState: (peerId, state) => {
+                // Update header status based on connection state
+                if (App.state.activeChat === peerId) {
+                    const statusEl = document.getElementById('chat-header-status');
+                    
+                    switch(state) {
+                        case 'connecting':
+                            statusEl.innerHTML = '<span class="text-yellow-400">Connecting...</span>';
+                            break;
+                        case 'handshaking':
+                            statusEl.innerHTML = '<span class="text-yellow-400">Securing...</span>';
+                            break;
+                        case 'connected':
+                            UI.updateHeaderStatus(peerId, 'Online');
+                            break;
+                        case 'disconnected':
+                            statusEl.innerHTML = '<span class="text-gray-400">Offline</span>';
+                            break;
+                        case 'failed':
+                            statusEl.innerHTML = '<span class="text-red-400">Connection Failed</span>';
+                            break;
+                        default:
+                            statusEl.innerText = 'Unknown';
+                    }
+                }
+                
+                // Update contact list UI
+                UI.renderContactList();
             },
             
             loadChat: async (peerId) => {
