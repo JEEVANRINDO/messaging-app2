@@ -181,7 +181,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v18.0 Fix</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v18.1 Enhanced</span>
             </div>
         </div>
 
@@ -917,25 +917,38 @@
                 if (data.type === 'msg') {
                     try {
                         const dec = await Crypto.decryptPayload(data.payload, connObj.key);
-                        if(dec.seq <= connObj.lastSeq) return;
+                        if(dec.seq <= connObj.lastSeq) {
+                            Network.debugLog('Duplicate message detected', { sender, seq: dec.seq });
+                            return;
+                        }
                         connObj.lastSeq = dec.seq;
 
                         if(dec.type === 'text') {
                              const msgId = data.id || Date.now().toString();
                              App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', msgId);
                              setTimeout(() => {
-                                 conn.send({ type: 'receipt', msgId: msgId, status: 'delivered' });
-                                 if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: msgId, status: 'read' });
+                                 if (connObj?.conn?.open) {
+                                     conn.send({ type: 'receipt', msgId: msgId, status: 'delivered' });
+                                     if (App.state.activeChat === sender) {
+                                         conn.send({ type: 'receipt', msgId: msgId, status: 'read' });
+                                     }
+                                 }
                              }, 50);
                         } else if(dec.type === 'location') {
                              const msgId = data.id || Date.now().toString();
                              App.addMessage(sender, { lat: dec.lat, lon: dec.lon, url: dec.url }, 'in', 'location', 'read', msgId);
                              setTimeout(() => {
-                                 conn.send({ type: 'receipt', msgId: msgId, status: 'delivered' });
-                                 if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: msgId, status: 'read' });
+                                 if (connObj?.conn?.open) {
+                                     conn.send({ type: 'receipt', msgId: msgId, status: 'delivered' });
+                                     if (App.state.activeChat === sender) {
+                                         conn.send({ type: 'receipt', msgId: msgId, status: 'read' });
+                                     }
+                                 }
                              }, 50);
                         }
-                    } catch(e) {}
+                    } catch(e) {
+                        Network.debugLog('Message decryption failed', { sender, error: e });
+                    }
                 }
                 
                 if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
@@ -969,12 +982,20 @@
                                 App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
                             }
                             
-                            conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'delivered' });
-                            if(App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'read' });
+                            if (connObj?.conn?.open) {
+                                conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'delivered' });
+                                if(App.state.activeChat === sender) {
+                                    conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'read' });
+                                }
+                            }
 
                             delete App.fileChunks[sender];
                         }
-                    } catch(e){}
+                    } catch(e){
+                        Network.debugLog('File decryption error', { sender, error: e });
+                        UI.showToast('Error receiving file');
+                        delete App.fileChunks[sender];
+                    }
                 }
                 if (data.type === 'file-start') {
                      App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
