@@ -754,9 +754,21 @@
                         const pub = await Crypto.importKey(data.key);
                         const shared = await Crypto.deriveShared(pub);
                         const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
+                        
+                        // Add or update contact (will not create duplicates)
                         await App.addContact(sender, data.name, pubStr);
-                        Network.connections[sender] = { ...Network.connections[sender], conn, key: shared, seqOut: 0, lastSeq: 0, handshakeComplete: true };
+                        
+                        // Update connection object, preserving existing connection if any
+                        const existingConn = Network.connections[sender];
+                        Network.connections[sender] = { 
+                            conn, 
+                            key: shared, 
+                            seqOut: existingConn?.seqOut || 0, 
+                            lastSeq: existingConn?.lastSeq || 0, 
+                            handshakeComplete: true 
+                        };
                         Network.connectionStates[sender] = 'connected';
+                        
                         if (data.type === 'handshake') conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
                         
                         // Process pending messages after handshake
@@ -857,7 +869,10 @@
                         
                         // FIX: RACE CONDITION SOLVED
                         if (tracker.received >= tracker.encSize) {
-                            document.getElementById('download-progress').classList.add('hidden');
+                            // Hide download progress immediately
+                            const downloadProgress = document.getElementById('download-progress');
+                            if (downloadProgress) downloadProgress.classList.add('hidden');
+                            
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             const url = Utils.addBlob(URL.createObjectURL(blob));
                             
@@ -919,11 +934,21 @@
                     document.getElementById('upload-progress').classList.remove('hidden');
                     
                     const streamLoop = async () => {
-                        if (Network.uploadCancelled) { document.getElementById('upload-progress').classList.add('hidden'); return; }
+                        if (Network.uploadCancelled) { 
+                            document.getElementById('upload-progress').classList.add('hidden'); 
+                            return; 
+                        }
                         if(offset >= file.size) {
+                             // File upload complete - update UI and message status
                              document.getElementById('upload-progress').classList.add('hidden');
                              const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
-                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                             if(msg) { 
+                                 msg.status = 'sent'; 
+                                 await Store.put('messages', null, msg); 
+                                 UI.updateMessageTick(msgId, 'sent'); 
+                             }
+                             // Ensure UI is ready for next message
+                             UI.toggleSendIcon();
                              return;
                         }
                         if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
@@ -1270,6 +1295,12 @@
                 const contact = App.state.contacts[peerId];
                 if (!contact) return;
                 
+                // Hide any active progress bars when switching chats
+                const uploadProgress = document.getElementById('upload-progress');
+                const downloadProgress = document.getElementById('download-progress');
+                if (uploadProgress) uploadProgress.classList.add('hidden');
+                if (downloadProgress) downloadProgress.classList.add('hidden');
+                
                 // Send Read Receipts for any unread messages
                 const connObj = Network.connections[peerId];
                 const messages = await Store.getMessages(peerId);
@@ -1340,13 +1371,16 @@
                     const fileName = msg.content.name || 'File';
                     const fileSize = msg.content.size ? Utils.formatBytes(msg.content.size) : '';
                     
-                    if (mime.startsWith('image') && url) {
-                        // Image preview with thumbnail
+                    if (mime.startsWith('image/') && url) {
+                        // Image preview with thumbnail (WhatsApp style)
                         inner = `<div class="bubble-constraint"><div class="${bubbleClass} p-1 relative max-w-xs"><img src="${url}" class="rounded-lg max-w-full h-auto cursor-pointer" onclick="(function(u){const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener noreferrer';a.click();}('${url}'))" style="max-height: 300px; object-fit: cover;"><div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
+                    } else if (mime.startsWith('video/') && url) {
+                        // Video preview with play button overlay (WhatsApp style)
+                        inner = `<div class="bubble-constraint"><div class="${bubbleClass} p-1 relative max-w-xs"><div class="relative"><video src="${url}" class="rounded-lg max-w-full h-auto" style="max-height: 300px; object-fit: cover;" controls></video></div><div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
                     } else {
-                        // File with colored icon
+                        // File with colored icon and download button (WhatsApp style)
                         const fileIcon = Utils.getFileIcon(mime, fileName);
-                        const downloadBtn = url ? `<a href="${url}" download="${fileName}" class="text-[#00a884] hover:underline text-xs flex items-center gap-1 mt-1"><i data-lucide="download" class="w-3 h-3"></i>Download</a>` : '';
+                        const downloadBtn = url ? `<a href="${url}" download="${fileName}" class="text-[#00a884] hover:underline text-xs flex items-center gap-1 mt-1"><i data-lucide="download" class="w-3 h-3"></i>Download</a>` : '<div class="text-xs text-[#8696a0] mt-1">Downloading...</div>';
                         inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 relative"><div class="file-card-inner">${fileIcon}<div class="flex-1 min-w-0"><div class="font-medium text-sm truncate">${Utils.escapeHTML(fileName)}</div><div class="text-xs text-[#8696a0]">${fileSize}</div>${downloadBtn}</div></div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
                     }
                 }
