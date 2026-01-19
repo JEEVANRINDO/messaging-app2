@@ -1327,11 +1327,11 @@
                 if (!App.state.activeChat) return;
                 document.getElementById('chat-menu').classList.add('hidden');
                 const msgs = await Store.getMessages(App.state.activeChat);
-                const media = msgs.filter(m => (m.type === 'file' && (m.content.mime?.startsWith('image') || m.content.mime?.startsWith('video'))));
+                const media = msgs.filter(m => (m.type === 'file' && m.content.url && (m.content.mime?.startsWith('image') || m.content.mime?.startsWith('video'))));
                 const grid = document.getElementById('media-gallery-grid');
                 grid.innerHTML = media.length ? media.map(m => {
-                    const url = m.content.url || '';
-                    return url ? `<div class="aspect-square bg-[#202c33] rounded overflow-hidden cursor-pointer" onclick="window.open('${url}', '_blank')"><img src="${url}" class="w-full h-full object-cover"></div>` : '';
+                    const url = m.content.url;
+                    return `<div class="aspect-square bg-[#202c33] rounded overflow-hidden cursor-pointer" onclick="window.open('${url}', '_blank')"><img src="${url}" class="w-full h-full object-cover"></div>`;
                 }).join('') : '<div class="col-span-3 text-center text-[#8696a0] py-8">No media</div>';
                 document.getElementById('media-gallery-modal').classList.remove('hidden');
             },
@@ -1420,6 +1420,9 @@
                     const url = msg.content.url;
                     if (url) {
                         inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 relative"><div class="audio-card"><button class="audio-play-btn" onclick="UI.playAudio(this, '${url}')"><i data-lucide="play" class="w-4 h-4"></i></button><div class="waveform">${Array(15).fill('<div class="bar"></div>').join('')}</div></div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
+                    } else {
+                        // Fallback for voice messages without URL
+                        inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 text-sm relative"><div class="text-[#8696a0] italic">🎤 Voice message (loading...)</div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div></div>`;
                     }
                 } else if (msg.type === 'file' || msg.type === 'file-receiving') {
                     // BUG FIX #2: Use only pre-created URL from message object
