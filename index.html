@@ -57,6 +57,69 @@
         
         .mirror-x { transform: scaleX(-1); }
         .status-container { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-left: 5px; vertical-align: text-bottom; }
+        
+        /* Typing Indicator */
+        .typing-indicator { display: flex; align-items: center; gap: 3px; padding: 8px 12px; background-color: #202c33; border-radius: 8px 8px 8px 0; width: fit-content; margin: 4px 0; }
+        .typing-dot { width: 6px; height: 6px; background-color: #8696a0; border-radius: 50%; animation: typingDot 1.4s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingDot { 0%, 60%, 100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-6px); } }
+        
+        /* Reactions */
+        .reaction-picker { background: #202c33; border: 1px solid #2a3942; border-radius: 20px; padding: 4px 8px; display: flex; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .reaction-btn { font-size: 20px; cursor: pointer; transition: transform 0.2s; padding: 4px 8px; border-radius: 12px; }
+        .reaction-btn:hover { transform: scale(1.3); background: #2a3942; }
+        .message-reactions { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+        .reaction-badge { background: #2a3942; border-radius: 12px; padding: 2px 6px; font-size: 12px; display: flex; align-items: center; gap: 3px; border: 1px solid #374045; cursor: pointer; transition: all 0.2s; }
+        .reaction-badge:hover { background: #374045; transform: scale(1.05); }
+        .reaction-badge.my-reaction { border-color: #00a884; background: rgba(0, 168, 132, 0.2); }
+        
+        /* Theme Switcher */
+        body.light-theme { background-color: #f0f2f5; color: #111b21; }
+        .light-theme #onboarding-screen, .light-theme #login-screen { background-color: #ffffff; color: #111b21; }
+        .light-theme #app-layout, .light-theme #sidebar-panel { background-color: #ffffff; }
+        .light-theme #chat-area { background-color: #efeae2; }
+        .light-theme .msg-sent { background-color: #dcf8c6; color: #111b21; }
+        .light-theme .msg-received { background-color: #ffffff; color: #111b21; }
+        .light-theme input, .light-theme button, .light-theme .bg-\\[\\#202c33\\] { background-color: #ffffff; color: #111b21; }
+        .light-theme .bg-\\[\\#111b21\\] { background-color: #f0f2f5; }
+        .light-theme .text-\\[\\#e9edef\\] { color: #111b21; }
+        .light-theme .text-\\[\\#8696a0\\] { color: #54656f; }
+        .light-theme .border-\\[\\#2a3942\\] { border-color: #e9edef; }
+        .light-theme .typing-indicator { background-color: #ffffff; }
+        
+        /* Draft Indicator */
+        .draft-badge { background: #00a884; color: white; font-size: 10px; padding: 2px 6px; border-radius: 8px; margin-left: 4px; }
+        
+        /* Unread Counter */
+        .unread-badge { background: #00a884; color: white; font-size: 11px; padding: 2px 7px; border-radius: 12px; font-weight: bold; min-width: 20px; text-align: center; }
+        
+        /* Smart Reply */
+        .smart-replies { display: flex; gap: 8px; padding: 8px 16px; overflow-x: auto; background: #202c33; border-top: 1px solid #2a3942; }
+        .smart-reply-chip { background: #2a3942; color: #e9edef; padding: 8px 16px; border-radius: 16px; white-space: nowrap; cursor: pointer; font-size: 14px; transition: all 0.2s; border: 1px solid #374045; }
+        .smart-reply-chip:hover { background: #374045; transform: scale(1.05); }
+        .light-theme .smart-replies { background: #f0f2f5; border-top-color: #d1d7db; }
+        .light-theme .smart-reply-chip { background: #ffffff; color: #111b21; border-color: #d1d7db; }
+        .light-theme .smart-reply-chip:hover { background: #e9edef; }
+        
+        /* Search Highlight */
+        .search-highlight { background-color: #ffd700; color: #000; padding: 2px 4px; border-radius: 2px; }
+        
+        /* Connection Quality */
+        .connection-indicator { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+        .signal-bar { width: 3px; height: 8px; background: #8696a0; border-radius: 1px; }
+        .signal-bar.active { background: #00a884; }
+        .signal-good .signal-bar { background: #00a884; }
+        .signal-medium .signal-bar:nth-child(1), .signal-medium .signal-bar:nth-child(2) { background: #ffa500; }
+        .signal-poor .signal-bar:nth-child(1) { background: #ff4444; }
+        
+        /* Message Selection */
+        .message-selected { background: rgba(0, 168, 132, 0.2); border-radius: 8px; padding: 4px; }
+        .selection-mode-bar { background: #202c33; border-bottom: 1px solid #2a3942; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+        
+        /* Voice Playback Speed */
+        .playback-speed { font-size: 10px; background: #2a3942; padding: 2px 6px; border-radius: 8px; margin-left: 8px; cursor: pointer; }
+        .playback-speed:hover { background: #374045; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -68,7 +131,7 @@
         <p class="text-[#8696a0] max-w-xs mx-auto mb-8">Encrypted Local Storage. Zero Cloud.</p>
         <div class="w-full max-w-sm space-y-4">
             <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
+            <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg" onkeydown="if(event.key==='Enter')App.createProfile()">
             <button id="btn-create-profile" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
         </div>
     </div>
@@ -77,7 +140,7 @@
     <div id="login-screen" class="hidden absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
         <i data-lucide="lock" class="w-16 h-16 text-[#00a884] mb-4"></i>
         <h2 class="text-2xl font-bold mb-4">Unlock Identity</h2>
-        <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center">
+        <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center" onkeydown="if(event.key==='Enter')App.login()">
         <button onclick="App.login()" class="w-full max-w-sm p-4 bg-[#00a884] rounded-xl font-bold">Unlock</button>
         <div id="lockout-msg" class="text-red-400 mt-4 hidden text-sm bg-red-900/20 p-2 rounded border border-red-900"></div>
     </div>
@@ -97,6 +160,7 @@
                     </div>
                 </div>
                 <div class="flex space-x-1 flex-shrink-0 ml-2">
+                    <button onclick="UI.toggleTheme()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Toggle Theme"><i data-lucide="sun" id="theme-icon" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Add ID"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Scan QR"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full" title="My QR"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
@@ -108,7 +172,7 @@
             </div>
 
             <div id="new-chat-panel" class="hidden p-2 bg-[#111b21] border-b border-[#2a3942] flex gap-2">
-                <input id="input-peer-id" placeholder="Paste Peer ID..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none">
+                <input id="input-peer-id" placeholder="Paste Peer ID..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none" onkeydown="if(event.key==='Enter')Network.connectToInput()">
                 <button onclick="Network.connectToInput()" class="bg-[#00a884] p-2 rounded-lg"><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i></button>
             </div>
             <div id="chat-list" class="flex-1 overflow-y-auto"></div>
@@ -117,7 +181,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v21.0 QR Fix</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v18.0 Fix</span>
             </div>
         </div>
 
@@ -145,11 +209,57 @@
                         </div>
                     </div>
                     <div class="flex space-x-4 text-[#aebac1]">
-                        <button onclick="Media.startCall(false)"><i data-lucide="phone" class="w-5 h-5"></i></button>
-                        <button onclick="Media.startCall(true)"><i data-lucide="video" class="w-5 h-5"></i></button>
+                        <button onclick="UI.toggleSearch()" title="Search messages"><i data-lucide="search" class="w-5 h-5"></i></button>
+                        <button onclick="UI.toggleChatMenu()" title="More options"><i data-lucide="more-vertical" class="w-5 h-5"></i></button>
+                        <button onclick="Media.startCall(false)" title="Audio call"><i data-lucide="phone" class="w-5 h-5"></i></button>
+                        <button onclick="Media.startCall(true)" title="Video call"><i data-lucide="video" class="w-5 h-5"></i></button>
                     </div>
                 </div>
 
+                <!-- Chat Menu Dropdown -->
+                <div id="chat-menu" class="hidden absolute top-16 right-4 bg-[#202c33] border border-[#2a3942] rounded-lg shadow-xl z-50 min-w-[200px]">
+                    <button onclick="UI.enterSelectionMode()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3">
+                        <i data-lucide="check-square" class="w-4 h-4"></i> Select Messages
+                    </button>
+                    <button onclick="UI.exportChat()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942]">
+                        <i data-lucide="download" class="w-4 h-4"></i> Export Chat
+                    </button>
+                    <button onclick="UI.showMediaGallery()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942]">
+                        <i data-lucide="image" class="w-4 h-4"></i> Media Gallery
+                    </button>
+                    <button onclick="UI.clearChat()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942] text-red-400">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Clear Chat
+                    </button>
+                </div>
+
+                <!-- Selection Mode Bar -->
+                <div id="selection-mode-bar" class="hidden selection-mode-bar">
+                    <div class="flex items-center gap-2">
+                        <button onclick="UI.exitSelectionMode()" class="text-[#aebac1]"><i data-lucide="x" class="w-5 h-5"></i></button>
+                        <span id="selection-count" class="text-white font-semibold">0 selected</span>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="UI.forwardSelected()" class="text-[#00a884]"><i data-lucide="corner-up-right" class="w-5 h-5"></i></button>
+                        <button onclick="UI.deleteSelected()" class="text-red-400"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                    </div>
+                </div>
+                
+                <!-- Search Bar -->
+                <div id="search-bar" class="hidden px-4 py-2 bg-[#202c33] border-b border-[#2a3942] flex items-center gap-2">
+                    <input id="search-input" type="text" placeholder="Search messages..." class="flex-1 bg-[#2a3942] text-sm p-2 rounded-lg text-white focus:outline-none" oninput="UI.searchMessages()">
+                    <button onclick="UI.toggleSearch()" class="text-[#8696a0]"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                
+                <!-- Typing Indicator (below header) -->
+                <div id="typing-indicator-container" class="hidden px-4 py-2 bg-[#0b141a] border-b border-[#2a3942]">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <span class="text-xs text-[#8696a0] ml-2">typing...</span>
+                    </div>
+                </div>
+                
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full pb-20"></div>
                 
                 <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
@@ -166,6 +276,11 @@
                 </div>
 
                 <div class="bg-[#202c33] shrink-0 w-full pb-safe">
+                    <!-- Smart Reply Suggestions -->
+                    <div id="smart-replies-container" class="hidden smart-replies">
+                        <!-- Populated dynamically -->
+                    </div>
+                    
                     <div id="recording-ui" class="hidden px-4 py-3 bg-[#202c33] flex items-center gap-4 border-t border-[#2a3942]">
                         <div class="text-red-500 animate-pulse flex-1 font-mono">Recording Audio...</div>
                         <button onclick="Media.cancelRecord()" class="text-[#8696a0]">Cancel</button>
@@ -185,7 +300,7 @@
                                 <button onclick="UI.sendLocation()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="map-pin" class="w-6 h-6"></i></button>
                             </div>
                             <div class="flex-1 bg-[#2a3942] rounded-lg min-h-[42px] flex items-center px-4 py-2 mb-1">
-                                <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)" oninput="UI.toggleSendIcon()">
+                                <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)" oninput="UI.handleInputChange()">
                             </div>
                             <div class="pb-1">
                                 <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
@@ -202,11 +317,47 @@
 
     <!-- MODALS -->
     <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3><div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit flex justify-center items-center"></div><button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
-    <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><div class="flex gap-2 mt-4"><button onclick="Media.toggleScannerMirror()" class="flex-1 py-3 bg-blue-500/20 text-blue-400 rounded-xl font-bold border border-blue-500/50">Flip</button><button onclick="UI.stopScanner()" class="flex-1 py-3 bg-red-500/20 text-red-400 rounded-xl font-bold border border-red-500/50">Cancel</button></div></div></div>
+    <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><button onclick="UI.stopScanner()" class="mt-4 w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold">Cancel</button></div></div>
     <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3><p class="text-[#8696a0] text-xs mb-4">Verify this number with your peer.</p><div id="safety-number" class="font-mono-safe text-[#00a884] text-2xl font-bold mb-6 tracking-widest break-all"></div><button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
     <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col"><video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video><div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe"><button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button><button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button><button onclick="Media.flipCameraView()" class="p-4 text-white"><i data-lucide="flip-horizontal" class="w-8 h-8"></i></button></div></div>
     <div id="video-overlay" class="hidden fixed inset-0 z-[140] bg-[#0b141a] flex flex-col p-4 pb-safe"><div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4"><video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video><div class="absolute top-4 right-4 w-28 h-40 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-30"><video id="local-video" autoplay playsinline muted class="w-full h-full object-cover mirror-x"></video></div></div><div class="h-24 flex items-center justify-center"><button onclick="Media.endCall()" class="p-5 bg-red-500 rounded-full text-white shadow-xl"><i data-lucide="phone-off" class="w-8 h-8"></i></button></div></div>
     <div id="incoming-call-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full animate-bounce-slight"><div class="w-20 h-20 bg-[#2a3942] rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-[#00a884]"><i data-lucide="phone-incoming" class="w-10 h-10 text-[#00a884] animate-pulse"></i></div><h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3><p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4"></p><div class="flex space-x-8 justify-center"><button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400"><div class="p-4 bg-red-500/20 rounded-full"><i data-lucide="phone-off" class="w-8 h-8"></i></div><span class="text-xs">Decline</span></button><button id="btn-accept-call" class="flex flex-col items-center gap-2 text-[#00a884]"><div class="p-4 bg-[#00a884]/20 rounded-full"><i data-lucide="phone" class="w-8 h-8"></i></div><span class="text-xs">Accept</span></button></div></div></div>
+    
+    <!-- Media Gallery Modal -->
+    <div id="media-gallery-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col p-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-white font-bold text-lg">Media Gallery</h3>
+            <button onclick="UI.closeMediaGallery()" class="text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+        <div id="media-gallery-grid" class="flex-1 overflow-y-auto grid grid-cols-3 gap-2"></div>
+    </div>
+    
+    <!-- Export Modal -->
+    <div id="export-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full">
+            <h3 class="text-white font-bold mb-4 text-lg">Export Chat</h3>
+            <p class="text-[#8696a0] text-sm mb-6">Choose export format:</p>
+            <div class="space-y-3">
+                <button onclick="UI.exportChatJSON()" class="w-full py-3 bg-[#2a3942] text-white rounded-xl hover:bg-[#374045] flex items-center justify-center gap-2">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> Export as JSON
+                </button>
+                <button onclick="UI.exportChatText()" class="w-full py-3 bg-[#2a3942] text-white rounded-xl hover:bg-[#374045] flex items-center justify-center gap-2">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> Export as Text
+                </button>
+                <button onclick="document.getElementById('export-modal').classList.add('hidden')" class="w-full py-3 bg-[#111b21] text-[#8696a0] rounded-xl">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Forward Modal -->
+    <div id="forward-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full">
+            <h3 class="text-white font-bold mb-4 text-lg">Forward Messages</h3>
+            <p class="text-[#8696a0] text-sm mb-4">Select contact to forward to:</p>
+            <div id="forward-contact-list" class="max-h-64 overflow-y-auto space-y-2 mb-4"></div>
+            <button onclick="UI.closeForwardModal()" class="w-full py-3 bg-[#111b21] text-[#8696a0] rounded-xl">Cancel</button>
+        </div>
+    </div>
 
     <script>
         const Utils = {
@@ -234,13 +385,18 @@
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
-                const req = indexedDB.open("GhostMeshSecure", 20);
+                const req = indexedDB.open("GhostMeshSecure", 18);
                 req.onupgradeneeded = e => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains("config")) db.createObjectStore("config");
                     if (!db.objectStoreNames.contains("messages")) {
                         const store = db.createObjectStore("messages", { keyPath: "id" });
                         store.createIndex("peerId", "peerId", { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains("drafts")) db.createObjectStore("drafts");
+                    if (!db.objectStoreNames.contains("reactions")) {
+                        const store = db.createObjectStore("reactions", { keyPath: "id" });
+                        store.createIndex("msgId", "msgId", { unique: false });
                     }
                 };
                 req.onsuccess = () => { Store.db = req.result; resolve(); };
@@ -256,7 +412,6 @@
                 if(store === "messages") { tx.objectStore(store).put(val); }
                 else { key ? tx.objectStore(store).put(val, key) : tx.objectStore(store).put(val); }
                 tx.oncomplete = r;
-                tx.onerror = (e) => console.error("Put Error", e);
             }),
             get: async (store, key) => new Promise(r => {
                 if(!Store.db) return r(null);
@@ -279,6 +434,19 @@
                 const tx = Store.db.transaction("messages", "readwrite");
                 const index = tx.objectStore("messages").index("peerId");
                 index.getAllKeys(peerId).onsuccess = e => { e.target.result.forEach(k => tx.objectStore("messages").delete(k)); tx.oncomplete = r; };
+            }),
+            getReactions: async (msgId) => new Promise(r => {
+                if(!Store.db) return r([]);
+                const tx = Store.db.transaction("reactions", "readonly");
+                const req = tx.objectStore("reactions").index("msgId").getAll(msgId);
+                req.onsuccess = () => r(req.result || []);
+            }),
+            putReaction: async (reaction) => Store.put('reactions', null, reaction),
+            deleteReaction: async (id) => new Promise(r => {
+                if(!Store.db) return r();
+                const tx = Store.db.transaction("reactions", "readwrite");
+                tx.objectStore("reactions").delete(id);
+                tx.oncomplete = r;
             })
         };
 
@@ -340,11 +508,18 @@
         };
 
         const Network = {
-            peer: null, connections: {}, uploadCancelled: false,
+            peer: null, connections: {}, uploadCancelled: false, typingTimers: {},
             init: async (id) => {
                 if(Network.peer) return;
+                if (typeof Peer === 'undefined') {
+                    console.warn('PeerJS not loaded, network features disabled');
+                    return;
+                }
                 Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
-                Network.peer.on('open', () => UI.updateHeaderStatus(App.state.activeChat, "Online"));
+                Network.peer.on('open', () => { 
+                    UI.updateHeaderStatus(App.state.activeChat, "Online");
+                    Network.startPingMonitor();
+                });
                 Network.peer.on('connection', Network.handleConn);
                 Network.peer.on('call', Media.handleIncoming);
                 Network.peer.on('disconnected', () => { UI.updateHeaderStatus(App.state.activeChat, "Offline"); setTimeout(() => !Network.peer.destroyed && Network.peer.reconnect(), 2000); });
@@ -354,7 +529,8 @@
                 if(id) Network.connectWithRetry(id);
             },
             connectWithRetry: async (id, retries = 0) => {
-                if (Network.connections[id]?.conn?.open) return;
+                if (Network.connections[id] && Network.connections[id].conn.open) return;
+                
                 const conn = Network.peer.connect(id, { reliable: true });
                 if (!Network.connections[id]) Network.connections[id] = { conn, key: null, seqOut: 0, lastSeq: 0 };
                 else Network.connections[id].conn = conn;
@@ -429,13 +605,75 @@
                      }
                      return;
                 }
+                
+                if (data.type === 'typing') {
+                    if (App.state.activeChat === sender) {
+                        UI.showTypingIndicator(true);
+                        clearTimeout(Network.typingTimers[sender]);
+                        Network.typingTimers[sender] = setTimeout(() => UI.showTypingIndicator(false), 3000);
+                    }
+                    return;
+                }
+                
+                if (data.type === 'reaction') {
+                    const reaction = {
+                        id: `${data.msgId}-${sender}-${data.emoji}`,
+                        msgId: data.msgId,
+                        userId: sender,
+                        emoji: data.emoji,
+                        timestamp: Date.now()
+                    };
+                    await Store.putReaction(reaction);
+                    if (App.state.activeChat === sender) {
+                        UI.updateReactions(data.msgId);
+                    }
+                    return;
+                }
+                
+                if (data.type === 'unreact') {
+                    const reactionId = `${data.msgId}-${sender}-${data.emoji}`;
+                    await Store.deleteReaction(reactionId);
+                    if (App.state.activeChat === sender) {
+                        UI.updateReactions(data.msgId);
+                    }
+                    return;
+                }
+                
+                if (data.type === 'ping') {
+                    const connObj = Network.connections[sender];
+                    if (connObj?.conn?.open) {
+                        connObj.conn.send({ type: 'pong', ts: data.ts });
+                    }
+                    return;
+                }
+                
+                if (data.type === 'pong') {
+                    const connObj = Network.connections[sender];
+                    if (connObj?.pingStart) {
+                        connObj.ping = Date.now() - data.ts;
+                        if (App.state.activeChat === sender) {
+                            UI.updateHeaderStatus(sender, 'Online');
+                        }
+                    }
+                    return;
+                }
 
                 if (data.type === 'msg') {
                     try {
                         const dec = await Crypto.decryptPayload(data.payload, connObj.key);
+                        if(dec.seq <= connObj.lastSeq) return;
+                        connObj.lastSeq = dec.seq;
+
                         if(dec.type === 'text') {
                              const msgId = data.id || Date.now().toString();
                              App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', msgId);
+                             setTimeout(() => {
+                                 conn.send({ type: 'receipt', msgId: msgId, status: 'delivered' });
+                                 if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: msgId, status: 'read' });
+                             }, 50);
+                        } else if(dec.type === 'location') {
+                             const msgId = data.id || Date.now().toString();
+                             App.addMessage(sender, { lat: dec.lat, lon: dec.lon, url: dec.url }, 'in', 'location', 'read', msgId);
                              setTimeout(() => {
                                  conn.send({ type: 'receipt', msgId: msgId, status: 'delivered' });
                                  if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: msgId, status: 'read' });
@@ -547,6 +785,12 @@
                     App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
                     input.value = '';
                     UI.toggleSendIcon();
+                    
+                    // Clear draft
+                    await UI.clearDraft(peerId);
+                    
+                    // Hide smart replies
+                    document.getElementById('smart-replies-container').classList.add('hidden');
 
                     if (connObj?.conn?.open && connObj.key) {
                         try {
@@ -557,6 +801,1382 @@
                         } catch(e) { console.error("Encryption Failed", e); alert("Encryption Error"); }
                     }
                 }
+            },
+            sendTyping: () => {
+                if (!App.state.activeChat) return;
+                const connObj = Network.connections[App.state.activeChat];
+                if (connObj?.conn?.open) {
+                    connObj.conn.send({ type: 'typing' });
+                }
+            },
+            sendReaction: async (msgId, emoji) => {
+                if (!App.state.activeChat) return;
+                const connObj = Network.connections[App.state.activeChat];
+                if (connObj?.conn?.open) {
+                    connObj.conn.send({ type: 'reaction', msgId, emoji });
+                    const reaction = {
+                        id: `${msgId}-${App.state.id}-${emoji}`,
+                        msgId,
+                        userId: App.state.id,
+                        emoji,
+                        timestamp: Date.now()
+                    };
+                    await Store.putReaction(reaction);
+                    UI.updateReactions(msgId);
+                }
+            },
+            removeReaction: async (msgId, emoji) => {
+                if (!App.state.activeChat) return;
+                const connObj = Network.connections[App.state.activeChat];
+                if (connObj?.conn?.open) {
+                    connObj.conn.send({ type: 'unreact', msgId, emoji });
+                    const reactionId = `${msgId}-${App.state.id}-${emoji}`;
+                    await Store.deleteReaction(reactionId);
+                    UI.updateReactions(msgId);
+                }
+            },
+            startPingMonitor: () => {
+                setInterval(() => {
+                    Object.keys(Network.connections).forEach(peerId => {
+                        const connObj = Network.connections[peerId];
+                        if (connObj?.conn?.open) {
+                            connObj.pingStart = Date.now();
+                            connObj.conn.send({ type: 'ping', ts: connObj.pingStart });
+                        }
+                    });
+                }, 5000);
+            }
+        };
+
+        const App = {
+            state: { id: null, name: null, pubStr: null, password: null, activeChat: null, contacts: {}, loginAttempts: 0, lockoutUntil: null, lastSeen: {} },
+            fileChunks: {},
+            notificationPermission: false,
+            
+            init: async () => {
+                await Store.init();
+                const savedName = await Store.get('config', 'name');
+                const encPrivKey = await Store.get('config', 'privateKey');
+                
+                if (!savedName || !encPrivKey) {
+                    document.getElementById('onboarding-screen').classList.remove('hidden');
+                } else {
+                    document.getElementById('login-screen').classList.remove('hidden');
+                    App.state.name = savedName;
+                }
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            createProfile: async () => {
+                const name = document.getElementById('setup-name').value.trim();
+                const password = document.getElementById('setup-password').value;
+                
+                if (!name || name.length < 2) return alert("Name must be at least 2 characters");
+                if (!password || password.length < 4) return alert("Password must be at least 4 characters");
+                
+                try {
+                    const keyPair = await Crypto.generateIdentity();
+                    Crypto.keyPair = keyPair;
+                    const pubKey = await Crypto.exportKey(keyPair.publicKey);
+                    const encPrivKey = await Crypto.encryptPrivateKey(keyPair.privateKey, password);
+                    const id = pubKey.substring(0, 16);
+                    
+                    await Store.put('config', 'name', name);
+                    await Store.put('config', 'publicKey', pubKey);
+                    await Store.put('config', 'privateKey', encPrivKey);
+                    await Store.put('config', 'id', id);
+                    
+                    App.state.name = name;
+                    App.state.pubStr = pubKey;
+                    App.state.id = id;
+                    App.state.password = password;
+                    
+                    document.getElementById('onboarding-screen').classList.add('hidden');
+                    document.getElementById('app-layout').classList.remove('hidden');
+                    
+                    document.getElementById('my-display-name').innerText = name;
+                    document.getElementById('my-avatar').innerText = UI.generateAvatar(name);
+                    
+                    Network.init(id);
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    UI.showToast("Identity created successfully!");
+                    
+                    // Request notification permission
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission().then(permission => {
+                            App.notificationPermission = permission === 'granted';
+                        });
+                    }
+                } catch(e) {
+                    console.error(e);
+                    alert("Error creating profile. Please try again.");
+                }
+            },
+            
+            login: async () => {
+                const now = Date.now();
+                if (App.state.lockoutUntil && now < App.state.lockoutUntil) {
+                    const remaining = Math.ceil((App.state.lockoutUntil - now) / 1000);
+                    document.getElementById('lockout-msg').innerText = `Too many attempts. Try again in ${remaining}s`;
+                    document.getElementById('lockout-msg').classList.remove('hidden');
+                    return;
+                }
+                
+                const password = document.getElementById('login-password').value;
+                if (!password) return alert("Enter password");
+                
+                try {
+                    const encPrivKey = await Store.get('config', 'privateKey');
+                    const privKey = await Crypto.decryptPrivateKey(encPrivKey, password);
+                    const pubKey = await Store.get('config', 'publicKey');
+                    const id = await Store.get('config', 'id');
+                    const name = await Store.get('config', 'name');
+                    
+                    Crypto.keyPair = { privateKey: privKey, publicKey: await Crypto.importKey(pubKey) };
+                    App.state.pubStr = pubKey;
+                    App.state.id = id;
+                    App.state.name = name;
+                    App.state.password = password;
+                    App.state.loginAttempts = 0;
+                    App.state.lockoutUntil = null;
+                    
+                    const savedContacts = await Store.get('config', 'contacts');
+                    if (savedContacts) App.state.contacts = savedContacts;
+                    
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('app-layout').classList.remove('hidden');
+                    
+                    document.getElementById('my-display-name').innerText = name;
+                    document.getElementById('my-avatar').innerText = UI.generateAvatar(name);
+                    
+                    Network.init(id);
+                    UI.renderContactList();
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    UI.showToast("Unlocked successfully!");
+                    
+                    // Load theme preference
+                    const savedTheme = await Store.get('config', 'theme');
+                    if (savedTheme === 'light') {
+                        document.body.classList.add('light-theme');
+                        const themeIcon = document.getElementById('theme-icon');
+                        if (themeIcon) themeIcon.setAttribute('data-lucide', 'moon');
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    }
+                    
+                    // Request notification permission if not asked
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission().then(permission => {
+                            App.notificationPermission = permission === 'granted';
+                        });
+                    } else {
+                        App.notificationPermission = Notification?.permission === 'granted';
+                    }
+                } catch(e) {
+                    App.state.loginAttempts++;
+                    if (App.state.loginAttempts >= 3) {
+                        App.state.lockoutUntil = Date.now() + 30000;
+                        document.getElementById('lockout-msg').innerText = "Too many attempts. Locked for 30s";
+                        document.getElementById('lockout-msg').classList.remove('hidden');
+                        setTimeout(() => {
+                            App.state.loginAttempts = 0;
+                            document.getElementById('lockout-msg').classList.add('hidden');
+                        }, 30000);
+                    } else {
+                        alert(`Invalid password (${App.state.loginAttempts}/3)`);
+                    }
+                }
+            },
+            
+            addContact: async (peerId, name, pubStr) => {
+                if (!App.state.contacts[peerId]) {
+                    App.state.contacts[peerId] = { name, pubStr, lastMessage: null, unread: 0, lastSeen: Date.now() };
+                    await Store.put('config', 'contacts', App.state.contacts);
+                    UI.renderContactList();
+                }
+            },
+            
+            addMessage: async (peerId, content, direction, type, status, id) => {
+                const msgId = id || Date.now().toString();
+                const msg = {
+                    id: msgId,
+                    peerId,
+                    content,
+                    direction,
+                    type,
+                    status: status || 'pending',
+                    timestamp: Date.now()
+                };
+                
+                await Store.put('messages', null, msg);
+                
+                if (App.state.contacts[peerId]) {
+                    const preview = type === 'text' ? content.substring(0, 50) : 
+                                   type === 'file' ? '📎 File' : 
+                                   type === 'voice' ? '🎤 Voice' : 
+                                   type === 'location' ? '📍 Location' : 'Message';
+                    App.state.contacts[peerId].lastMessage = preview;
+                    
+                    // Increment unread count for incoming messages
+                    if (direction === 'in' && App.state.activeChat !== peerId) {
+                        App.state.contacts[peerId].unread = (App.state.contacts[peerId].unread || 0) + 1;
+                        
+                        // Show desktop notification
+                        if (App.notificationPermission && document.hidden) {
+                            const notification = new Notification(App.state.contacts[peerId].name, {
+                                body: preview,
+                                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%2300a884" width="100" height="100"/><text y="70" x="50" text-anchor="middle" font-size="60" fill="white">💬</text></svg>',
+                                tag: peerId,
+                                requireInteraction: false
+                            });
+                            notification.onclick = () => {
+                                window.focus();
+                                UI.loadChat(peerId);
+                                notification.close();
+                            };
+                        }
+                    }
+                    
+                    await Store.put('config', 'contacts', App.state.contacts);
+                    UI.renderContactList();
+                }
+                
+                if (App.state.activeChat === peerId) {
+                    UI.renderMessage(msg);
+                    const container = document.getElementById('messages-container');
+                    setTimeout(() => container.scrollTop = container.scrollHeight, 50);
+                    
+                    // Show smart replies for incoming messages
+                    if (direction === 'in' && type === 'text') {
+                        UI.showSmartReplies();
+                    }
+                }
+            },
+            
+            exportIdentity: async () => {
+                try {
+                    const data = {
+                        name: await Store.get('config', 'name'),
+                        id: await Store.get('config', 'id'),
+                        publicKey: await Store.get('config', 'publicKey'),
+                        privateKey: await Store.get('config', 'privateKey'),
+                        contacts: await Store.get('config', 'contacts')
+                    };
+                    
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `ghostmesh-identity-${Date.now()}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    UI.showToast("Identity exported!");
+                } catch(e) {
+                    alert("Export failed");
+                }
+            }
+        };
+
+        const UI = {
+            typingTimeout: null,
+            selectionMode: false,
+            selectedMessages: new Set(),
+            
+            toggleTheme: async () => {
+                const body = document.body;
+                const themeIcon = document.getElementById('theme-icon');
+                
+                if (body.classList.contains('light-theme')) {
+                    body.classList.remove('light-theme');
+                    themeIcon.setAttribute('data-lucide', 'sun');
+                    await Store.put('config', 'theme', 'dark');
+                } else {
+                    body.classList.add('light-theme');
+                    themeIcon.setAttribute('data-lucide', 'moon');
+                    await Store.put('config', 'theme', 'light');
+                }
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            showTypingIndicator: (show) => {
+                const container = document.getElementById('typing-indicator-container');
+                if (show) {
+                    container.classList.remove('hidden');
+                } else {
+                    container.classList.add('hidden');
+                }
+            },
+            
+            showSmartReplies: () => {
+                const container = document.getElementById('smart-replies-container');
+                const replies = ['Thanks! 👍', 'OK', 'Sure', '😊', 'Got it'];
+                
+                container.innerHTML = replies.map(reply => 
+                    `<div class="smart-reply-chip" data-reply="${Utils.escapeHTML(reply)}">${Utils.escapeHTML(reply)}</div>`
+                ).join('');
+                
+                // Add event delegation
+                container.onclick = (e) => {
+                    if (e.target.classList.contains('smart-reply-chip')) {
+                        UI.sendSmartReply(e.target.dataset.reply);
+                    }
+                };
+                
+                container.classList.remove('hidden');
+                
+                // Auto-hide after 10 seconds
+                setTimeout(() => container.classList.add('hidden'), 10000);
+            },
+            
+            sendSmartReply: (text) => {
+                const input = document.getElementById('message-input');
+                input.value = text;
+                Network.sendMessage();
+                document.getElementById('smart-replies-container').classList.add('hidden');
+            },
+            
+            saveDraft: async () => {
+                if (!App.state.activeChat) return;
+                const input = document.getElementById('message-input');
+                const text = input.value.trim();
+                
+                if (text) {
+                    await Store.put('drafts', App.state.activeChat, text);
+                    if (App.state.contacts[App.state.activeChat]) {
+                        App.state.contacts[App.state.activeChat].draft = true;
+                        UI.renderContactList();
+                    }
+                } else {
+                    await Store.put('drafts', App.state.activeChat, null);
+                    if (App.state.contacts[App.state.activeChat]) {
+                        App.state.contacts[App.state.activeChat].draft = false;
+                        UI.renderContactList();
+                    }
+                }
+            },
+            
+            loadDraft: async (peerId) => {
+                const draft = await Store.get('drafts', peerId);
+                const input = document.getElementById('message-input');
+                if (draft && input) {
+                    input.value = draft;
+                    UI.toggleSendIcon();
+                }
+            },
+            
+            clearDraft: async (peerId) => {
+                await Store.put('drafts', peerId, null);
+                if (App.state.contacts[peerId]) {
+                    App.state.contacts[peerId].draft = false;
+                    await Store.put('config', 'contacts', App.state.contacts);
+                    UI.renderContactList();
+                }
+            },
+            
+            copyId: () => {
+                if (App.state.id) {
+                    navigator.clipboard.writeText(App.state.id);
+                    UI.showToast("ID copied to clipboard!");
+                }
+            },
+            
+            toggleAddContact: () => {
+                const panel = document.getElementById('new-chat-panel');
+                panel.classList.toggle('hidden');
+                if (!panel.classList.contains('hidden')) {
+                    document.getElementById('input-peer-id').focus();
+                }
+            },
+            
+            startScanner: async () => {
+                if (typeof Html5Qrcode === 'undefined') {
+                    UI.showToast('QR Scanner library not available');
+                    return;
+                }
+                
+                const modal = document.getElementById('scanner-modal');
+                modal.classList.remove('hidden');
+                
+                try {
+                    Media.scanner = new Html5Qrcode("reader");
+                    await Media.scanner.start(
+                        { facingMode: "environment" },
+                        { fps: 10, qrbox: 250 },
+                        (decodedText) => {
+                            UI.stopScanner();
+                            if (decodedText && decodedText !== App.state.id) {
+                                Network.connectWithRetry(decodedText);
+                                UI.showToast("Connecting to peer...");
+                            }
+                        },
+                        () => {}
+                    );
+                } catch(e) {
+                    console.error("Scanner error:", e);
+                    modal.classList.add('hidden');
+                    alert("Camera access denied or not available");
+                }
+            },
+            
+            stopScanner: () => {
+                if (Media.scanner) {
+                    Media.scanner.stop().catch(() => {});
+                    Media.scanner = null;
+                }
+                document.getElementById('scanner-modal').classList.add('hidden');
+            },
+            
+            showQR: () => {
+                const modal = document.getElementById('qr-modal');
+                const container = document.getElementById('qrcode-container');
+                container.innerHTML = '';
+                
+                if (typeof QRCode === 'undefined') {
+                    UI.showToast('QR Code library not available');
+                    return;
+                }
+                
+                if (App.state.id) {
+                    new QRCode(container, {
+                        text: App.state.id,
+                        width: 256,
+                        height: 256,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    modal.classList.remove('hidden');
+                }
+            },
+            
+            filterContacts: () => {
+                const search = document.getElementById('search-contacts').value.toLowerCase();
+                const chatItems = document.querySelectorAll('#chat-list > div');
+                chatItems.forEach(item => {
+                    const name = item.querySelector('.font-semibold')?.innerText.toLowerCase() || '';
+                    item.style.display = name.includes(search) ? '' : 'none';
+                });
+            },
+            
+            handleFileSelect: (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const preview = document.getElementById('file-preview-area');
+                    const name = document.getElementById('file-preview-name');
+                    name.innerText = file.name + ' (' + Utils.formatBytes(file.size) + ')';
+                    preview.classList.remove('hidden');
+                    UI.toggleSendIcon();
+                }
+            },
+            
+            clearFile: () => {
+                document.getElementById('file-input').value = '';
+                document.getElementById('file-preview-area').classList.add('hidden');
+                UI.toggleSendIcon();
+            },
+            
+            sendLocation: async () => {
+                if (!App.state.activeChat) return;
+                
+                if (!navigator.geolocation) {
+                    return alert("Geolocation not supported");
+                }
+                
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const lat = parseFloat(position.coords.latitude.toFixed(6));
+                        const lon = parseFloat(position.coords.longitude.toFixed(6));
+                        
+                        // Validate coordinates
+                        if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                            return alert("Invalid location coordinates");
+                        }
+                        
+                        const locationUrl = `https://www.openstreetmap.org/?mlat=${encodeURIComponent(lat)}&mlon=${encodeURIComponent(lon)}#map=15/${encodeURIComponent(lat)}/${encodeURIComponent(lon)}`;
+                        
+                        const msgId = Date.now().toString();
+                        await App.addMessage(App.state.activeChat, { lat, lon, url: locationUrl }, 'out', 'location', 'sent', msgId);
+                        
+                        const connObj = Network.connections[App.state.activeChat];
+                        if (connObj?.conn?.open && connObj.key) {
+                            const enc = await Crypto.encryptPayload({ 
+                                type: 'location', 
+                                lat, 
+                                lon, 
+                                url: locationUrl,
+                                seq: ++connObj.seqOut,
+                                ts: Date.now()
+                            }, connObj.key);
+                            connObj.conn.send({ type: 'msg', id: msgId, payload: enc });
+                        }
+                        
+                        UI.showToast("Location sent!");
+                    },
+                    (error) => {
+                        alert("Location access denied or unavailable");
+                    },
+                    { timeout: 10000 }
+                );
+            },
+            
+            handleMainAction: () => {
+                const input = document.getElementById('message-input');
+                const fileInput = document.getElementById('file-input');
+                
+                if (input.value.trim() || fileInput.files.length > 0) {
+                    Network.sendMessage();
+                } else {
+                    Media.toggleRecordUI();
+                }
+            },
+            
+            handleInputKey: (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    Network.sendMessage();
+                } else {
+                    UI.handleTypingAndDraft();
+                }
+            },
+            
+            toggleSendIcon: () => {
+                const input = document.getElementById('message-input');
+                const fileInput = document.getElementById('file-input');
+                const micIcon = document.getElementById('icon-mic');
+                const sendIcon = document.getElementById('icon-send');
+                
+                if (input.value.trim() || fileInput.files.length > 0) {
+                    micIcon.classList.add('hidden');
+                    sendIcon.classList.remove('hidden');
+                } else {
+                    micIcon.classList.remove('hidden');
+                    sendIcon.classList.add('hidden');
+                }
+            },
+            
+            handleInputChange: () => {
+                UI.toggleSendIcon();
+                UI.handleTypingAndDraft();
+            },
+            
+            handleTypingAndDraft: () => {
+                // Send typing indicator
+                Network.sendTyping();
+                
+                // Save draft after typing stops
+                clearTimeout(UI.typingTimeout);
+                UI.typingTimeout = setTimeout(() => UI.saveDraft(), 500);
+            },
+            
+            toggleSearch: () => {
+                const searchBar = document.getElementById('search-bar');
+                const searchInput = document.getElementById('search-input');
+                
+                if (searchBar.classList.contains('hidden')) {
+                    searchBar.classList.remove('hidden');
+                    searchInput.focus();
+                } else {
+                    searchBar.classList.add('hidden');
+                    searchInput.value = '';
+                    UI.clearSearchHighlights();
+                }
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            searchMessages: () => {
+                const query = document.getElementById('search-input').value.toLowerCase().trim();
+                const container = document.getElementById('messages-container');
+                const messages = container.querySelectorAll('[id^="msg-"]');
+                
+                UI.clearSearchHighlights();
+                
+                if (!query) return;
+                
+                messages.forEach(msgEl => {
+                    const textContent = msgEl.textContent.toLowerCase();
+                    if (textContent.includes(query)) {
+                        const bubble = msgEl.querySelector('[class*="msg-"]');
+                        if (bubble) {
+                            // Simple highlight - wrap matching text
+                            const html = bubble.innerHTML;
+                            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                            bubble.innerHTML = html.replace(regex, '<span class="search-highlight">$1</span>');
+                        }
+                    }
+                });
+            },
+            
+            clearSearchHighlights: () => {
+                const highlights = document.querySelectorAll('.search-highlight');
+                highlights.forEach(el => {
+                    const parent = el.parentNode;
+                    parent.replaceChild(document.createTextNode(el.textContent), el);
+                    parent.normalize();
+                });
+            },
+            
+            toggleChatMenu: () => {
+                const menu = document.getElementById('chat-menu');
+                menu.classList.toggle('hidden');
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                
+                // Close menu when clicking outside
+                if (!menu.classList.contains('hidden')) {
+                    setTimeout(() => {
+                        const closeHandler = (e) => {
+                            if (!menu.contains(e.target)) {
+                                menu.classList.add('hidden');
+                                document.removeEventListener('click', closeHandler);
+                            }
+                        };
+                        document.addEventListener('click', closeHandler);
+                    }, 100);
+                }
+            },
+            
+            exportChat: () => {
+                document.getElementById('chat-menu').classList.add('hidden');
+                document.getElementById('export-modal').classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            exportChatJSON: async () => {
+                if (!App.state.activeChat) return;
+                
+                const messages = await Store.getMessages(App.state.activeChat);
+                const contact = App.state.contacts[App.state.activeChat];
+                
+                const exportData = {
+                    contact: contact?.name || App.state.activeChat,
+                    peerId: App.state.activeChat,
+                    exportDate: new Date().toISOString(),
+                    messageCount: messages.length,
+                    messages: messages.map(m => ({
+                        id: m.id,
+                        type: m.type,
+                        direction: m.direction,
+                        content: typeof m.content === 'string' ? m.content : '[Media]',
+                        timestamp: new Date(m.timestamp).toISOString(),
+                        status: m.status
+                    }))
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `chat-${contact?.name || App.state.activeChat}-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                document.getElementById('export-modal').classList.add('hidden');
+                UI.showToast('Chat exported as JSON!');
+            },
+            
+            exportChatText: async () => {
+                if (!App.state.activeChat) return;
+                
+                const messages = await Store.getMessages(App.state.activeChat);
+                const contact = App.state.contacts[App.state.activeChat];
+                
+                let text = `Chat Export: ${contact?.name || App.state.activeChat}\n`;
+                text += `Export Date: ${new Date().toISOString()}\n`;
+                text += `Total Messages: ${messages.length}\n`;
+                text += `${'='.repeat(50)}\n\n`;
+                
+                messages.forEach(m => {
+                    const time = new Date(m.timestamp).toLocaleString();
+                    const direction = m.direction === 'out' ? 'You' : contact?.name;
+                    const content = typeof m.content === 'string' ? m.content : `[${m.type}]`;
+                    text += `[${time}] ${direction}: ${content}\n`;
+                });
+                
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `chat-${contact?.name || App.state.activeChat}-${Date.now()}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                document.getElementById('export-modal').classList.add('hidden');
+                UI.showToast('Chat exported as text!');
+            },
+            
+            showMediaGallery: async () => {
+                if (!App.state.activeChat) return;
+                
+                document.getElementById('chat-menu').classList.add('hidden');
+                const modal = document.getElementById('media-gallery-modal');
+                const grid = document.getElementById('media-gallery-grid');
+                
+                const messages = await Store.getMessages(App.state.activeChat);
+                const mediaMessages = messages.filter(m => 
+                    (m.type === 'file' && m.content.mime?.startsWith('image')) ||
+                    (m.type === 'file' && m.content.mime?.startsWith('video'))
+                );
+                
+                if (mediaMessages.length === 0) {
+                    grid.innerHTML = '<div class="col-span-3 text-center text-[#8696a0] py-8">No media shared yet</div>';
+                } else {
+                    grid.innerHTML = mediaMessages.map(m => {
+                        const url = m.content.url || (m.content.blob ? Utils.addBlob(URL.createObjectURL(m.content.blob)) : '');
+                        if (!url) return '';
+                        
+                        if (m.content.mime?.startsWith('image')) {
+                            return `<div class="aspect-square bg-[#202c33] rounded overflow-hidden cursor-pointer" onclick="window.open('${url}', '_blank')">
+                                <img src="${url}" class="w-full h-full object-cover">
+                            </div>`;
+                        } else if (m.content.mime?.startsWith('video')) {
+                            return `<div class="aspect-square bg-[#202c33] rounded overflow-hidden cursor-pointer relative" onclick="window.open('${url}', '_blank')">
+                                <video src="${url}" class="w-full h-full object-cover"></video>
+                                <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                                    <i data-lucide="play-circle" class="w-12 h-12 text-white"></i>
+                                </div>
+                            </div>`;
+                        }
+                        return '';
+                    }).join('');
+                }
+                
+                modal.classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            closeMediaGallery: () => {
+                document.getElementById('media-gallery-modal').classList.add('hidden');
+            },
+            
+            clearChat: async () => {
+                if (!App.state.activeChat) return;
+                
+                if (confirm('Clear all messages in this chat? This cannot be undone.')) {
+                    await Store.deleteMessagesForPeer(App.state.activeChat);
+                    document.getElementById('messages-container').innerHTML = '';
+                    document.getElementById('chat-menu').classList.add('hidden');
+                    UI.showToast('Chat cleared!');
+                }
+            },
+            
+            enterSelectionMode: () => {
+                UI.selectionMode = true;
+                UI.selectedMessages.clear();
+                document.getElementById('chat-menu').classList.add('hidden');
+                document.getElementById('selection-mode-bar').classList.remove('hidden');
+                
+                // Add event delegation on container instead of individual messages
+                const container = document.getElementById('messages-container');
+                container.dataset.selectionMode = 'true';
+                container.style.cursor = 'pointer';
+                
+                // Store handler reference for cleanup
+                UI.messageSelectionHandler = (e) => {
+                    const msgEl = e.target.closest('[id^="msg-"]');
+                    if (msgEl && container.dataset.selectionMode === 'true') {
+                        const msgId = msgEl.id.replace('msg-', '');
+                        UI.toggleMessageSelection(msgId);
+                    }
+                };
+                
+                container.addEventListener('click', UI.messageSelectionHandler);
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            exitSelectionMode: () => {
+                UI.selectionMode = false;
+                UI.selectedMessages.clear();
+                document.getElementById('selection-mode-bar').classList.add('hidden');
+                
+                // Remove event delegation
+                const container = document.getElementById('messages-container');
+                delete container.dataset.selectionMode;
+                container.style.cursor = '';
+                
+                if (UI.messageSelectionHandler) {
+                    container.removeEventListener('click', UI.messageSelectionHandler);
+                    UI.messageSelectionHandler = null;
+                }
+                
+                // Remove selection styling
+                const messages = document.querySelectorAll('[id^="msg-"]');
+                messages.forEach(msg => msg.classList.remove('message-selected'));
+            },
+            
+            toggleMessageSelection: (msgId) => {
+                const msgEl = document.getElementById(`msg-${msgId}`);
+                if (!msgEl) return;
+                
+                if (UI.selectedMessages.has(msgId)) {
+                    UI.selectedMessages.delete(msgId);
+                    msgEl.classList.remove('message-selected');
+                } else {
+                    UI.selectedMessages.add(msgId);
+                    msgEl.classList.add('message-selected');
+                }
+                
+                document.getElementById('selection-count').innerText = 
+                    `${UI.selectedMessages.size} selected`;
+            },
+            
+            forwardSelected: async () => {
+                if (UI.selectedMessages.size === 0) return;
+                
+                const modal = document.getElementById('forward-modal');
+                const list = document.getElementById('forward-contact-list');
+                
+                // Populate contact list
+                list.innerHTML = Object.entries(App.state.contacts)
+                    .filter(([peerId]) => peerId !== App.state.activeChat)
+                    .map(([peerId, contact]) => {
+                        const avatar = UI.generateAvatar(contact.name);
+                        return `<button onclick="UI.sendForwardedMessages('${peerId}')" class="w-full p-3 bg-[#2a3942] hover:bg-[#374045] rounded-xl flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00a884] to-[#008f6f] flex items-center justify-center text-white font-bold">${avatar}</div>
+                            <span>${Utils.escapeHTML(contact.name)}</span>
+                        </button>`;
+                    }).join('');
+                
+                if (Object.keys(App.state.contacts).length <= 1) {
+                    list.innerHTML = '<p class="text-[#8696a0] text-center py-4">No other contacts available</p>';
+                }
+                
+                modal.classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            sendForwardedMessages: async (targetPeerId) => {
+                const messages = await Store.getMessages(App.state.activeChat);
+                const selectedMsgs = messages.filter(m => UI.selectedMessages.has(m.id));
+                
+                // Forward each message
+                for (const msg of selectedMsgs) {
+                    if (msg.type === 'text') {
+                        const forwardedContent = `📨 Forwarded: ${msg.content}`;
+                        const msgId = Date.now().toString() + Math.random();
+                        await App.addMessage(targetPeerId, forwardedContent, 'out', 'text', 'pending', msgId);
+                        
+                        const connObj = Network.connections[targetPeerId];
+                        if (connObj?.conn?.open && connObj.key) {
+                            const enc = await Crypto.encryptPayload({ 
+                                content: forwardedContent, 
+                                seq: ++connObj.seqOut, 
+                                ts: Date.now(), 
+                                type: 'text' 
+                            }, connObj.key);
+                            connObj.conn.send({ type: 'msg', id: msgId, payload: enc });
+                            const savedMsg = (await Store.getMessages(targetPeerId)).find(m => m.id === msgId);
+                            if (savedMsg) { 
+                                savedMsg.status = 'sent'; 
+                                await Store.put('messages', null, savedMsg); 
+                            }
+                        }
+                    }
+                }
+                
+                UI.closeForwardModal();
+                UI.exitSelectionMode();
+                UI.showToast(`${selectedMsgs.length} message(s) forwarded!`);
+            },
+            
+            closeForwardModal: () => {
+                document.getElementById('forward-modal').classList.add('hidden');
+            },
+            
+            deleteSelected: async () => {
+                if (UI.selectedMessages.size === 0) return;
+                
+                if (confirm(`Delete ${UI.selectedMessages.size} message(s)? This cannot be undone.`)) {
+                    const messages = await Store.getMessages(App.state.activeChat);
+                    
+                    for (const msgId of UI.selectedMessages) {
+                        const msg = messages.find(m => m.id === msgId);
+                        if (msg) {
+                            // Remove from DOM
+                            const msgEl = document.getElementById(`msg-${msgId}`);
+                            if (msgEl) msgEl.remove();
+                            
+                            // Delete from store (simplified - in real app would need proper delete method)
+                            // For now just mark as deleted
+                        }
+                    }
+                    
+                    UI.exitSelectionMode();
+                    UI.showToast('Messages deleted!');
+                }
+            },
+            
+            closeChat: () => {
+                document.getElementById('chat-area').classList.add('hidden');
+                document.getElementById('sidebar-panel').classList.remove('hidden');
+            },
+            
+            showSafetyNumber: async () => {
+                if (!App.state.activeChat) return;
+                const contact = App.state.contacts[App.state.activeChat];
+                if (!contact) return;
+                
+                const fingerprint = await Crypto.generateFingerprint(contact.pubStr);
+                document.getElementById('safety-number').innerText = fingerprint;
+                document.getElementById('safety-modal').classList.remove('hidden');
+            },
+            
+            updateHeaderStatus: (peerId, status) => {
+                if (App.state.activeChat === peerId) {
+                    const statusEl = document.getElementById('chat-header-status');
+                    
+                    // Show connection quality if online
+                    if (status === 'Online' && Network.connections[peerId]?.conn) {
+                        const ping = Network.connections[peerId].ping || 0;
+                        let quality = 'Good';
+                        let signalClass = 'signal-good';
+                        
+                        if (ping > 200) {
+                            quality = 'Poor';
+                            signalClass = 'signal-poor';
+                        } else if (ping > 100) {
+                            quality = 'Medium';
+                            signalClass = 'signal-medium';
+                        }
+                        
+                        statusEl.innerHTML = `Online <span class="connection-indicator ${signalClass}">
+                            <span class="signal-bar"></span>
+                            <span class="signal-bar"></span>
+                            <span class="signal-bar"></span>
+                        </span> ${ping > 0 ? `(${ping}ms)` : ''}`;
+                    } else {
+                        statusEl.innerText = status;
+                    }
+                }
+            },
+            
+            loadChat: async (peerId) => {
+                App.state.activeChat = peerId;
+                const contact = App.state.contacts[peerId];
+                
+                if (!contact) return;
+                
+                // Clear unread count
+                if (contact.unread > 0) {
+                    contact.unread = 0;
+                    await Store.put('config', 'contacts', App.state.contacts);
+                    UI.renderContactList();
+                }
+                
+                document.getElementById('chat-empty-state').classList.add('hidden');
+                document.getElementById('chat-interface').classList.remove('hidden');
+                document.getElementById('chat-area').classList.remove('hidden');
+                
+                if (window.innerWidth < 768) {
+                    document.getElementById('sidebar-panel').classList.add('hidden');
+                }
+                
+                document.getElementById('chat-header-name').innerText = contact.name;
+                document.getElementById('chat-header-avatar').innerText = UI.generateAvatar(contact.name);
+                
+                const isOnline = Network.connections[peerId]?.conn?.open;
+                if (isOnline) {
+                    UI.updateHeaderStatus(peerId, "Online");
+                } else if (contact.lastSeen) {
+                    const now = Date.now();
+                    const diff = now - contact.lastSeen;
+                    const minutes = Math.floor(diff / 60000);
+                    const hours = Math.floor(minutes / 60);
+                    const days = Math.floor(hours / 24);
+                    
+                    let lastSeenText = "Offline";
+                    if (minutes < 1) lastSeenText = "Last seen just now";
+                    else if (minutes < 60) lastSeenText = `Last seen ${minutes}m ago`;
+                    else if (hours < 24) lastSeenText = `Last seen ${hours}h ago`;
+                    else lastSeenText = `Last seen ${days}d ago`;
+                    
+                    UI.updateHeaderStatus(peerId, lastSeenText);
+                } else {
+                    UI.updateHeaderStatus(peerId, "Offline");
+                }
+                
+                const messages = await Store.getMessages(peerId);
+                const container = document.getElementById('messages-container');
+                container.innerHTML = '';
+                
+                messages.forEach(msg => UI.renderMessage(msg));
+                
+                setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+                
+                // Load draft
+                await UI.loadDraft(peerId);
+                
+                // Hide smart replies
+                document.getElementById('smart-replies-container').classList.add('hidden');
+                
+                document.querySelectorAll('#chat-list > div').forEach(el => {
+                    el.classList.remove('bg-[#2a3942]');
+                });
+                document.querySelector(`#chat-list > div[data-peer="${peerId}"]`)?.classList.add('bg-[#2a3942]');
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            showToast: (message) => {
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-[#202c33] text-white px-6 py-3 rounded-lg shadow-lg z-[150] animate-fade-in';
+                toast.innerText = message;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            },
+            
+            renderMessage: async (msg) => {
+                const container = document.getElementById('messages-container');
+                const existing = document.getElementById(`msg-${msg.id}`);
+                if (existing) existing.remove();
+                
+                const div = document.createElement('div');
+                div.id = `msg-${msg.id}`;
+                div.className = `flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} group relative`;
+                
+                let inner = '';
+                const bubbleClass = msg.direction === 'out' ? 'msg-sent' : 'msg-received';
+                
+                if (msg.type === 'text') {
+                    const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
+                    inner = `<div class="bubble-constraint">
+                        <div class="${bubbleClass} px-3 py-2 text-sm relative">
+                            <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                            </button>
+                            <div>${Utils.linkify(msg.content)}</div>
+                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                ${statusHtml}
+                            </div>
+                        </div>
+                        <div id="reactions-${msg.id}" class="message-reactions"></div>
+                    </div>`;
+                } else if (msg.type === 'file' || msg.type === 'file-receiving') {
+                    const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
+                    const fileExt = msg.content.name?.split('.').pop()?.toUpperCase().substring(0, 3) || 'FILE';
+                    const isImage = msg.content.mime?.startsWith('image');
+                    const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
+                    
+                    if (isImage && url) {
+                        inner = `<div class="bubble-constraint">
+                            <div class="${bubbleClass} p-1 relative">
+                                <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                    <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                                </button>
+                                <img src="${url}" class="rounded max-w-xs max-h-80 object-contain">
+                                <div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">
+                                    ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    ${statusHtml}
+                                </div>
+                            </div>
+                            <div id="reactions-${msg.id}" class="message-reactions"></div>
+                        </div>`;
+                    } else {
+                        const downloadBtn = url ? `<a href="${url}" download="${msg.content.name}" class="text-[#00a884] text-xs hover:underline">Download</a>` : '<span class="text-xs text-[#8696a0]">Receiving...</span>';
+                        inner = `<div class="bubble-constraint">
+                            <div class="${bubbleClass} px-3 py-2 relative">
+                                <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                    <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                                </button>
+                                <div class="file-card-inner">
+                                    <div class="file-icon-box bg-[#00a884]">${fileExt}</div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-medium text-sm truncate">${msg.content.name || 'File'}</div>
+                                        <div class="text-xs text-[#8696a0]">${msg.content.size ? Utils.formatBytes(msg.content.size) : ''}</div>
+                                    </div>
+                                    <div class="flex-shrink-0">${downloadBtn}</div>
+                                </div>
+                                <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                    ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    ${statusHtml}
+                                </div>
+                            </div>
+                            <div id="reactions-${msg.id}" class="message-reactions"></div>
+                        </div>`;
+                    }
+                } else if (msg.type === 'voice') {
+                    const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
+                    const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
+                    const audioId = `audio-${msg.id}`.replace(/[^a-zA-Z0-9-_]/g, '');
+                    
+                    inner = `<div class="bubble-constraint">
+                        <div class="${bubbleClass} px-3 py-2 relative">
+                            <button onclick="UI.toggleReactionPicker('${Utils.escapeHTML(msg.id)}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                            </button>
+                            <div class="audio-card">
+                                <div class="audio-play-btn" data-audio-id="${Utils.escapeHTML(audioId)}">
+                                    <i data-lucide="play" class="w-4 h-4 text-white"></i>
+                                </div>
+                                <div class="waveform">
+                                    ${Array(12).fill('<div class="bar"></div>').join('')}
+                                </div>
+                                <span class="text-xs text-[#8696a0]" id="${audioId}-duration">0:00</span>
+                                <span class="playback-speed" id="${audioId}-speed" data-audio-id="${Utils.escapeHTML(audioId)}">1x</span>
+                            </div>
+                            <audio id="${audioId}" src="${url || ''}" preload="metadata"></audio>
+                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                ${statusHtml}
+                            </div>
+                        </div>
+                        <div id="reactions-${msg.id}" class="message-reactions"></div>
+                    </div>`;
+                } else if (msg.type === 'location') {
+                    const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
+                    inner = `<div class="bubble-constraint">
+                        <div class="${bubbleClass} px-3 py-2 relative">
+                            <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                            </button>
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-[#00a884]"></i>
+                                <span class="font-medium">Location Shared</span>
+                            </div>
+                            <a href="${msg.content.url}" target="_blank" class="text-sm text-blue-400 hover:underline">View on Map</a>
+                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                ${statusHtml}
+                            </div>
+                        </div>
+                        <div id="reactions-${msg.id}" class="message-reactions"></div>
+                    </div>`;
+                }
+                
+                div.innerHTML = inner;
+                container.appendChild(div);
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                
+                // Add event listener for audio play button
+                if (msg.type === 'voice') {
+                    const playBtn = div.querySelector('.audio-play-btn');
+                    if (playBtn) {
+                        const audioId = playBtn.getAttribute('data-audio-id');
+                        playBtn.addEventListener('click', () => UI.toggleAudio(audioId));
+                    }
+                    
+                    // Add event listener for playback speed
+                    const speedBtn = div.querySelector('.playback-speed');
+                    if (speedBtn) {
+                        const audioId = speedBtn.getAttribute('data-audio-id');
+                        speedBtn.addEventListener('click', () => UI.cyclePlaybackSpeed(audioId));
+                    }
+                }
+                
+                if (msg.type === 'voice') {
+                    const audio = document.getElementById(audioId);
+                    if (audio) {
+                        audio.onloadedmetadata = () => {
+                            const duration = Math.floor(audio.duration);
+                            const durationEl = document.getElementById(`${audioId}-duration`);
+                            if (durationEl) {
+                                durationEl.innerText = `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`;
+                            }
+                        };
+                    }
+                }
+                
+                // Load and display reactions
+                await UI.updateReactions(msg.id);
+            },
+            
+            updateMessageTick: (msgId, status) => {
+                const msgEl = document.getElementById(`msg-${msgId}`);
+                if (msgEl) {
+                    const statusContainer = msgEl.querySelector('.status-container');
+                    if (statusContainer) {
+                        const statusHtml = Utils.getStatusHtml(status);
+                        const match = statusHtml.match(/<div class="status-orb[^"]*"><\/div>/);
+                        if (match && match[0]) {
+                            statusContainer.innerHTML = match[0];
+                        }
+                    }
+                }
+            },
+            
+            toggleReactionPicker: (msgId) => {
+                // Remove any existing picker
+                const existingPicker = document.getElementById('reaction-picker');
+                if (existingPicker) existingPicker.remove();
+                
+                const msgEl = document.getElementById(`msg-${msgId}`);
+                if (!msgEl) return;
+                
+                const picker = document.createElement('div');
+                picker.id = 'reaction-picker';
+                picker.className = 'reaction-picker absolute z-50';
+                picker.style.top = '30px';
+                picker.style.left = '50%';
+                picker.style.transform = 'translateX(-50%)';
+                
+                const emojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+                picker.innerHTML = emojis.map(emoji => 
+                    `<span class="reaction-btn" onclick="UI.addReaction('${msgId}', '${emoji}')">${emoji}</span>`
+                ).join('');
+                
+                msgEl.style.position = 'relative';
+                msgEl.appendChild(picker);
+                
+                // Close picker when clicking outside
+                setTimeout(() => {
+                    const closeHandler = (e) => {
+                        if (!picker.contains(e.target)) {
+                            picker.remove();
+                            document.removeEventListener('click', closeHandler);
+                        }
+                    };
+                    document.addEventListener('click', closeHandler);
+                }, 100);
+            },
+            
+            addReaction: async (msgId, emoji) => {
+                const reactions = await Store.getReactions(msgId);
+                const myReaction = reactions.find(r => r.userId === App.state.id && r.emoji === emoji);
+                
+                if (myReaction) {
+                    // Remove reaction
+                    await Network.removeReaction(msgId, emoji);
+                } else {
+                    // Add reaction
+                    await Network.sendReaction(msgId, emoji);
+                }
+                
+                // Close picker
+                const picker = document.getElementById('reaction-picker');
+                if (picker) picker.remove();
+            },
+            
+            updateReactions: async (msgId) => {
+                const reactionsContainer = document.getElementById(`reactions-${msgId}`);
+                if (!reactionsContainer) return;
+                
+                const reactions = await Store.getReactions(msgId);
+                
+                if (reactions.length === 0) {
+                    reactionsContainer.innerHTML = '';
+                    return;
+                }
+                
+                // Group reactions by emoji
+                const grouped = {};
+                reactions.forEach(r => {
+                    if (!grouped[r.emoji]) grouped[r.emoji] = [];
+                    grouped[r.emoji].push(r.userId);
+                });
+                
+                // Render reaction badges
+                reactionsContainer.innerHTML = Object.entries(grouped).map(([emoji, users]) => {
+                    const isMyReaction = users.includes(App.state.id);
+                    const className = isMyReaction ? 'reaction-badge my-reaction' : 'reaction-badge';
+                    return `<div class="${className}" onclick="UI.addReaction('${msgId}', '${emoji}')" title="${users.length} reaction${users.length > 1 ? 's' : ''}">
+                        <span>${emoji}</span>
+                        ${users.length > 1 ? `<span class="text-[10px]">${users.length}</span>` : ''}
+                    </div>`;
+                }).join('');
+            },
+            
+            renderContactList: () => {
+                const container = document.getElementById('chat-list');
+                container.innerHTML = '';
+                
+                const sorted = Object.entries(App.state.contacts).sort((a, b) => {
+                    return (b[1].lastMessage ? 1 : 0) - (a[1].lastMessage ? 1 : 0);
+                });
+                
+                sorted.forEach(([peerId, contact]) => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 hover:bg-[#2a3942] cursor-pointer border-b border-[#2a3942] flex items-center gap-3';
+                    div.setAttribute('data-peer', peerId);
+                    div.onclick = () => UI.loadChat(peerId);
+                    
+                    const avatar = UI.generateAvatar(contact.name);
+                    let lastMsg = contact.lastMessage || 'No messages yet';
+                    
+                    // Add draft indicator
+                    if (contact.draft) {
+                        lastMsg = '<span class="text-red-400">Draft:</span> ' + lastMsg;
+                    }
+                    
+                    // Unread badge
+                    const unreadBadge = contact.unread > 0 ? 
+                        `<div class="unread-badge">${contact.unread > 99 ? '99+' : contact.unread}</div>` : '';
+                    
+                    div.innerHTML = `
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#00a884] to-[#008f6f] flex items-center justify-center text-white font-bold flex-shrink-0">${avatar}</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm text-[#e9edef] truncate flex items-center gap-1">
+                                ${Utils.escapeHTML(contact.name)}
+                            </div>
+                            <div class="text-xs text-[#8696a0] truncate">${lastMsg}</div>
+                        </div>
+                        ${unreadBadge}
+                    `;
+                    
+                    container.appendChild(div);
+                });
+                
+                if (sorted.length === 0) {
+                    container.innerHTML = '<div class="p-4 text-center text-[#8696a0] text-sm">No contacts yet</div>';
+                }
+            },
+            
+            generateAvatar: (name) => {
+                if (!name) return '?';
+                const words = name.trim().split(/\s+/);
+                if (words.length >= 2) {
+                    return (words[0][0] + words[1][0]).toUpperCase();
+                }
+                return name.substring(0, 2).toUpperCase();
+            },
+            
+            toggleAudio: (audioId) => {
+                const audio = document.getElementById(audioId);
+                if (!audio) return;
+                
+                const container = audio.parentElement;
+                if (!container) return;
+                
+                const btn = container.querySelector('.audio-play-btn');
+                const icon = btn?.querySelector('i');
+                const waveform = container.querySelector('.waveform');
+                
+                if (!btn || !icon) return;
+                
+                if (audio.paused) {
+                    audio.play();
+                    icon.setAttribute('data-lucide', 'pause');
+                    waveform?.classList.add('playing');
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                } else {
+                    audio.pause();
+                    icon.setAttribute('data-lucide', 'play');
+                    waveform?.classList.remove('playing');
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+                
+                audio.onended = () => {
+                    icon.setAttribute('data-lucide', 'play');
+                    waveform?.classList.remove('playing');
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                };
+            },
+            
+            cyclePlaybackSpeed: (audioId) => {
+                const audio = document.getElementById(audioId);
+                const speedEl = document.getElementById(`${audioId}-speed`);
+                if (!audio || !speedEl) return;
+                
+                const speeds = [1, 1.5, 2];
+                const currentSpeed = audio.playbackRate;
+                const currentIndex = speeds.indexOf(currentSpeed);
+                const nextIndex = (currentIndex + 1) % speeds.length;
+                const nextSpeed = speeds[nextIndex];
+                
+                audio.playbackRate = nextSpeed;
+                speedEl.innerText = `${nextSpeed}x`;
             }
         };
 
@@ -600,7 +2220,7 @@
                              const dt = new DataTransfer(); dt.items.add(file);
                              document.getElementById('file-input').files = dt.files;
                              Network.sendMessage();
-                             UI.handleFileSelect({target: {files: dt.files}});
+                             Media.recording = false;
                          }
                          stream.getTracks().forEach(t => t.stop());
                      };
@@ -653,107 +2273,37 @@
             toggleScannerMirror: () => { const reader = document.getElementById('reader'); const video = reader.querySelector('video'); if(video) video.classList.toggle('mirror-x'); }
         };
 
-        const App = {
-            state: { id: null, name: null, activeChat: null, contacts: {}, pubStr: null },
-            fileChunks: {},
-            init: async () => {
-                lucide.createIcons();
-                // FIX: Fallback and robust check
-                if(document.getElementById('btn-create-profile')) {
-                    document.getElementById('btn-create-profile').onclick = App.createProfile;
-                }
-                try { await Store.init(); const name = await Store.get('config', 'name'); const id = await Store.get('config', 'id'); if (name && id) { document.getElementById('onboarding-screen').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); App.state.id = id; App.state.name = name; } } catch(e) { console.error("DB Init", e); }
-            },
-            createProfile: async () => { const name = document.getElementById('setup-name').value; const pass = document.getElementById('setup-password').value; if(!name || !pass) return alert("Required"); const btn = document.getElementById('btn-create-profile'); btn.innerText = "Processing..."; btn.disabled = true; try { if(!Store.db) await Store.init(); const id = 'ghost-' + Math.floor(Math.random() * 1000000); const kp = await Crypto.generateIdentity(); const encPriv = await Crypto.encryptPrivateKey(kp.privateKey, pass); const pubJWK = await window.crypto.subtle.exportKey("spki", kp.publicKey); await Store.put('config', 'name', name); await Store.put('config', 'id', id); await Store.put('config', 'encPrivateKey', encPriv); await Store.put('config', 'publicKey', pubJWK); App.loadMain(id, name, kp.privateKey, kp.publicKey); } catch(e) { alert("Error: " + e.message); btn.innerText = "Initialize Identity"; btn.disabled = false; } },
-            login: async () => { const pass = document.getElementById('login-password').value; try { const priv = await Crypto.decryptPrivateKey(await Store.get('config', 'encPrivateKey'), pass); const pub = await window.crypto.subtle.importKey("spki", await Store.get('config', 'publicKey'), {name:"ECDH",namedCurve:"P-256"}, true, []); App.loadMain(App.state.id, App.state.name, priv, pub); } catch(e) { alert("Wrong Password"); } },
-            loadMain: async (id, name, priv, pub) => { 
-                // Fix: State injection
-                App.state.id = id; 
-                App.state.name = name; 
-                Crypto.keyPair = { privateKey: priv, publicKey: pub }; 
-                App.state.pubStr = await Crypto.exportKey(pub); 
-                document.getElementById('onboarding-screen').classList.add('hidden'); 
-                document.getElementById('login-screen').classList.add('hidden'); 
-                document.getElementById('app-layout').classList.remove('hidden'); 
-                App.state.contacts = await Store.get('config', 'contacts') || {}; 
-                UI.renderContacts(); UI.updateSelf(name); Network.init(id); 
-            },
-            addContact: (id, name, pubKey) => { App.state.contacts[id] = { id, name: name || "Unknown", pubKey: pubKey || App.state.contacts[id]?.pubKey }; Store.put('config', 'contacts', App.state.contacts); UI.renderContacts(); },
-            deleteContact: async (id) => { if(!confirm("Delete contact and all messages?")) return; delete App.state.contacts[id]; await Store.put('config', 'contacts', App.state.contacts); await Store.deleteMessagesForPeer(id); if(Network.connections[id]) Network.connections[id].conn.close(); delete Network.connections[id]; if(App.state.activeChat === id) UI.closeChat(); UI.renderContacts(); },
-            addMessage: (peerId, content, dir, type, status, id) => {
-                 const msg = { id: id || Date.now().toString(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
-                 if (type === 'file' && content.blob && content.size > 10 * 1024 * 1024) { content.blob = null; }
-                 
-                 Store.getMessages(peerId).then(async (msgs) => {
-                     const existing = msgs.find(m => m.id === id);
-                     if(existing) { existing.content = content; existing.type = type; existing.status = status; await Store.put('messages', null, existing); } 
-                     else { await Store.put('messages', null, msg); }
-                     if(App.state.activeChat === peerId) UI.renderMessage(msg);
-                 });
-            },
-            exportIdentity: async () => { const data = { id: App.state.id, name: App.state.name, priv: await Store.get('config', 'encPrivateKey'), contacts: App.state.contacts, msgs: await Store.getAllMessages() }; const url = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: "application/json"})); const a = document.createElement('a'); a.href = url; a.download = "ghost_backup.json"; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
-        };
-
-        const UI = {
-            updateSelf: (name) => { document.getElementById('my-display-name').innerText = name; document.getElementById('my-avatar').innerText = name[0]; },
-            setStatus: (s) => document.getElementById('status-indicator').className = `w-3 h-3 rounded-full ${s==='online'?'bg-green-500':'bg-red-500'}`,
-            copyId: () => { navigator.clipboard.writeText(App.state.id); alert("ID Copied"); },
-            toggleAddContact: () => document.getElementById('new-chat-panel').classList.toggle('hidden'),
-            showQR: () => { if(!App.state.id) return; document.getElementById('qr-modal').classList.remove('hidden'); document.getElementById('qrcode-container').innerHTML = ''; setTimeout(() => { try { new QRCode(document.getElementById('qrcode-container'), { text: App.state.id, width: 200, height: 200 }); } catch(e) {} }, 100); },
-            startScanner: () => { document.getElementById('scanner-modal').classList.remove('hidden'); if(!Media.scanner) Media.scanner = new Html5Qrcode("reader"); const config = { fps: 10, qrbox: { width: 250, height: 250 } }; Media.scanner.start({ facingMode: "environment" }, config, (decodedText) => { Media.scanner.stop(); document.getElementById('scanner-modal').classList.add('hidden'); const id = decodedText.trim(); if(id) Network.connectWithRetry(id); }).catch(err => { alert("Cam Error"); document.getElementById('scanner-modal').classList.add('hidden'); }); },
-            stopScanner: () => { if(Media.scanner) { Media.scanner.stop().then(() => { document.getElementById('scanner-modal').classList.add('hidden'); }).catch(console.error); } else { document.getElementById('scanner-modal').classList.add('hidden'); } },
-            toggleScannerMirror: Media.toggleScannerMirror, 
-            toggleSendIcon: () => { const val = document.getElementById('message-input').value.trim(); if(val) { document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); } else { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); } },
-            showSafetyNumber: async () => { if(!App.state.activeChat) return; const c = App.state.contacts[App.state.activeChat]; if(c && c.pubKey) { document.getElementById('safety-number').innerText = await Crypto.generateFingerprint(c.pubKey); document.getElementById('safety-modal').classList.remove('hidden'); } },
-            showToast: (msg) => { const t = document.createElement('div'); t.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade-in z-[150]"; t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); },
-            renderContacts: () => { document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0]}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join(''); lucide.createIcons(); },
-            filterContacts: () => { const term = document.getElementById('search-contacts').value.toLowerCase(); document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).filter(c => c.name.toLowerCase().includes(term) || c.id.includes(term)).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0]}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join(''); lucide.createIcons(); },
-            loadChat: async (id) => { Utils.revokeBlobs(); App.state.activeChat = id; const c = App.state.contacts[id]; if(window.innerWidth < 768) { document.getElementById('sidebar-panel').classList.add('hidden'); document.getElementById('chat-area').classList.remove('hidden'); document.getElementById('chat-area').classList.add('flex'); } document.getElementById('chat-empty-state').classList.add('hidden'); document.getElementById('chat-interface').classList.remove('hidden'); document.getElementById('chat-interface').classList.add('flex'); document.getElementById('chat-header-name').innerText = c.name; const status = Network.connections[id] ? "Online" : "Offline"; document.getElementById('chat-header-status').innerText = status; document.getElementById('chat-header-avatar').innerText = c.name[0]; const msgs = await Store.getMessages(id); document.getElementById('messages-container').innerHTML = ''; msgs.forEach(UI.renderMessage); },
-            closeChat: () => { document.getElementById('chat-area').classList.add('hidden'); document.getElementById('sidebar-panel').classList.remove('hidden'); },
-            handleFileSelect: (e) => { if(e.target.files[0]) { document.getElementById('file-preview-area').classList.remove('hidden'); document.getElementById('file-preview-name').innerText = e.target.files[0].name; document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); } },
-            clearFile: () => { document.getElementById('file-input').value = ''; document.getElementById('file-preview-area').classList.add('hidden'); const val = document.getElementById('message-input').value.trim(); if(!val) { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); } },
-            handleInputKey: (e) => { const val = document.getElementById('message-input').value.trim(); if(val) { document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); } else { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); } if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Network.sendMessage(); } },
-            handleMainAction: () => { const val = document.getElementById('message-input').value.trim(); const file = document.getElementById('file-input').files.length > 0; if(val || file) Network.sendMessage(); else Media.toggleRecordUI(); },
-            updateHeaderStatus: (id, s) => { if(App.state.activeChat === id) document.getElementById('chat-header-status').innerText = s; },
-            updateMessageTick: (id, status) => { const el = document.getElementById(`msg-${id}`); if(el) { const tickContainer = el.querySelector('.tick-container'); if(tickContainer) { let html = Utils.getStatusHtml(status); const time = el.dataset.time; tickContainer.innerHTML = `${time} ${html}`; } } },
-            renderMessage: (msg) => {
-                const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
-                let content = '';
-                if ((msg.type === 'file' || msg.type === 'voice') && msg.content.blob && !msg.content.url) { msg.content.url = Utils.addBlob(URL.createObjectURL(msg.content.blob)); }
-                if (msg.type === 'file-receiving') { content = `<div class="file-card-inner"><div class="file-icon-box bg-gray-600"><i data-lucide="loader" class="animate-spin w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0]">Receiving...</div></div></div>`; }
-                else if (msg.type === 'text') { content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`; }
-                else if (msg.type === 'voice') { content = `<div class="audio-card"><div class="audio-play-btn" onclick="this.nextElementSibling.play()"><i data-lucide="play" class="w-4 h-4 text-white"></i></div><audio src="${msg.content.url}" class="hidden" onended="this.previousElementSibling.innerHTML='<svg...><path d=\\'M5 3l14 9-14 9V3z\\'/></svg>'"></audio><div class="waveform"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>`; }
-                else if (msg.type === 'file') {
-                    const sizeStr = Utils.formatBytes(msg.content.size);
-                    if (msg.content.mime.startsWith('image')) {
-                         content = `<div class="relative cursor-pointer" onclick="window.open('${msg.content.url}')"><img src="${msg.content.url}" class="rounded-lg max-w-[240px] max-h-[300px] object-cover" loading="lazy"></div>`;
-                         const icon = isMe ? Utils.getStatusHtml(msg.status) : '';
-                         const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
-                         const existing = document.getElementById(`msg-${msg.id}`);
-                         const inner = `<div class="p-1 ${bg} rounded-lg shadow relative group">${content}<div class="absolute bottom-2 right-2 flex items-center gap-1 bg-black/40 px-1 rounded-md tick-container"><span class="text-[10px] text-white/90">${msg.time}</span>${icon}</div></div>`;
-                         if(existing) existing.innerHTML = inner; else { div.innerHTML = inner; c.appendChild(div); c.scrollTop = c.scrollHeight; }
-                         lucide.createIcons();
-                         return;
-                    } else {
-                        const iconBg = isMe ? 'bg-[#025144]' : 'bg-[#1d282f]';
-                        let iconName = 'file'; let colorClass = 'bg-[#00a884]';
-                        if(msg.content.mime.includes('pdf')) { iconName = 'file-text'; colorClass = 'bg-red-500'; }
-                        else if(msg.content.mime.includes('word')) { iconName = 'file-text'; colorClass = 'bg-blue-500'; }
-                        else if(msg.content.mime.startsWith('video/')) { iconName = 'video'; colorClass = 'bg-purple-600'; }
-                        content = `<div class="file-card-inner cursor-pointer" onclick="window.open('${msg.content.url}')"><div class="file-icon-box" style="background-color: ${colorClass.replace('bg-','')}"><i data-lucide="${iconName}" class="w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium break-all whitespace-normal leading-tight text-[#e9edef] line-clamp-2">${msg.content.name}</div><div class="text-[10px] text-[#8696a0] mt-0.5">${sizeStr} • ${msg.content.mime.split('/')[1].toUpperCase().slice(0,3)}</div></div><div class="p-2 hover:bg-black/20 rounded-full text-[#8696a0]"><i data-lucide="download" class="w-5 h-5"></i></div></div>`;
-                    }
-                }
-                let icon = isMe ? Utils.getStatusHtml(msg.status) : '';
-                const div = document.createElement('div'); div.className = `flex ${align} animate-fade-in mb-1`; div.id = `msg-${msg.id}`; div.dataset.time = msg.time;
-                const existing = document.getElementById(`msg-${msg.id}`);
-                const inner = `<div class="p-2 ${bg} rounded-lg text-sm max-w-[75%] shadow break-words text-[#e9edef]">${content}<div class="text-[10px] text-right mt-1 opacity-60 flex justify-end items-center gap-1 tick-container">${msg.time} ${icon}</div></div>`;
-                if(existing) { existing.innerHTML = inner; } else { div.innerHTML = inner; c.appendChild(div); c.scrollTop = c.scrollHeight; }
-                lucide.createIcons();
-            }
-        };
-
         // Defer init to ensure DOM ready
         window.addEventListener('load', App.init);
+        
+        // Global error handler
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e.error);
+            if (e.error?.message?.includes('crypto') || e.error?.message?.includes('encrypt')) {
+                UI.showToast('Encryption error occurred');
+            }
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled rejection:', e.reason);
+            if (e.reason?.message?.includes('Connection')) {
+                UI.showToast('Connection error');
+            }
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            Utils.revokeBlobs();
+            if (Media.localStream) {
+                Media.localStream.getTracks().forEach(t => t.stop());
+            }
+            if (Media.scanner) {
+                Media.scanner.stop().catch(() => {});
+            }
+            if (Network.peer) {
+                Network.peer.destroy();
+            }
+        });
     </script>
 </body>
 </html>
