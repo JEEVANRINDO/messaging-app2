@@ -54,7 +54,9 @@
         @keyframes pulseRed { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .bubble-constraint { max-width: 85%; }
         @media (min-width: 768px) { .bubble-constraint { max-width: 60%; } }
+        
         .mirror-x { transform: scaleX(-1); }
+        .status-container { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-left: 5px; vertical-align: text-bottom; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -67,7 +69,7 @@
         <div class="w-full max-w-sm space-y-4">
             <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
             <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <button id="btn-create-profile" type="button" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
+            <button id="btn-create-profile" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
         </div>
     </div>
 
@@ -115,7 +117,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v14.0 Protocol</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v15.0 ReplayFix</span>
             </div>
         </div>
 
@@ -211,8 +213,8 @@
             escapeHTML: str => str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]),
             linkify: str => str.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-blue-400 hover:underline">$1</a>'),
             blobRegistry: new Set(),
-            addBlob: (url) => { Utils.blobRegistry.add(url); return url; },
-            revokeBlobs: () => { /* Fix 5: Do not revoke aggressively */ },
+            addBlob: (url) => Utils.blobRegistry.add(url),
+            revokeBlobs: () => { Utils.blobRegistry.forEach(u => URL.revokeObjectURL(u)); Utils.blobRegistry.clear(); },
             bufferToHex: (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''),
             formatBytes: (bytes) => {
                 if (bytes === 0) return '0 B';
@@ -232,7 +234,7 @@
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
-                const req = indexedDB.open("GhostMeshSecure", 14);
+                const req = indexedDB.open("GhostMeshSecure", 15);
                 req.onupgradeneeded = e => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains("config")) db.createObjectStore("config");
@@ -337,7 +339,7 @@
         };
 
         const Network = {
-            peer: null, connections: {}, uploadCancelled: false, activeUploads: {},
+            peer: null, connections: {}, uploadCancelled: false,
             init: async (id) => {
                 if(Network.peer) return;
                 Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
@@ -351,33 +353,21 @@
                 if(id) Network.connectWithRetry(id);
             },
             connectWithRetry: async (id, retries = 0) => {
-                // Fix 1: Check actual open state
-                if (Network.connections[id] && Network.connections[id].conn.open) return;
-                
+                if (Network.connections[id]?.conn?.open) return;
                 const conn = Network.peer.connect(id, { reliable: true });
-                // Fix 2: Initialize or merge connection object immediately
                 if (!Network.connections[id]) Network.connections[id] = { conn, key: null, seqOut: 0, lastSeq: 0 };
                 else Network.connections[id].conn = conn;
 
                 conn.on('open', () => {
                     conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-                    // Only process if we already have keys (reconnect)
                     if(Network.connections[id].key) Network.processQueue(id);
                 });
                 conn.on('error', () => { if (retries < 3) setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000); });
-                // Fix 1: Single handler path
                 Network.handleConn(conn);
             },
             handleConn: (conn) => {
-                // Fix 1: Guard against double-binding
-                if(conn._hasListeners) return;
-                conn._hasListeners = true;
-                
                 conn.on('data', data => Network.handleData(conn.peer, data, conn));
-                conn.on('close', () => { 
-                    delete Network.connections[conn.peer]; 
-                    UI.updateHeaderStatus(conn.peer, "Offline"); 
-                });
+                conn.on('close', () => { delete Network.connections[conn.peer]; UI.updateHeaderStatus(conn.peer, "Offline"); });
             },
             processQueue: async (peerId) => {
                 const pending = await Store.getPendingMessages(peerId);
@@ -387,38 +377,11 @@
                     if (msg.type === 'text') {
                         const enc = await Crypto.encryptPayload({ content: msg.content, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key);
                         connObj.conn.send({ type: 'msg', payload: enc, id: msg.id });
-                        // Fix #1: Update status
                         msg.status = 'sent';
                         await Store.put('messages', null, msg);
                         if(App.state.activeChat === peerId) UI.updateMessageTick(msg.id, 'sent');
-                    } else if (msg.type === 'file' || msg.type === 'voice') {
-                         // Fix #4: Resume file sending logic (simplified for single blob)
-                         if (msg.content.blob) {
-                              const file = msg.content.blob;
-                              const CHUNK = 256 * 1024;
-                              const totalChunks = Math.ceil(file.size / CHUNK);
-                              connObj.conn.send({ type: 'file-start', id: msg.id, name: msg.content.name, mime: msg.content.mime, encSize: file.size, totalChunks });
-                              
-                              let offset = 0;
-                              const streamLoop = async () => {
-                                   if (!Network.activeUploads[msg.id]) return; // Cancellation support
-                                   if(offset >= file.size) return; // Done
-                                   if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
-                                   
-                                   const slice = file.slice(offset, offset + CHUNK);
-                                   const buf = await slice.arrayBuffer();
-                                   const enc = await Crypto.encryptBin(buf, connObj.key);
-                                   connObj.conn.send(enc);
-                                   offset += CHUNK;
-                                   // Progress update can be added here if needed
-                                   requestAnimationFrame(streamLoop);
-                              };
-                              Network.activeUploads[msg.id] = true;
-                              streamLoop();
-                         }
                     }
                 }
-                if(App.state.activeChat === peerId) UI.loadChat(peerId);
             },
             handleData: async (sender, data, conn) => {
                 if (data.type === 'handshake') {
@@ -426,8 +389,8 @@
                     const shared = await Crypto.deriveShared(pub);
                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
                     App.addContact(sender, data.name, pubStr);
-                    // Fix 2: Merge state
-                    Network.connections[sender] = { ...Network.connections[sender], conn, key: shared };
+                    // RESET SEQUENCES on handshake to fix replay/one-way bug
+                    Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
                     conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
                     if (!App.state.activeChat) UI.loadChat(sender);
                     else if (App.state.activeChat === sender) UI.loadChat(sender);
@@ -438,7 +401,8 @@
                      const shared = await Crypto.deriveShared(pub);
                      const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
                      App.addContact(sender, data.name, pubStr);
-                     Network.connections[sender] = { ...Network.connections[sender], conn, key: shared };
+                     // RESET SEQUENCES on ack
+                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
                      Network.processQueue(sender); 
                      if (App.state.activeChat === sender) UI.loadChat(sender);
                      else if (!App.state.activeChat) UI.loadChat(sender);
@@ -453,7 +417,6 @@
                      if (msg) {
                          const priority = { 'pending': 0, 'sent': 1, 'delivered': 2, 'read': 3 };
                          const current = msg.status || 'pending';
-                         // Fix 3: Strict priority check
                          if (priority[data.status] > priority[current]) {
                              msg.status = data.status;
                              await Store.put('messages', null, msg);
@@ -463,17 +426,15 @@
                      return;
                 }
 
-                // Fix 3: Use top level ID
-                const msgId = data.id || (data.payload ? data.payload.id : null) || Date.now().toString();
-
                 if (data.type === 'msg') {
                     try {
                         const dec = await Crypto.decryptPayload(data.payload, connObj.key);
-                        // Fix 5: Replay Check
+                        // Fix 4: Replay Check
                         if (dec.seq <= connObj.lastSeq) return;
                         connObj.lastSeq = dec.seq;
-
+                        
                         if(dec.type === 'text') {
+                             const msgId = data.id || Date.now().toString();
                              App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', msgId);
                              setTimeout(() => {
                                  conn.send({ type: 'receipt', msgId: msgId, status: 'delivered' });
@@ -484,54 +445,34 @@
                 }
                 
                 if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
-                    // Fix 1: Active Transfer Lookup
-                    const currentMsgId = App.activeTransfers[sender];
-                    const tracker = App.fileChunks[currentMsgId];
+                    const tracker = App.fileChunks[sender];
                     if (!tracker) return;
                     try {
                         const dec = await Crypto.decryptBin(data, connObj.key);
                         tracker.chunks.push(dec);
-                        // Fix 4: Chunk Counting
-                        // tracker.received is now just chunk count
-                        
+                        tracker.received += data.byteLength;
                         if (App.state.activeChat === sender) {
-                            const pct = Math.min(100, Math.round((tracker.chunks.length / tracker.totalChunks) * 100));
+                            const pct = Math.min(100, Math.round((tracker.received / tracker.encSize) * 100));
                             document.getElementById('download-progress').classList.remove('hidden');
                             document.getElementById('dl-progress-bar').style.width = pct + "%";
                             document.getElementById('dl-progress-percent').innerText = pct + "%";
                         }
-
-                        if (tracker.chunks.length >= tracker.totalChunks) {
+                        if (tracker.received >= tracker.encSize) {
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             
-                            // Fix 6: UI Sync - Fetch existing
-                            const msgs = await Store.getMessages(sender);
-                            const existing = msgs.find(m => m.id === tracker.msgId);
-                            
-                            if(existing) {
-                                existing.type = tracker.mime.startsWith('audio') ? 'voice' : 'file';
-                                existing.content.blob = blob;
-                                existing.content.url = Utils.addBlob(URL.createObjectURL(blob));
-                                // Fix 2: Status Logic
-                                existing.status = (App.state.activeChat === sender) ? 'read' : 'delivered';
-                                await Store.put('messages', null, existing);
-                                if(App.state.activeChat === sender) UI.renderMessage(existing);
-                            }
+                            // *** CRITICAL: Fix "Double Bubble" by passing MsgID to Update ***
+                            App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
                             
                             conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'delivered' });
                             if(App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'read' });
 
-                            delete App.fileChunks[tracker.msgId];
-                            delete App.activeTransfers[sender];
+                            delete App.fileChunks[sender];
                         }
                     } catch(e){}
                 }
                 if (data.type === 'file-start') {
-                     // Fix 1: Register Active Transfer
-                     App.activeTransfers[sender] = data.id;
-                     // Fix 4: Total Chunks from sender
-                     App.fileChunks[data.id] = { ...data, chunks: [], msgId: data.id, totalChunks: data.totalChunks };
+                     App.fileChunks[sender] = { ...data, received: 0, chunks: [], msgId: data.id };
                      App.addMessage(sender, { name: data.name, mime: data.mime, size: 0, blob: null }, 'in', 'file-receiving', 'pending', data.id);
                 }
             },
@@ -544,68 +485,49 @@
                     const file = fileInput.files[0];
                     if (file.size > 50*1024*1024) { alert("File > 50MB"); UI.clearFile(); return; }
                     const connObj = Network.connections[peerId];
-                    // Removed offline check to allow queueing
-
+                    // Removed offline alert - allow queue
+                    
                     Network.uploadCancelled = false;
                     const CHUNK = 256 * 1024;
+                    const overhead = 28;
                     const numChunks = Math.ceil(file.size / CHUNK);
-                    
+                    const totalEncSize = file.size + (numChunks * overhead);
+
                     const msgId = Date.now().toString(); 
                     App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
                     UI.clearFile();
-                    
-                    // Offline? Queue.
-                    if (!connObj?.conn?.open) return;
 
-                    // Fix 4: Send totalChunks
-                    connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: file.type, totalChunks: numChunks, encSize: file.size });
-                    
-                    let offset = 0;
-                    document.getElementById('upload-progress').classList.remove('hidden');
-                    
-                    const streamLoop = async () => {
-                        if (Network.uploadCancelled) {
-                             document.getElementById('upload-progress').classList.add('hidden');
-                             return;
-                        }
-                        if(offset >= file.size) {
-                             document.getElementById('upload-progress').classList.add('hidden');
-                             const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
-                             // Fix 1: Update status
-                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
-                             return;
-                        }
-                        if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
-
-                        const slice = file.slice(offset, offset + CHUNK);
-                        const buf = await slice.arrayBuffer();
-                        const enc = await Crypto.encryptBin(buf, connObj.key);
-                        connObj.conn.send(enc);
-                        
-                        offset += CHUNK;
-                        const pct = Math.min(100, Math.round((offset/file.size)*100));
-                        document.getElementById('progress-bar').style.width = pct + "%";
-                        document.getElementById('progress-percent').innerText = pct + "%";
-                        requestAnimationFrame(streamLoop);
-                    };
-                    streamLoop();
+                    if(connObj?.conn?.open) {
+                        connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: file.type, encSize: totalEncSize });
+                        let offset = 0; document.getElementById('upload-progress').classList.remove('hidden');
+                        const streamLoop = async () => {
+                            if (Network.uploadCancelled) { document.getElementById('upload-progress').classList.add('hidden'); return; }
+                            if(offset >= file.size) {
+                                 document.getElementById('upload-progress').classList.add('hidden');
+                                 // Fix 1: Update status immediately
+                                 const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
+                                 if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
+                                 return;
+                            }
+                            if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { setTimeout(streamLoop, 50); return; }
+                            const slice = file.slice(offset, offset + CHUNK); const buf = await slice.arrayBuffer(); const enc = await Crypto.encryptBin(buf, connObj.key); connObj.conn.send(enc);
+                            offset += CHUNK; 
+                            const pct = Math.min(100, Math.round((offset/file.size)*100));
+                            document.getElementById('progress-bar').style.width = pct + "%"; document.getElementById('progress-percent').innerText = pct + "%";
+                            requestAnimationFrame(streamLoop);
+                        }; streamLoop();
+                    }
                 } 
                 else if (input.value.trim()) {
-                    const text = input.value.trim();
-                    const connObj = Network.connections[peerId];
-                    const msgId = Date.now().toString();
-                    
-                    // Offline? Pending.
+                    const text = input.value.trim(); const connObj = Network.connections[peerId]; const msgId = Date.now().toString();
                     App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
-                    input.value = '';
-                    UI.toggleSendIcon();
+                    input.value = ''; UI.toggleSendIcon();
 
                     if (connObj?.conn?.open && connObj.key) {
                         try {
                             const encPayload = await Crypto.encryptPayload({ content: text, seq: ++connObj.seqOut, ts: Date.now(), type: 'text' }, connObj.key);
                             connObj.conn.send({ type: 'msg', id: msgId, payload: encPayload });
                             const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
-                            // Fix 1: Update status
                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
                         } catch(e) { console.error(e); }
                     }
@@ -650,7 +572,6 @@
                          if (Media.recording) {
                              const blob = new Blob(Media.audioChunks, { type: 'audio/webm' });
                              const file = new File([blob], `Voice.webm`, { type: 'audio/webm' });
-                             // Fix #6: Direct send
                              const dt = new DataTransfer(); dt.items.add(file);
                              document.getElementById('file-input').files = dt.files;
                              Network.sendMessage();
@@ -709,7 +630,7 @@
 
         const App = {
             state: { id: null, name: null, activeChat: null, contacts: {}, pubStr: null },
-            fileChunks: {}, activeTransfers: {}, // Fix 1
+            fileChunks: {},
             init: async () => {
                 lucide.createIcons();
                 if(document.getElementById('btn-create-profile')) { document.getElementById('btn-create-profile').onclick = App.createProfile; }
@@ -720,12 +641,14 @@
             loadMain: async (id, name, priv, pub) => { Crypto.keyPair = { privateKey: priv, publicKey: pub }; App.state.pubStr = await Crypto.exportKey(pub); document.getElementById('onboarding-screen').classList.add('hidden'); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('app-layout').classList.remove('hidden'); App.state.contacts = await Store.get('config', 'contacts') || {}; UI.renderContacts(); UI.updateSelf(name); Network.init(id); },
             addContact: (id, name, pubKey) => { App.state.contacts[id] = { id, name: name || "Unknown", pubKey: pubKey || App.state.contacts[id]?.pubKey }; Store.put('config', 'contacts', App.state.contacts); UI.renderContacts(); },
             deleteContact: async (id) => { if(!confirm("Delete contact and all messages?")) return; delete App.state.contacts[id]; await Store.put('config', 'contacts', App.state.contacts); await Store.deleteMessagesForPeer(id); if(Network.connections[id]) Network.connections[id].conn.close(); delete Network.connections[id]; if(App.state.activeChat === id) UI.closeChat(); UI.renderContacts(); },
-            // Fix 5: Atomic update
             addMessage: (peerId, content, dir, type, status, id) => {
                  const msg = { id: id || Date.now().toString(), peerId, content, dir, type, status, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
                  if (type === 'file' && content.blob && content.size > 10 * 1024 * 1024) { content.blob = null; }
                  
-                 Store.put('messages', null, msg).then(() => {
+                 Store.getMessages(peerId).then(async (msgs) => {
+                     const existing = msgs.find(m => m.id === id);
+                     if(existing) { existing.content = content; existing.type = type; existing.status = status; await Store.put('messages', null, existing); } 
+                     else { await Store.put('messages', null, msg); }
                      if(App.state.activeChat === peerId) UI.renderMessage(msg);
                  });
             },
@@ -757,7 +680,7 @@
             renderMessage: (msg) => {
                 const c = document.getElementById('messages-container'), isMe = msg.dir === 'out', bg = isMe ? 'msg-sent' : 'msg-received', align = isMe ? 'justify-end' : 'justify-start';
                 let content = '';
-                if ((msg.type === 'file' || msg.type === 'voice') && msg.content.blob && !msg.content.url) { msg.content.url = Utils.addBlob(URL.createObjectURL(msg.content.blob)); }
+                if ((msg.type === 'file' || msg.type === 'voice') && msg.content.blob && !msg.content.url) { msg.content.url = URL.createObjectURL(msg.content.blob); }
                 if (msg.type === 'file-receiving') { content = `<div class="file-card-inner"><div class="file-icon-box bg-gray-600"><i data-lucide="loader" class="animate-spin w-5 h-5"></i></div><div class="flex-1 min-w-0"><div class="text-sm font-medium text-[#e9edef]">${msg.content.name}</div><div class="text-[10px] text-[#8696a0]">Receiving...</div></div></div>`; }
                 else if (msg.type === 'text') { content = `<div class="text-sm">${Utils.linkify(msg.content)}</div>`; }
                 else if (msg.type === 'voice') { content = `<div class="audio-card"><div class="audio-play-btn" onclick="this.nextElementSibling.play()"><i data-lucide="play" class="w-4 h-4 text-white"></i></div><audio src="${msg.content.url}" class="hidden" onended="this.previousElementSibling.innerHTML='<svg...><path d=\\'M5 3l14 9-14 9V3z\\'/></svg>'"></audio><div class="waveform"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>`; }
