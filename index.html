@@ -2,1163 +2,1108 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GhostMesh | Pro Secure</title>
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
+    <!-- Styles -->
     <style>
-        /* ... (CSS remains the same) ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b141a;
+            color: #e9edef;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Onboarding Screen */
+        #onboarding-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1f2c 0%, #111b21 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .logo-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo-icon {
+            font-size: 48px;
+            color: #00a884;
+            margin-bottom: 20px;
+        }
+        
+        .logo-text {
+            font-size: 32px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .logo-subtext {
+            color: #8696a0;
+            font-size: 14px;
+        }
+        
+        .input-group {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            background: #2a3942;
+            border: 1px solid #3d4b53;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #00a884;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
+            background: #00a884;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn-primary:hover {
+            background: #008f6f;
+        }
+        
+        /* Main App Layout */
+        #app-layout {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* Sidebar */
+        #sidebar-panel {
+            width: 400px;
+            background: #111b21;
+            border-right: 1px solid #2a3942;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-header {
+            padding: 15px;
+            background: #202c33;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: #00a884;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .user-info h3 {
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+        
+        .user-info .status {
+            font-size: 12px;
+            color: #8696a0;
+        }
+        
+        .sidebar-search {
+            padding: 15px;
+            background: #111b21;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 10px 15px;
+            background: #202c33;
+            border: none;
+            border-radius: 8px;
+            color: white;
+        }
+        
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .chat-item {
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #2a3942;
+            cursor: pointer;
+        }
+        
+        .chat-item:hover {
+            background: #202c33;
+        }
+        
+        .chat-avatar {
+            width: 50px;
+            height: 50px;
+            background: #3d4b53;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .chat-info {
+            flex: 1;
+        }
+        
+        .chat-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .chat-preview {
+            font-size: 14px;
+            color: #8696a0;
+        }
+        
+        /* Chat Area */
+        #chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0b141a;
+        }
+        
+        .chat-header {
+            padding: 15px;
+            background: #202c33;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #2a3942;
+        }
+        
+        .chat-contact {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 8px;
+            position: relative;
+            word-wrap: break-word;
+        }
+        
+        .message.sent {
+            background: #005c4b;
+            align-self: flex-end;
+            border-top-right-radius: 0;
+        }
+        
+        .message.received {
+            background: #202c33;
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        /* File message */
+        .file-message {
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: #3d4b53;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .file-details {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .file-size {
+            font-size: 12px;
+            color: #8696a0;
+        }
+        
+        .download-btn {
+            padding: 6px 12px;
+            background: #00a884;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        /* Image message */
+        .image-message {
+            max-width: 300px;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .image-message img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        /* Input Area */
+        .input-area {
+            padding: 15px;
+            background: #202c33;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .message-input {
+            flex: 1;
+            background: #2a3942;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: white;
+            font-size: 15px;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+        }
+        
+        .message-input:focus {
+            outline: none;
+        }
+        
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            background: #00a884;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #202c33;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            animation: fadeInOut 3s ease-in-out;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            90% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        }
     </style>
 </head>
-<body class="flex flex-col md:flex-row">
+<body>
+    <!-- Onboarding Screen -->
+    <div id="onboarding-screen">
+        <div class="logo-container">
+            <div class="logo-icon">🔒</div>
+            <div class="logo-text">GhostMesh Secure</div>
+            <div class="logo-subtext">End-to-End Encrypted Messaging</div>
+        </div>
+        
+        <div class="input-group">
+            <input type="text" id="setup-name" class="input-field" placeholder="Display Name">
+            <input type="password" id="setup-password" class="input-field" placeholder="Set Encryption Password">
+        </div>
+        
+        <button id="btn-create-profile" class="btn-primary">Initialize Identity</button>
+    </div>
 
-    <!-- ... (HTML structure remains the same) ... -->
+    <!-- Main App -->
+    <div id="app-layout" class="hidden">
+        <!-- Sidebar -->
+        <div id="sidebar-panel">
+            <div class="sidebar-header">
+                <div class="user-avatar" id="my-avatar">ME</div>
+                <div class="user-info">
+                    <h3 id="my-display-name">Loading...</h3>
+                    <div class="status" id="network-status">Connecting...</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-search">
+                <input type="text" class="search-input" placeholder="Search contacts...">
+            </div>
+            
+            <div class="chat-list" id="chat-list">
+                <!-- Chat items will be added here -->
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div id="chat-area" class="hidden">
+            <div class="chat-header">
+                <div class="chat-contact">
+                    <div class="chat-avatar" id="chat-avatar">?</div>
+                    <div>
+                        <div id="chat-name">Select a chat</div>
+                        <div id="chat-status" class="status">Offline</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="messages-container" id="messages-container">
+                <!-- Messages will be added here -->
+                <div style="text-align: center; color: #8696a0; padding: 40px;">
+                    Select a chat to start messaging
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <textarea class="message-input" id="message-input" placeholder="Type a message..." rows="1"></textarea>
+                <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const Utils = {
-            escapeHTML: str => str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]),
-            linkify: str => str.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-blue-400 hover:underline">$1</a>'),
-            blobRegistry: new Map(), // Changed from Set to Map for better tracking
-            addBlob: (key, url) => { 
-                // Revoke old URL if exists
-                if (Utils.blobRegistry.has(key)) {
-                    URL.revokeObjectURL(Utils.blobRegistry.get(key));
-                }
-                Utils.blobRegistry.set(key, url); 
-                return url; 
-            },
-            revokeBlobs: () => { 
-                Utils.blobRegistry.forEach(u => URL.revokeObjectURL(u)); 
-                Utils.blobRegistry.clear(); 
-            },
-            bufferToHex: (buf) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''),
-            formatBytes: (bytes) => {
-                if (bytes === 0) return '0 B';
-                const k=1024, i=Math.floor(Math.log(bytes)/Math.log(k));
-                return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + ['B','KB','MB','GB'][i];
-            },
-            detectMimeType: (fileName, mimeType) => {
-                // If mime type is valid, use it
-                if (mimeType && mimeType.trim() && mimeType !== 'application/octet-stream') return mimeType;
+        // Simplified App State
+        const AppState = {
+            id: null,
+            name: null,
+            password: null,
+            activeChat: null,
+            contacts: {},
+            messages: {},
+            peer: null,
+            connections: {}
+        };
+
+        // Initialize the app
+        async function initializeApp() {
+            console.log("Initializing app...");
+            
+            // Check if profile exists
+            const savedName = localStorage.getItem('ghostmesh_name');
+            const savedId = localStorage.getItem('ghostmesh_id');
+            
+            if (savedName && savedId) {
+                // Load existing profile
+                AppState.name = savedName;
+                AppState.id = savedId;
+                AppState.contacts = JSON.parse(localStorage.getItem('ghostmesh_contacts') || '{}');
+                AppState.messages = JSON.parse(localStorage.getItem('ghostmesh_messages') || '{}');
                 
-                // Fallback to extension-based detection
-                if (!fileName) return 'application/octet-stream';
-                const ext = fileName.toLowerCase().split('.').pop();
-                const mimeMap = {
-                    'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif',
-                    'webp': 'image/webp', 'heic': 'image/heic', 'heif': 'image/heif',
-                    'mp4': 'video/mp4', 'webm': 'video/webm', 'mov': 'video/quicktime',
-                    'pdf': 'application/pdf', 'doc': 'application/msword', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                    'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    'ppt': 'application/vnd.ms-powerpoint', 'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                    'zip': 'application/zip', 'rar': 'application/x-rar-compressed', '7z': 'application/x-7z-compressed',
-                    'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4'
-                };
-                return mimeMap[ext] || 'application/octet-stream';
-            },
-            getStatusHtml: (status) => {
-                let cl = 'status-orb';
-                if(status === 'pending') cl += ' status-pending';
-                else if(status === 'sent') cl += ' status-sent';
-                else if(status === 'delivered') cl += ' status-delivered';
-                else if(status === 'read') cl += ' status-read';
-                return `<div class="status-container"><div class="${cl}"></div></div>`;
-            },
-            getFileIcon: (mime, name) => {
-                if (!name || typeof name !== 'string') return '<div class="file-icon-box" style="background-color: #8696a0">FILE</div>';
-                const parts = name.split('.');
-                const ext = parts.length > 1 ? parts.pop().toUpperCase() : 'FILE';
-                let color = '#8696a0'; // default gray
-                let label = ext.substring(0, 3);
-                
-                if (mime && mime.includes('pdf')) { color = '#ef4444'; label = 'PDF'; }
-                else if (mime && (mime.includes('word') || ext === 'DOC' || ext === 'DOCX')) { color = '#3b82f6'; label = 'DOC'; }
-                else if (mime && (mime.includes('zip') || ext === 'ZIP' || ext === 'RAR')) { color = '#f97316'; label = 'ZIP'; }
-                else if (mime && (mime.includes('excel') || ext === 'XLS' || ext === 'XLSX')) { color = '#10b981'; label = 'XLS'; }
-                else if (mime && (mime.includes('powerpoint') || ext === 'PPT' || ext === 'PPTX')) { color = '#f59e0b'; label = 'PPT'; }
-                
-                return `<div class="file-icon-box" style="background-color: ${color}">${label}</div>`;
-            },
-            // NEW: Check if file is an image by mime type or extension
-            isImageFile: (fileName, mimeType) => {
-                const mime = Utils.detectMimeType(fileName, mimeType);
-                if (mime.startsWith('image/')) return true;
-                
-                // Also check by extension
-                if (!fileName) return false;
-                const ext = fileName.toLowerCase().split('.').pop();
-                const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'bmp', 'svg'];
-                return imageExtensions.includes(ext);
+                showApp();
+                initializePeer();
+            } else {
+                // Show onboarding
+                document.getElementById('onboarding-screen').classList.remove('hidden');
+                document.getElementById('btn-create-profile').onclick = createProfile;
             }
-        };
+        }
 
-        const Store = {
-            // ... (Store code remains the same) ...
-        };
-
-        const Crypto = {
-            // ... (Crypto code remains the same) ...
-        };
-
-        const Network = {
-            CONFIG: { CONNECTION_TIMEOUT: 15000, RECONNECT_INTERVAL: 30000, RECONNECT_DELAY: 3000, PEER_READY_RETRY_DELAY: 2000, PING_INTERVAL: 5000, MAX_RETRY_ATTEMPTS: 3, INITIAL_BACKOFF: 1000, DEBUG_MODE: false },
-            peer: null, connections: {}, uploadCancelled: false, typingTimers: {}, connectionStates: {}, pingIntervalId: null, reconnectIntervalId: null,
-            debugLog: (message, data) => {
-                if (Network.CONFIG.DEBUG_MODE) {
-                    console.log(`[${new Date().toISOString()}] ${message}`, data || '');
-                    const debugLogs = document.getElementById('debug-logs');
-                    if (debugLogs) {
-                        const logDiv = document.createElement('div');
-                        logDiv.className = 'text-[#00a884]';
-                        logDiv.textContent = `${message} ${data ? JSON.stringify(data) : ''}`;
-                        debugLogs.prepend(logDiv);
-                        while (debugLogs.children.length > 50) debugLogs.removeChild(debugLogs.lastChild);
-                    }
-                }
-            },
-            init: async (id) => {
-                // ... (init code remains the same) ...
-            },
-            connectToInput: () => {
-                // ... (connectToInput code remains the same) ...
-            },
-            connectWithRetry: async (id, retries = 0, backoff = Network.CONFIG.INITIAL_BACKOFF) => {
-                // ... (connectWithRetry code remains the same) ...
-            },
-            handleConn: (conn) => {
-                // ... (handleConn code remains the same) ...
-            },
-            processQueue: async (peerId) => {
-                // ... (processQueue code remains the same) ...
-            },
-            handleData: async (sender, data, conn) => {
-                if (data.type === 'handshake' || data.type === 'handshake-ack') {
-                    try {
-                        const pub = await Crypto.importKey(data.key);
-                        const shared = await Crypto.deriveShared(pub);
-                        const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                        
-                        // FIX #4: Check if contact with same public key already exists
-                        let existingPeerId = null;
-                        for (const [pid, contact] of Object.entries(App.state.contacts)) {
-                            if (contact.pubStr === pubStr) {
-                                existingPeerId = pid;
-                                break;
-                            }
-                        }
-                        
-                        if (existingPeerId && existingPeerId !== sender) {
-                            // Same person, different peer ID - migrate to new ID
-                            console.log(`Contact reconnected with new peer ID: ${existingPeerId} -> ${sender}`);
-                            
-                            // Migrate messages
-                            const msgs = await Store.getMessages(existingPeerId);
-                            for (const msg of msgs) {
-                                msg.peerId = sender;
-                                await Store.put('messages', null, msg);
-                            }
-                            
-                            // Update active chat if needed
-                            if (App.state.activeChat === existingPeerId) {
-                                App.state.activeChat = sender;
-                            }
-                            
-                            // Delete old contact entry
-                            delete App.state.contacts[existingPeerId];
-                            delete Network.connections[existingPeerId];
-                            delete Network.connectionStates[existingPeerId];
-                        }
-                        
-                        // Add or update contact
-                        await App.addContact(sender, data.name, pubStr);
-                        
-                        // Update connection object
-                        Network.connections[sender] = { 
-                            conn, 
-                            key: shared, 
-                            seqOut: 0, 
-                            lastSeq: 0, 
-                            handshakeComplete: true 
-                        };
-                        Network.connectionStates[sender] = 'connected';
-                        
-                        if (data.type === 'handshake') conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-                        
-                        // Process pending messages after handshake
-                        await Network.processQueue(sender);
-                        
-                        if (App.state.activeChat === sender || !App.state.activeChat) UI.loadChat(sender);
-                        UI.updateConnectionState(sender, 'connected');
-                    } catch (err) { conn.close(); }
-                    return;
-                }
-                
-                const connObj = Network.connections[sender];
-                if (!connObj || !connObj.key) return;
-
-                if (data.type === 'receipt') {
-                     const msgs = await Store.getMessages(sender);
-                     const msg = msgs.find(m => m.id === data.msgId);
-                     if (msg) {
-                         const priority = { 'pending': 0, 'sent': 1, 'delivered': 2, 'read': 3 };
-                         if (priority[data.status] > priority[msg.status || 'pending']) {
-                             msg.status = data.status;
-                             await Store.put('messages', null, msg);
-                             if (App.state.activeChat === sender) UI.updateMessageTick(msg.id, data.status);
-                         }
-                     }
-                     return;
-                }
-                
-                if (data.type === 'typing') {
-                    if (App.state.activeChat === sender) {
-                        UI.showTypingIndicator(true);
-                        clearTimeout(Network.typingTimers[sender]);
-                        Network.typingTimers[sender] = setTimeout(() => UI.showTypingIndicator(false), 3000);
-                    }
-                    return;
-                }
-                
-                if (data.type === 'reaction') {
-                    await Store.putReaction({ id: `${data.msgId}-${sender}-${data.emoji}`, msgId: data.msgId, userId: sender, emoji: data.emoji, timestamp: Date.now() });
-                    if (App.state.activeChat === sender) UI.updateReactions(data.msgId);
-                    return;
-                }
-                
-                if (data.type === 'unreact') {
-                    await Store.deleteReaction(`${data.msgId}-${sender}-${data.emoji}`);
-                    if (App.state.activeChat === sender) UI.updateReactions(data.msgId);
-                    return;
-                }
-                
-                if (data.type === 'ping') { if (connObj?.conn?.open) connObj.conn.send({ type: 'pong', ts: data.ts }); return; }
-                if (data.type === 'pong') { if (connObj?.pingStart) connObj.ping = Date.now() - data.ts; return; }
-                if (data.type === 'clear-chat') { await Store.deleteMessagesForPeer(sender); if (App.state.activeChat === sender) UI.loadChat(sender); return; }
-                
-                if (data.type === 'delete-for-everyone') {
-                    const msgs = await Store.getMessages(sender);
-                    const msg = msgs.find(m => m.id === data.msgId);
-                    if (msg) {
-                        msg.deletedForEveryone = true; msg.content = 'This message was deleted';
-                        await Store.put('messages', null, msg);
-                        if (App.state.activeChat === sender) UI.loadChat(sender);
-                    }
-                    return;
-                }
-
-                if (data.type === 'msg') {
-                    try {
-                        const dec = await Crypto.decryptPayload(data.payload, connObj.key);
-                        if(dec.seq <= connObj.lastSeq) return;
-                        connObj.lastSeq = dec.seq;
-
-                        if(dec.type === 'text' || dec.type === 'location') {
-                             const msgId = data.id || Date.now().toString();
-                             const content = dec.type === 'location' ? { lat: dec.lat, lon: dec.lon, url: dec.url } : Utils.escapeHTML(dec.content);
-                             App.addMessage(sender, content, 'in', dec.type, 'read', msgId);
-                             setTimeout(() => {
-                                 if (connObj?.conn?.open) {
-                                     conn.send({ type: 'receipt', msgId: msgId, status: 'delivered' });
-                                     if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: msgId, status: 'read' });
-                                 }
-                             }, 50);
-                        }
-                    } catch(e) {}
-                }
-                
-                if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
-                    const tracker = App.fileChunks[sender];
-                    if (!tracker) return;
-                    try {
-                        const dec = await Crypto.decryptBin(data, connObj.key);
-                        tracker.chunks.push(dec);
-                        tracker.received += data.byteLength;
-                        if (App.state.activeChat === sender) {
-                            const pct = Math.min(100, Math.round((tracker.received / tracker.encSize) * 100));
-                            document.getElementById('download-progress').classList.remove('hidden');
-                            document.getElementById('dl-progress-bar').style.width = pct + "%";
-                            document.getElementById('dl-progress-percent').innerText = pct + "%";
-                        }
-                        
-                        if (tracker.received >= tracker.encSize) {
-                            // Hide download progress
-                            const downloadProgress = document.getElementById('download-progress');
-                            if (downloadProgress) downloadProgress.classList.add('hidden');
-                            
-                            const blob = new Blob(tracker.chunks, { type: tracker.mime });
-                            // FIX #2: Create URL once and store it with message
-                            const urlKey = `file-${tracker.msgId}`;
-                            const url = Utils.addBlob(urlKey, URL.createObjectURL(blob));
-                            
-                            // Create message data with URL
-                            const msgData = {
-                                id: tracker.msgId,
-                                peerId: sender,
-                                content: { 
-                                    name: tracker.name, 
-                                    blob: blob, 
-                                    mime: tracker.mime, 
-                                    size: blob.size, 
-                                    url: url,
-                                    urlKey: urlKey // Store the key for cleanup
-                                },
-                                direction: 'in',
-                                type: tracker.mime.startsWith('audio') ? 'voice' : 'file',
-                                status: 'read',
-                                timestamp: Date.now()
-                            };
-                            
-                            await Store.put('messages', null, msgData);
-                            
-                            if(App.state.activeChat === sender) {
-                                UI.renderMessage(msgData);
-                            }
-
-                            if (connObj?.conn?.open) {
-                                conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'delivered' });
-                                if(App.state.activeChat === sender) {
-                                    conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'read' });
-                                }
-                            }
-                            delete App.fileChunks[sender];
-                        }
-                    } catch(e){ 
-                        console.error('File download error:', e);
-                        delete App.fileChunks[sender]; 
-                    }
-                }
-                if (data.type === 'file-start') {
-                     // FIX #1: Use enhanced mime type detection
-                     const detectedMime = Utils.detectMimeType(data.name, data.mime);
-                     App.fileChunks[sender] = { ...data, mime: detectedMime, received: 0, chunks: [], msgId: data.id };
-                     
-                     // Create placeholder message
-                     App.addMessage(sender, { 
-                         name: data.name, 
-                         mime: detectedMime, 
-                         size: data.size || 0, 
-                         blob: null 
-                     }, 'in', 'file', 'pending', data.id);
-                }
-            },
-            cancelUpload: () => { Network.uploadCancelled = true; },
-            sendMessage: async () => {
-                if (!App.state.activeChat) return;
-                const peerId = App.state.activeChat, input = document.getElementById('message-input'), fileInput = document.getElementById('file-input');
-                const connObj = Network.connections[peerId];
-                
-                // FIX #3: Separate file and text sending (not else-if)
-                let fileSent = false;
-                
-                if (fileInput.files.length > 0) {
-                    fileSent = true;
-                    const file = fileInput.files[0];
-                    if (file.size > 50*1024*1024) { 
-                        UI.showToast("File size must be under 50MB"); 
-                        UI.clearFile(); 
-                        return; 
-                    }
-                    if (!connObj?.conn?.open || !connObj?.key) { 
-                        UI.showToast("Cannot send files while offline"); 
-                        return; 
-                    }
-
-                    Network.uploadCancelled = false;
-                    const CHUNK = 256 * 1024;
-                    const overhead = 28;
-                    const numChunks = Math.ceil(file.size / CHUNK);
-                    const totalEncSize = file.size + (numChunks * overhead);
-                    const msgId = Date.now().toString();
-                    
-                    // FIX #1: Use enhanced mime type detection
-                    const detectedMime = Utils.detectMimeType(file.name, file.type);
-                    
-                    // FIX #2: Create ObjectURL once and store it
-                    const urlKey = `file-${msgId}`;
-                    const fileUrl = Utils.addBlob(urlKey, URL.createObjectURL(file));
-                    
-                    App.addMessage(peerId, { 
-                        name: file.name, 
-                        blob: file, 
-                        mime: detectedMime, 
-                        size: file.size, 
-                        url: fileUrl,
-                        urlKey: urlKey 
-                    }, 'out', 'file', 'pending', msgId);
-                    
-                    // Clear file input
-                    fileInput.value = '';
-                    UI.clearFile();
-
-                    connObj.conn.send({ 
-                        type: 'file-start', 
-                        id: msgId, 
-                        name: file.name, 
-                        mime: detectedMime, 
-                        encSize: totalEncSize,
-                        size: file.size 
-                    });
-                    
-                    let offset = 0;
-                    document.getElementById('upload-progress').classList.remove('hidden');
-                    
-                    const streamLoop = async () => {
-                        if (Network.uploadCancelled) { 
-                            document.getElementById('upload-progress').classList.add('hidden'); 
-                            // Revoke the blob URL since upload was cancelled
-                            if (fileUrl) URL.revokeObjectURL(fileUrl);
-                            return; 
-                        }
-                        if(offset >= file.size) {
-                             // File upload complete
-                             document.getElementById('upload-progress').classList.add('hidden');
-                             const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
-                             if(msg) { 
-                                 msg.status = 'sent'; 
-                                 await Store.put('messages', null, msg); 
-                                 UI.updateMessageTick(msgId, 'sent'); 
-                             }
-                             // Don't toggle send icon here - let text handler do it
-                             return;
-                        }
-                        if(connObj.conn.dataChannel.bufferedAmount > 32 * 1024 * 1024) { 
-                            setTimeout(streamLoop, 50); 
-                            return; 
-                        }
-                        const slice = file.slice(offset, offset + CHUNK);
-                        const buf = await slice.arrayBuffer();
-                        const enc = await Crypto.encryptBin(buf, connObj.key);
-                        connObj.conn.send(enc);
-                        offset += CHUNK;
-                        const pct = Math.min(100, Math.round((offset/file.size)*100));
-                        document.getElementById('progress-bar').style.width = pct + "%";
-                        document.getElementById('progress-percent').innerText = pct + "%";
-                        requestAnimationFrame(streamLoop);
-                    };
-                    streamLoop();
-                }
-                
-                // FIX #3: Always check for text message (not else-if)
-                if (input.value.trim()) {
-                    const text = input.value.trim();
-                    const msgId = Date.now().toString();
-                    App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
-                    input.value = '';
-                    input.style.height = 'auto';
-                    UI.toggleSendIcon();
-                    await UI.clearDraft(peerId);
-                    document.getElementById('smart-replies-container').classList.add('hidden');
-
-                    if (connObj?.conn?.open && connObj.key && connObj.handshakeComplete) {
-                        try {
-                            const encPayload = await Crypto.encryptPayload({ 
-                                content: text, 
-                                seq: ++connObj.seqOut, 
-                                ts: Date.now(), 
-                                type: 'text' 
-                            }, connObj.key);
-                            connObj.conn.send({ type: 'msg', id: msgId, payload: encPayload });
-                            const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
-                            if(msg) { 
-                                msg.status = 'sent'; 
-                                await Store.put('messages', null, msg); 
-                                UI.updateMessageTick(msgId, 'sent'); 
-                            }
-                        } catch(e) {
-                            console.error('Text send error:', e);
-                        }
-                    }
-                } else if (!fileSent) {
-                    // No file and no text - toggle send icon back to mic
-                    UI.toggleSendIcon();
-                }
-            },
-            sendTyping: () => { 
-                if (App.state.activeChat && Network.connections[App.state.activeChat]?.conn?.open) 
-                    Network.connections[App.state.activeChat].conn.send({ type: 'typing' }); 
-            },
-            sendReaction: async (msgId, emoji) => {
-                if (App.state.activeChat && Network.connections[App.state.activeChat]?.conn?.open) {
-                    Network.connections[App.state.activeChat].conn.send({ type: 'reaction', msgId, emoji });
-                    await Store.putReaction({ id: `${msgId}-${App.state.id}-${emoji}`, msgId, userId: App.state.id, emoji, timestamp: Date.now() });
-                    UI.updateReactions(msgId);
-                }
-            },
-            removeReaction: async (msgId, emoji) => {
-                if (App.state.activeChat && Network.connections[App.state.activeChat]?.conn?.open) {
-                    Network.connections[App.state.activeChat].conn.send({ type: 'unreact', msgId, emoji });
-                    await Store.deleteReaction(`${msgId}-${App.state.id}-${emoji}`);
-                    UI.updateReactions(msgId);
-                }
-            },
-            startPingMonitor: () => {
-                if (Network.pingIntervalId) clearInterval(Network.pingIntervalId);
-                if (Network.reconnectIntervalId) clearInterval(Network.reconnectIntervalId);
-                Network.pingIntervalId = setInterval(() => { 
-                    Object.keys(Network.connections).forEach(peerId => { 
-                        const connObj = Network.connections[peerId]; 
-                        if (connObj?.conn?.open && connObj.handshakeComplete) { 
-                            connObj.pingStart = Date.now(); 
-                            connObj.conn.send({ type: 'ping', ts: connObj.pingStart }); 
-                        } 
-                    }); 
-                }, Network.CONFIG.PING_INTERVAL);
-                Network.reconnectIntervalId = setInterval(() => { 
-                    Object.keys(App.state.contacts).forEach(peerId => { 
-                        const connObj = Network.connections[peerId]; 
-                        if (!connObj || !connObj.conn || connObj.conn.disconnected) { 
-                            Network.connectWithRetry(peerId, 0, 5000); 
-                        } 
-                    }); 
-                }, Network.CONFIG.RECONNECT_INTERVAL);
-            },
-            stopPingMonitor: () => { 
-                if (Network.pingIntervalId) clearInterval(Network.pingIntervalId); 
-                if (Network.reconnectIntervalId) clearInterval(Network.reconnectIntervalId); 
+        // Create new profile
+        function createProfile() {
+            const name = document.getElementById('setup-name').value.trim();
+            const password = document.getElementById('setup-password').value;
+            
+            if (!name || name.length < 2) {
+                showToast("Name must be at least 2 characters");
+                return;
             }
-        };
-
-        const App = {
-            CONFIG: { MIN_NAME_LENGTH: 2, MAX_NAME_LENGTH: 50, MIN_PASSWORD_LENGTH: 4, MAX_PASSWORD_LENGTH: 100 },
-            state: { 
-                id: null, 
-                name: null, 
-                pubStr: null, 
-                password: null, 
-                activeChat: null, 
-                contacts: {}, 
-                loginAttempts: 0, 
-                lockoutUntil: null, 
-                lastSeen: {},
-                pubStrToPeerId: {} // NEW: Map public key to current peer ID
-            },
-            fileChunks: {}, 
-            notificationPermission: false,
-            init: async () => {
-                // ... (init code remains the same) ...
-            },
-            createProfile: async () => {
-                // ... (createProfile code remains the same) ...
-            },
-            login: async () => {
-                // ... (login code remains the same) ...
-            },
-            addContact: async (peerId, name, pubStr) => {
-                if (!peerId || !name || !pubStr) return;
-                const sanitizedName = name.trim().substring(0, App.CONFIG.MAX_NAME_LENGTH);
-                
-                // Store mapping of public key to peer ID
-                App.state.pubStrToPeerId[pubStr] = peerId;
-                
-                // Check if we already have this contact (by public key)
-                let existingPeerId = null;
-                for (const [pid, contact] of Object.entries(App.state.contacts)) {
-                    if (contact.pubStr === pubStr && pid !== peerId) {
-                        existingPeerId = pid;
-                        break;
-                    }
-                }
-                
-                if (existingPeerId) {
-                    // Update existing contact with new peer ID
-                    console.log(`Updating contact ${sanitizedName} from ${existingPeerId} to ${peerId}`);
-                    
-                    // Migrate messages if needed
-                    const msgs = await Store.getMessages(existingPeerId);
-                    if (msgs.length > 0) {
-                        for (const msg of msgs) {
-                            msg.peerId = peerId;
-                            await Store.put('messages', null, msg);
-                        }
-                        console.log(`Migrated ${msgs.length} messages`);
-                    }
-                    
-                    // Delete old contact
-                    delete App.state.contacts[existingPeerId];
-                    
-                    // Update active chat if needed
-                    if (App.state.activeChat === existingPeerId) {
-                        App.state.activeChat = peerId;
-                        setTimeout(() => UI.loadChat(peerId), 100);
-                    }
-                }
-                
-                // Add/update contact
-                App.state.contacts[peerId] = { 
-                    name: sanitizedName, 
-                    pubStr, 
-                    lastSeen: Date.now(),
-                    originalName: name // Store original for reference
-                };
-                
-                await Store.put('config', 'contacts', App.state.contacts);
-                await Store.put('config', 'pubStrToPeerId', App.state.pubStrToPeerId);
-                
-                UI.renderContactList();
-                
-                // If this is the active chat, reload it
-                if (App.state.activeChat === peerId) {
-                    setTimeout(() => UI.loadChat(peerId), 100);
-                }
-            },
-            addMessage: async (peerId, content, direction, type, status, id) => {
-                const msgId = id || Date.now().toString();
-                const msg = { 
-                    id: msgId, 
-                    peerId, 
-                    content, 
-                    direction, 
-                    type, 
-                    status: status || 'pending', 
-                    timestamp: Date.now() 
-                };
-                
-                await Store.put('messages', null, msg);
-                
-                if (App.state.contacts[peerId]) {
-                    const preview = type === 'text' ? content.substring(0, 50) : 
-                                  type === 'file' ? '📎 File' : 
-                                  type === 'voice' ? '🎤 Voice' : 
-                                  type === 'location' ? '📍 Location' : 'Message';
-                    App.state.contacts[peerId].lastMessage = preview;
-                    
-                    if (direction === 'in' && App.state.activeChat !== peerId) {
-                        App.state.contacts[peerId].unread = (App.state.contacts[peerId].unread || 0) + 1;
-                    }
-                    
-                    await Store.put('config', 'contacts', App.state.contacts);
-                    UI.renderContactList();
-                }
-                
-                // FIX #5: Always render if active chat matches, regardless of connection state
-                if (App.state.activeChat === peerId) {
-                    UI.renderMessage(msg);
-                    const container = document.getElementById('messages-container');
-                    setTimeout(() => {
-                        if (container) {
-                            container.scrollTop = container.scrollHeight;
-                        }
-                    }, 50);
-                    
-                    if (direction === 'in' && type === 'text') UI.showSmartReplies();
-                }
-            },
-            exportIdentity: async () => {
-                // ... (exportIdentity code remains the same) ...
-            },
-            deleteContact: async (peerId) => {
-                if(confirm('Delete this contact and all chat history?')) {
-                    // Clean up any blob URLs associated with this contact's messages
-                    const msgs = await Store.getMessages(peerId);
-                    msgs.forEach(msg => {
-                        if (msg.content && msg.content.urlKey) {
-                            URL.revokeObjectURL(msg.content.url);
-                            Utils.blobRegistry.delete(msg.content.urlKey);
-                        }
-                    });
-                    
-                    delete App.state.contacts[peerId];
-                    await Store.put('config', 'contacts', App.state.contacts);
-                    await Store.deleteMessagesForPeer(peerId);
-                    
-                    if (App.state.activeChat === peerId) UI.closeChat();
-                    UI.renderContactList();
-                    UI.showToast('Contact deleted');
-                }
+            
+            if (!password || password.length < 4) {
+                showToast("Password must be at least 4 characters");
+                return;
             }
-        };
+            
+            // Generate unique ID
+            const id = 'user_' + Math.random().toString(36).substr(2, 9);
+            
+            // Save to AppState
+            AppState.name = name;
+            AppState.password = password;
+            AppState.id = id;
+            
+            // Save to localStorage
+            localStorage.setItem('ghostmesh_name', name);
+            localStorage.setItem('ghostmesh_id', id);
+            localStorage.setItem('ghostmesh_contacts', JSON.stringify({}));
+            localStorage.setItem('ghostmesh_messages', JSON.stringify({}));
+            
+            showApp();
+            initializePeer();
+        }
 
-        const UI = {
-            typingTimeout: null, 
-            selectionMode: false, 
-            selectedMessages: new Set(), 
-            currentAudio: null,
-            toggleTheme: async () => {
-                // ... (toggleTheme code remains the same) ...
-            },
-            toggleDebugMode: () => { 
-                Network.CONFIG.DEBUG_MODE = !Network.CONFIG.DEBUG_MODE; 
-                UI.showToast(Network.CONFIG.DEBUG_MODE ? 'Debug on' : 'Debug off'); 
-                document.getElementById('debug-panel').classList.toggle('hidden', !Network.CONFIG.DEBUG_MODE); 
-            },
-            showTypingIndicator: (show) => { 
-                document.getElementById('typing-indicator-container').classList.toggle('hidden', !show); 
-            },
-            showSmartReplies: () => {
-                // ... (showSmartReplies code remains the same) ...
-            },
-            sendSmartReply: (text) => { 
-                const input = document.getElementById('message-input'); 
-                input.value = text; 
-                Network.sendMessage(); 
-            },
-            saveDraft: async () => { 
-                // ... (saveDraft code remains the same) ...
-            },
-            loadDraft: async (peerId) => { 
-                // ... (loadDraft code remains the same) ...
-            },
-            clearDraft: async (peerId) => { 
-                // ... (clearDraft code remains the same) ...
-            },
-            copyId: () => { 
-                if (App.state.id) { 
-                    navigator.clipboard.writeText(App.state.id); 
-                    UI.showToast("ID copied!"); 
-                } 
-            },
-            toggleAddContact: () => { 
-                // ... (toggleAddContact code remains the same) ...
-            },
-            startScanner: async () => {
-                // ... (startScanner code remains the same) ...
-            },
-            stopScanner: () => { 
-                // ... (stopScanner code remains the same) ...
-            },
-            showQR: () => {
-                // ... (showQR code remains the same) ...
-            },
-            closeQRModal: () => document.getElementById('qr-modal').classList.add('hidden'),
-            updateNetworkStatus: (status) => {
-                // ... (updateNetworkStatus code remains the same) ...
-            },
-            setNetworkButtons: (enabled) => { 
-                // ... (setNetworkButtons code remains the same) ...
-            },
-            filterContacts: () => { 
-                // ... (filterContacts code remains the same) ...
-            },
-            handleFileSelect: (e) => { 
-                if (e.target.files[0]) { 
-                    document.getElementById('file-preview-area').classList.remove('hidden'); 
-                    document.getElementById('file-preview-name').innerText = e.target.files[0].name; 
-                    UI.toggleSendIcon(); 
-                } 
-            },
-            clearFile: () => { 
-                document.getElementById('file-input').value = ''; 
-                document.getElementById('file-preview-area').classList.add('hidden'); 
-                UI.toggleSendIcon(); 
-            },
-            sendLocation: () => {
-                // ... (sendLocation code remains the same) ...
-            },
-            handleMainAction: () => { 
-                if (document.getElementById('message-input').value.trim() || document.getElementById('file-input').files.length > 0) 
-                    Network.sendMessage(); 
-                else Media.toggleRecordUI(); 
-            },
-            handleInputKey: (e) => { 
-                if (e.key === 'Enter' && !e.shiftKey) { 
-                    e.preventDefault(); 
-                    Network.sendMessage(); 
-                } else { 
-                    UI.handleTypingAndDraft(); 
-                } 
-            },
-            toggleSendIcon: () => {
-                const hasText = document.getElementById('message-input').value.trim().length > 0;
-                const hasFile = document.getElementById('file-input').files.length > 0;
-                document.getElementById('icon-mic').classList.toggle('hidden', hasText || hasFile);
-                document.getElementById('icon-send').classList.toggle('hidden', !hasText && !hasFile);
-            },
-            handleInputChange: () => { 
-                UI.toggleSendIcon(); 
-                UI.handleTypingAndDraft(); 
-            },
-            handleTypingAndDraft: () => { 
-                Network.sendTyping(); 
-                clearTimeout(UI.typingTimeout); 
-                UI.typingTimeout = setTimeout(() => UI.saveDraft(), 500); 
-            },
-            toggleSearch: () => { 
-                // ... (toggleSearch code remains the same) ...
-            },
-            searchMessages: () => {
-                // ... (searchMessages code remains the same) ...
-            },
-            clearSearchHighlights: () => { 
-                // ... (clearSearchHighlights code remains the same) ...
-            },
-            toggleChatMenu: () => { 
-                // ... (toggleChatMenu code remains the same) ...
-            },
-            exportChat: () => { 
-                // ... (exportChat code remains the same) ...
-            },
-            exportChatJSON: async () => { /* ... */ },
-            exportChatText: async () => { /* ... */ },
-            showMediaGallery: async () => {
-                // ... (showMediaGallery code remains the same) ...
-            },
-            closeMediaGallery: () => document.getElementById('media-gallery-modal').classList.add('hidden'),
-            clearChat: async () => { 
-                if(confirm('Clear all messages?')) { 
-                    await Store.deleteMessagesForPeer(App.state.activeChat); 
-                    document.getElementById('messages-container').innerHTML = ''; 
-                    document.getElementById('chat-menu').classList.add('hidden'); 
-                } 
-            },
-            enterSelectionMode: () => { 
-                // ... (enterSelectionMode code remains the same) ...
-            },
-            exitSelectionMode: () => { 
-                // ... (exitSelectionMode code remains the same) ...
-            },
-            closeChat: () => { 
-                document.getElementById('chat-area').classList.add('hidden'); 
-                document.getElementById('sidebar-panel').classList.remove('hidden'); 
-            },
-            showSafetyNumber: async () => { 
-                // ... (showSafetyNumber code remains the same) ...
-            },
-            updateHeaderStatus: (peerId, status) => { 
-                if (App.state.activeChat === peerId) 
-                    document.getElementById('chat-header-status').innerText = status; 
-            },
-            updateConnectionState: (peerId, state) => { 
-                if (App.state.activeChat === peerId) 
-                    UI.updateHeaderStatus(peerId, state === 'connected' ? 'Online' : 'Offline'); 
-                UI.renderContactList(); 
-            },
-            loadChat: async (peerId) => {
-                App.state.activeChat = peerId;
-                const contact = App.state.contacts[peerId];
-                if (!contact) return;
-                
-                // Hide progress bars
-                const uploadProgress = document.getElementById('upload-progress');
-                const downloadProgress = document.getElementById('download-progress');
-                if (uploadProgress) uploadProgress.classList.add('hidden');
-                if (downloadProgress) downloadProgress.classList.add('hidden');
-                
-                // Send read receipts
-                const connObj = Network.connections[peerId];
-                const messages = await Store.getMessages(peerId);
-                
-                if (connObj?.conn?.open) {
-                    messages.forEach(msg => {
-                        if (msg.direction === 'in' && msg.status !== 'read') {
-                            msg.status = 'read';
-                            Store.put('messages', null, msg);
-                            connObj.conn.send({ type: 'receipt', msgId: msg.id, status: 'read' });
-                        }
-                    });
+        // Show main app
+        function showApp() {
+            document.getElementById('onboarding-screen').classList.add('hidden');
+            document.getElementById('app-layout').classList.remove('hidden');
+            
+            // Update UI
+            document.getElementById('my-display-name').textContent = AppState.name;
+            document.getElementById('my-avatar').textContent = getInitials(AppState.name);
+            
+            // Render contacts
+            renderContactList();
+            
+            // Setup event listeners
+            document.getElementById('message-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
                 }
+            });
+            
+            document.getElementById('message-input').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+        }
 
-                // Clear unread count
-                if (contact.unread > 0) { 
-                    contact.unread = 0; 
-                    await Store.put('config', 'contacts', App.state.contacts); 
-                    UI.renderContactList(); 
-                }
-                
-                // Update UI
-                document.getElementById('chat-empty-state').classList.add('hidden');
-                document.getElementById('chat-interface').classList.remove('hidden');
-                document.getElementById('chat-area').classList.remove('hidden');
-                
-                if (window.innerWidth < 768) 
-                    document.getElementById('sidebar-panel').classList.add('hidden');
-                
-                document.getElementById('chat-header-name').innerText = contact.name;
-                document.getElementById('chat-header-avatar').innerText = UI.generateAvatar(contact.name);
-                
-                // Render messages
-                const container = document.getElementById('messages-container');
-                container.innerHTML = '';
-                messages.forEach(msg => UI.renderMessage(msg));
-                
-                setTimeout(() => {
-                    if (container) {
-                        container.scrollTop = container.scrollHeight;
-                    }
-                }, 100);
-                
-                await UI.loadDraft(peerId);
-                document.getElementById('smart-replies-container').classList.add('hidden');
-                
-                // Highlight active chat
-                document.querySelectorAll('#chat-list > div').forEach(el => el.classList.remove('bg-[#2a3942]'));
-                document.querySelector(`#chat-list > div[data-peer="${peerId}"]`)?.classList.add('bg-[#2a3942]');
-                
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            },
-            showToast: (msg) => { 
-                const t = document.createElement('div'); 
-                t.className = 'fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-[#202c33] text-white px-6 py-3 rounded-lg shadow-lg z-[150] animate-fade-in'; 
-                t.innerText = msg; 
-                document.body.appendChild(t); 
-                setTimeout(() => t.remove(), 3000); 
-            },
-            renderMessage: async (msg) => {
-                if (msg.deletedForMe) return;
-                const container = document.getElementById('messages-container');
-                const existing = document.getElementById(`msg-${msg.id}`); 
-                if (existing) existing.remove();
-                
-                if (msg.deletedForEveryone) { 
-                    container.innerHTML += `<div id="msg-${msg.id}" class="flex ${msg.direction==='out'?'justify-end':'justify-start'}"><div class="bg-[#2a3942] px-3 py-2 rounded-lg"><p class="text-xs text-[#8696a0] italic">🚫 Deleted</p></div></div>`; 
-                    return; 
-                }
-                
-                const div = document.createElement('div');
-                div.id = `msg-${msg.id}`;
-                div.className = `flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} group relative`;
-                
-                // Context menu events
-                div.addEventListener('contextmenu', (e) => { 
-                    e.preventDefault(); 
-                    UI.showMessageContextMenu(msg.id, e.clientX, e.clientY); 
+        // Initialize PeerJS
+        function initializePeer() {
+            if (typeof Peer === 'undefined') {
+                showToast("PeerJS library not loaded");
+                return;
+            }
+            
+            try {
+                AppState.peer = new Peer(AppState.id, {
+                    debug: 2
                 });
-                let longPress;
-                div.addEventListener('touchstart', (e) => { 
-                    longPress = setTimeout(() => 
-                        UI.showMessageContextMenu(msg.id, e.touches[0].clientX, e.touches[0].clientY), 500); 
-                });
-                div.addEventListener('touchend', () => clearTimeout(longPress));
-                div.addEventListener('touchcancel', () => clearTimeout(longPress));
-
-                let inner = '';
-                const bubbleClass = msg.direction === 'out' ? 'msg-sent' : 'msg-received';
-                const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
-                const timestamp = new Date(msg.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
                 
-                if (msg.type === 'text') {
-                    inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 text-sm relative"><div>${Utils.linkify(msg.content)}</div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
-                } else if (msg.type === 'location') {
-                    const locUrl = msg.content.url || `https://www.openstreetmap.org/?mlat=${msg.content.lat}&mlon=${msg.content.lon}#map=15/${msg.content.lat}/${msg.content.lon}`;
-                    inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 text-sm relative"><div class="flex items-center gap-2"><i data-lucide="map-pin" class="w-5 h-5 text-[#00a884]"></i><a href="${locUrl}" target="_blank" class="text-blue-400 hover:underline">View Location</a></div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
-                } else if (msg.type === 'voice') {
-                    // Use existing URL or create one if needed
-                    let url = msg.content.url;
-                    if (!url && msg.content.blob) {
-                        const urlKey = `voice-${msg.id}`;
-                        url = Utils.addBlob(urlKey, URL.createObjectURL(msg.content.blob));
-                        // Update message with URL
-                        msg.content.url = url;
-                        msg.content.urlKey = urlKey;
-                        Store.put('messages', null, msg);
-                    }
-                    
-                    if (url) {
-                        inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 relative"><div class="audio-card"><button class="audio-play-btn" onclick="UI.playAudio(this, '${url}')"><i data-lucide="play" class="w-4 h-4"></i></button><div class="waveform">${Array(15).fill('<div class="bar"></div>').join('')}</div></div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
-                    } else {
-                        inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 text-sm relative"><div class="text-[#8696a0] italic">🎤 Voice message</div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
-                    }
-                } else if (msg.type === 'file') {
-                    // FIX #1: Use enhanced detection for image/video files
-                    const mime = Utils.detectMimeType(msg.content.name, msg.content.mime);
-                    const fileName = msg.content.name || 'File';
-                    const fileSize = msg.content.size ? Utils.formatBytes(msg.content.size) : '';
-                    
-                    // FIX #1: Better image detection
-                    const isImage = Utils.isImageFile(fileName, mime);
-                    const isVideo = mime.startsWith('video/');
-                    
-                    // FIX #2: Use stored URL or create one
-                    let url = msg.content.url;
-                    if (!url && msg.content.blob) {
-                        const urlKey = `file-${msg.id}`;
-                        url = Utils.addBlob(urlKey, URL.createObjectURL(msg.content.blob));
-                        // Update message with URL
-                        msg.content.url = url;
-                        msg.content.urlKey = urlKey;
-                        Store.put('messages', null, msg);
-                    }
-                    
-                    if (isImage && url) {
-                        // WhatsApp-style image display
-                        inner = `<div class="bubble-constraint max-w-xs"><div class="${bubbleClass} p-1 relative overflow-hidden rounded-lg"><img src="${url}" class="w-full h-auto max-h-80 object-cover rounded cursor-pointer" onclick="window.open('${url}', '_blank')" loading="lazy"><div class="absolute bottom-0 right-0 left-0 bg-gradient-to-t from-black/60 to-transparent p-2"><div class="text-white text-xs">${Utils.escapeHTML(fileName)}</div></div><div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end text-white">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
-                    } else if (isVideo && url) {
-                        // WhatsApp-style video display
-                        inner = `<div class="bubble-constraint max-w-xs"><div class="${bubbleClass} p-1 relative overflow-hidden rounded-lg"><video src="${url}" class="w-full h-auto max-h-80 object-cover rounded" controls poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23202c33'/%3E%3Cpath d='M160,120 v60 l40-30 z' fill='%23ffffff'/%3E%3C/svg%3E"></video><div class="absolute bottom-0 right-0 left-0 bg-gradient-to-t from-black/60 to-transparent p-2"><div class="text-white text-xs">${Utils.escapeHTML(fileName)}</div></div><div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end text-white">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
-                    } else {
-                        // File with download button (WhatsApp-style)
-                        const fileIcon = Utils.getFileIcon(mime, fileName);
-                        const downloadBtn = url ? 
-                            `<a href="${url}" download="${fileName}" class="text-[#00a884] hover:underline text-xs flex items-center gap-1 mt-1 px-3 py-1 bg-black/20 rounded-lg"><i data-lucide="download" class="w-3 h-3"></i>Download (${fileSize})</a>` : 
-                            '<div class="text-xs text-[#8696a0] mt-1 px-3 py-1 bg-black/20 rounded-lg">Downloading...</div>';
-                        
-                        inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 relative"><div class="file-card-inner backdrop-blur-none">${fileIcon}<div class="flex-1 min-w-0"><div class="font-medium text-sm truncate">${Utils.escapeHTML(fileName)}</div>${downloadBtn}</div></div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
-                    }
-                } else if (msg.type === 'file-receiving') {
-                    // Placeholder for incoming file
-                    const mime = Utils.detectMimeType(msg.content.name, msg.content.mime);
-                    const fileName = msg.content.name || 'File';
-                    const fileIcon = Utils.getFileIcon(mime, fileName);
-                    
-                    inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 relative"><div class="file-card-inner backdrop-blur-none">${fileIcon}<div class="flex-1 min-w-0"><div class="font-medium text-sm truncate">${Utils.escapeHTML(fileName)}</div><div class="text-xs text-[#8696a0] mt-1 px-3 py-1 bg-black/20 rounded-lg"><div class="inline-block h-1 w-4 bg-[#00a884] rounded-full animate-pulse mr-2"></div>Receiving...</div></div></div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
+                AppState.peer.on('open', function(id) {
+                    console.log("Peer connected with ID:", id);
+                    document.getElementById('network-status').textContent = 'Online';
+                    document.getElementById('network-status').style.color = '#00a884';
+                });
+                
+                AppState.peer.on('connection', handleConnection);
+                AppState.peer.on('error', handlePeerError);
+                
+            } catch (error) {
+                console.error("Peer initialization error:", error);
+                showToast("Failed to initialize connection");
+            }
+        }
+
+        // Handle incoming connection
+        function handleConnection(conn) {
+            console.log("Incoming connection from:", conn.peer);
+            
+            conn.on('open', function() {
+                // Send handshake
+                conn.send({
+                    type: 'handshake',
+                    id: AppState.id,
+                    name: AppState.name
+                });
+            });
+            
+            conn.on('data', function(data) {
+                handleIncomingData(conn.peer, data, conn);
+            });
+            
+            conn.on('close', function() {
+                console.log("Connection closed with:", conn.peer);
+                delete AppState.connections[conn.peer];
+                updateContactStatus(conn.peer, 'offline');
+            });
+            
+            // Store connection
+            AppState.connections[conn.peer] = conn;
+        }
+
+        // Handle incoming data
+        function handleIncomingData(sender, data, conn) {
+            console.log("Data from", sender, ":", data);
+            
+            if (data.type === 'handshake') {
+                // Add or update contact
+                addContact(sender, data.name, data.id);
+                
+                // Send handshake response
+                conn.send({
+                    type: 'handshake_response',
+                    id: AppState.id,
+                    name: AppState.name
+                });
+                
+                updateContactStatus(sender, 'online');
+                
+            } else if (data.type === 'handshake_response') {
+                // Contact responded
+                addContact(sender, data.name, data.id);
+                updateContactStatus(sender, 'online');
+                
+            } else if (data.type === 'message') {
+                // Handle text message
+                receiveMessage(sender, data.content, 'text');
+                
+            } else if (data.type === 'file') {
+                // Handle file
+                receiveMessage(sender, {
+                    name: data.name,
+                    type: data.fileType,
+                    data: data.data,
+                    size: data.size
+                }, 'file');
+            }
+        }
+
+        // Add or update contact
+        function addContact(peerId, name, contactId) {
+            // Check if contact already exists with different peerId
+            let existingContactId = null;
+            for (const [pid, contact] of Object.entries(AppState.contacts)) {
+                if (contact.id === contactId && pid !== peerId) {
+                    existingContactId = pid;
+                    break;
+                }
+            }
+            
+            if (existingContactId) {
+                // Migrate messages from old peerId to new
+                if (AppState.messages[existingContactId]) {
+                    AppState.messages[peerId] = AppState.messages[existingContactId];
+                    delete AppState.messages[existingContactId];
                 }
                 
-                div.innerHTML = inner;
-                container.appendChild(div);
+                // Update active chat if needed
+                if (AppState.activeChat === existingContactId) {
+                    AppState.activeChat = peerId;
+                }
                 
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-                await UI.updateReactions(msg.id);
-            },
-            updateMessageTick: (msgId, status) => { 
-                const el = document.querySelector(`#msg-${msgId} .status-container`); 
-                if(el) el.innerHTML = Utils.getStatusHtml(status); 
-            },
-            showMessageContextMenu: (msgId, x, y) => {
-                UI.selectedMessageId = msgId;
-                const menu = document.getElementById('message-context-menu');
-                menu.classList.remove('hidden');
+                // Delete old contact
+                delete AppState.contacts[existingContactId];
+                delete AppState.connections[existingContactId];
+            }
+            
+            // Add/update contact
+            AppState.contacts[peerId] = {
+                id: contactId,
+                name: name,
+                online: true,
+                lastSeen: Date.now()
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('ghostmesh_contacts', JSON.stringify(AppState.contacts));
+            localStorage.setItem('ghostmesh_messages', JSON.stringify(AppState.messages));
+            
+            // Update UI
+            renderContactList();
+            
+            // If this is the active chat, update header
+            if (AppState.activeChat === peerId) {
+                updateChatHeader(peerId);
+            }
+        }
+
+        // Connect to a peer
+        function connectToPeer(peerId) {
+            if (!AppState.peer || !AppState.peer.id) {
+                showToast("Not connected to network");
+                return;
+            }
+            
+            if (AppState.connections[peerId]) {
+                console.log("Already connected to", peerId);
+                return;
+            }
+            
+            try {
+                const conn = AppState.peer.connect(peerId, {
+                    reliable: true
+                });
                 
-                const menuWidth = 200, menuHeight = 300;
-                const screenW = window.innerWidth, screenH = window.innerHeight;
-                
-                let left = x, top = y;
-                if (x + menuWidth > screenW) left = screenW - menuWidth - 10;
-                if (y + menuHeight > screenH) top = screenH - menuHeight - 10;
-                
-                menu.style.left = left + 'px';
-                menu.style.top = top + 'px';
-                
-                setTimeout(() => { 
-                    document.addEventListener('click', UI.closeMessageContextMenu, { once: true }); 
-                }, 100);
-            },
-            closeMessageContextMenu: () => { 
-                document.getElementById('message-context-menu').classList.add('hidden'); 
-                UI.selectedMessageId = null; 
-            },
-            toggleReactionPicker: (msgId) => { 
-                UI.selectedMessageId = msgId; 
-                UI.reactToMessage(); 
-            },
-            reactToMessage: () => { /* ... */ },
-            updateReactions: async (msgId) => {
-                // ... (updateReactions code remains the same) ...
-            },
-            renderContactList: () => {
-                const container = document.getElementById('chat-list'); 
-                container.innerHTML = '';
-                const sorted = Object.entries(App.state.contacts).sort((a, b) => (b[1].lastSeen || 0) - (a[1].lastSeen || 0));
-                
-                sorted.forEach(([peerId, contact]) => {
-                    const div = document.createElement('div');
-                    div.className = 'p-3 hover:bg-[#2a3942] cursor-pointer border-b border-[#2a3942] flex items-center gap-3';
-                    div.setAttribute('data-peer', peerId);
-                    div.onclick = () => UI.loadChat(peerId);
+                conn.on('open', function() {
+                    console.log("Connected to", peerId);
                     
-                    // Connection status indicator
-                    const connObj = Network.connections[peerId];
-                    const isOnline = connObj?.handshakeComplete;
-                    const statusColor = isOnline ? '#00a884' : '#8696a0';
-                    const statusText = isOnline ? 'Online' : 'Offline';
+                    // Send handshake
+                    conn.send({
+                        type: 'handshake',
+                        id: AppState.id,
+                        name: AppState.name
+                    });
                     
-                    div.innerHTML = `
-                        <div class="relative">
-                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#00a884] to-[#008f6f] flex items-center justify-center text-white font-bold flex-shrink-0">
-                                ${UI.generateAvatar(contact.name)}
-                            </div>
-                            <div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#111b21]" style="background-color: ${statusColor};"></div>
+                    // Store connection
+                    AppState.connections[peerId] = conn;
+                    updateContactStatus(peerId, 'online');
+                });
+                
+                conn.on('data', function(data) {
+                    handleIncomingData(peerId, data, conn);
+                });
+                
+                conn.on('close', function() {
+                    console.log("Connection closed with", peerId);
+                    delete AppState.connections[peerId];
+                    updateContactStatus(peerId, 'offline');
+                });
+                
+                conn.on('error', function(err) {
+                    console.error("Connection error with", peerId, ":", err);
+                    showToast("Failed to connect");
+                });
+                
+            } catch (error) {
+                console.error("Connection error:", error);
+                showToast("Connection failed");
+            }
+        }
+
+        // Send message
+        function sendMessage() {
+            if (!AppState.activeChat) {
+                showToast("Select a chat first");
+                return;
+            }
+            
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add to UI immediately
+            addMessageToUI(AppState.activeChat, message, 'sent', 'text');
+            
+            // Send to peer
+            const conn = AppState.connections[AppState.activeChat];
+            if (conn && conn.open) {
+                conn.send({
+                    type: 'message',
+                    content: message,
+                    timestamp: Date.now()
+                });
+            } else {
+                showToast("Recipient is offline");
+            }
+            
+            // Clear input
+            input.value = '';
+            input.style.height = 'auto';
+            
+            // Save to storage
+            saveMessages();
+        }
+
+        // Send file
+        function sendFile(file) {
+            if (!AppState.activeChat) {
+                showToast("Select a chat first");
+                return;
+            }
+            
+            const conn = AppState.connections[AppState.activeChat];
+            if (!conn || !conn.open) {
+                showToast("Recipient is offline");
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                // Add to UI
+                addMessageToUI(AppState.activeChat, {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    data: e.target.result
+                }, 'sent', 'file');
+                
+                // Send to peer
+                conn.send({
+                    type: 'file',
+                    name: file.name,
+                    fileType: file.type,
+                    size: file.size,
+                    data: e.target.result,
+                    timestamp: Date.now()
+                });
+                
+                saveMessages();
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        // Receive message
+        function receiveMessage(sender, content, type) {
+            // Add to UI
+            addMessageToUI(sender, content, 'received', type);
+            
+            // Save to storage
+            saveMessages();
+            
+            // Show notification if not in active chat
+            if (AppState.activeChat !== sender) {
+                const contact = AppState.contacts[sender];
+                showToast(`New message from ${contact ? contact.name : 'Unknown'}`);
+            }
+        }
+
+        // Add message to UI
+        function addMessageToUI(peerId, content, direction, type) {
+            // Initialize messages array for this peer
+            if (!AppState.messages[peerId]) {
+                AppState.messages[peerId] = [];
+            }
+            
+            // Create message object
+            const message = {
+                id: Date.now(),
+                content: content,
+                direction: direction,
+                type: type,
+                timestamp: Date.now()
+            };
+            
+            // Add to storage
+            AppState.messages[peerId].push(message);
+            
+            // If this is the active chat, render it
+            if (AppState.activeChat === peerId) {
+                renderMessage(message);
+            }
+            
+            // Update contact preview
+            updateContactPreview(peerId, content, type);
+        }
+
+        // Render message in chat
+        function renderMessage(message) {
+            const container = document.getElementById('messages-container');
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${message.direction}`;
+            
+            if (message.type === 'text') {
+                messageDiv.innerHTML = `
+                    <div>${escapeHTML(message.content)}</div>
+                    <div class="message-time">${formatTime(message.timestamp)}</div>
+                `;
+            } else if (message.type === 'file') {
+                const isImage = message.content.type.startsWith('image/');
+                
+                if (isImage) {
+                    messageDiv.innerHTML = `
+                        <div class="image-message">
+                            <img src="${message.content.data}" alt="${message.content.name}" 
+                                 onclick="openImage('${message.content.data}')">
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-sm text-[#e9edef] truncate flex items-center gap-2">
-                                ${Utils.escapeHTML(contact.name)}
-                                <span class="text-[10px] px-2 py-0.5 rounded-full" style="background-color: ${statusColor}20; color: ${statusColor};">${statusText}</span>
-                            </div>
-                            <div class="text-xs text-[#8696a0] truncate">
-                                ${contact.draft?'<span class="text-red-400">Draft:</span> ':''}${contact.lastMessage||'No messages'}
-                            </div>
-                        </div>
-                        ${contact.unread>0?`<div class="unread-badge">${contact.unread}</div>`:''}
+                        <div class="message-time">${formatTime(message.timestamp)}</div>
                     `;
-                    
-                    // Delete on long press
-                    let timer;
-                    div.addEventListener('touchstart', () => {
-                        timer = setTimeout(() => {
-                            if (confirm(`Delete contact ${contact.name}?`)) {
-                                App.deleteContact(peerId);
-                            }
-                        }, 1000);
-                    });
-                    div.addEventListener('touchend', () => clearTimeout(timer));
-                    div.addEventListener('touchcancel', () => clearTimeout(timer));
-                    
-                    container.appendChild(div);
-                });
-                
-                if (sorted.length === 0) 
-                    container.innerHTML = '<div class="p-4 text-center text-[#8696a0] text-sm">No contacts yet</div>';
-            },
-            generateAvatar: (name) => { 
-                if (!name) return '?'; 
-                const words = name.trim().split(/\s+/); 
-                return (words.length >= 2 ? words[0][0] + words[1][0] : name.substring(0, 2)).toUpperCase(); 
-            },
-            stopCurrentAudio: () => {
-                if (UI.currentAudio) {
-                    UI.currentAudio.pause();
-                    UI.currentAudio = null;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="file-message">
+                            <div class="file-info">
+                                <div class="file-icon">${getFileIcon(message.content.type)}</div>
+                                <div class="file-details">
+                                    <div class="file-name">${escapeHTML(message.content.name)}</div>
+                                    <div class="file-size">${formatBytes(message.content.size)}</div>
+                                </div>
+                                <button class="download-btn" onclick="downloadFile('${message.content.data}', '${message.content.name}')">
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                        <div class="message-time">${formatTime(message.timestamp)}</div>
+                    `;
                 }
-            },
-            playAudio: (btn, url) => {
-                UI.stopCurrentAudio();
-                
-                const audio = new Audio(url);
-                const waveform = btn.parentElement;
-                const icon = btn.querySelector('i');
-                
-                const resetUI = () => {
-                    icon.setAttribute('data-lucide', 'play');
-                    waveform.classList.remove('playing');
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                    if (UI.currentAudio === audio) UI.currentAudio = null;
-                };
-                
-                audio.onplay = () => {
-                    icon.setAttribute('data-lucide', 'pause');
-                    waveform.classList.add('playing');
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                };
-                
-                audio.onpause = resetUI;
-                audio.onended = resetUI;
-                
-                UI.currentAudio = audio;
-                audio.play().catch((err) => {
-                    console.warn('Audio playback failed:', err);
-                    resetUI();
-                    UI.showToast('Cannot play audio');
+            }
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Load chat
+        function loadChat(peerId) {
+            AppState.activeChat = peerId;
+            
+            // Update UI
+            document.getElementById('chat-area').classList.remove('hidden');
+            updateChatHeader(peerId);
+            
+            // Clear and load messages
+            const container = document.getElementById('messages-container');
+            container.innerHTML = '';
+            
+            if (AppState.messages[peerId]) {
+                AppState.messages[peerId].forEach(message => {
+                    renderMessage(message);
                 });
             }
-        };
+            
+            // Connect if not already connected
+            if (!AppState.connections[peerId]) {
+                connectToPeer(peerId);
+            }
+        }
 
-        const Media = {
-            // ... (Media code remains the same) ...
-        };
-
-        window.addEventListener('load', App.init);
-        window.addEventListener('beforeunload', () => { 
-            Utils.revokeBlobs(); 
-            if (Media.localStream) Media.localStream.getTracks().forEach(t => t.stop()); 
-            if (Media.scanner) Media.scanner.stop().catch(()=>{}); 
-            if (Network.peer) { 
-                Network.stopPingMonitor(); 
-                Network.peer.destroy(); 
-            } 
-        });
-        
-        // Auto-reconnection on page visibility
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && App.state.id) {
-                setTimeout(() => {
-                    if (Network.peer && Network.peer.disconnected) {
-                        Network.peer.reconnect();
+        // Render contact list
+        function renderContactList() {
+            const container = document.getElementById('chat-list');
+            container.innerHTML = '';
+            
+            Object.entries(AppState.contacts).forEach(([peerId, contact]) => {
+                const chatItem = document.createElement('div');
+                chatItem.className = 'chat-item';
+                chatItem.onclick = () => loadChat(peerId);
+                
+                const lastMessage = AppState.messages[peerId] ? 
+                    AppState.messages[peerId][AppState.messages[peerId].length - 1] : null;
+                
+                let preview = 'No messages yet';
+                if (lastMessage) {
+                    if (lastMessage.type === 'text') {
+                        preview = lastMessage.content.length > 30 ? 
+                            lastMessage.content.substring(0, 30) + '...' : lastMessage.content;
+                    } else if (lastMessage.type === 'file') {
+                        preview = '📎 ' + lastMessage.content.name;
                     }
-                }, 500);
+                }
+                
+                chatItem.innerHTML = `
+                    <div class="chat-avatar">${getInitials(contact.name)}</div>
+                    <div class="chat-info">
+                        <div class="chat-name">${escapeHTML(contact.name)}</div>
+                        <div class="chat-preview">${escapeHTML(preview)}</div>
+                    </div>
+                `;
+                
+                container.appendChild(chatItem);
+            });
+        }
+
+        // Update contact preview
+        function updateContactPreview(peerId, content, type) {
+            // This would update the contact list preview
+            renderContactList();
+        }
+
+        // Update chat header
+        function updateChatHeader(peerId) {
+            const contact = AppState.contacts[peerId];
+            if (!contact) return;
+            
+            document.getElementById('chat-name').textContent = contact.name;
+            document.getElementById('chat-avatar').textContent = getInitials(contact.name);
+            document.getElementById('chat-status').textContent = contact.online ? 'Online' : 'Offline';
+            document.getElementById('chat-status').style.color = contact.online ? '#00a884' : '#8696a0';
+        }
+
+        // Update contact status
+        function updateContactStatus(peerId, status) {
+            const contact = AppState.contacts[peerId];
+            if (contact) {
+                contact.online = status === 'online';
+                contact.lastSeen = Date.now();
+                
+                // Update UI if this is the active chat
+                if (AppState.activeChat === peerId) {
+                    updateChatHeader(peerId);
+                }
+                
+                // Save changes
+                localStorage.setItem('ghostmesh_contacts', JSON.stringify(AppState.contacts));
+                renderContactList();
+            }
+        }
+
+        // Save messages to storage
+        function saveMessages() {
+            localStorage.setItem('ghostmesh_messages', JSON.stringify(AppState.messages));
+        }
+
+        // Utility functions
+        function escapeHTML(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function getInitials(name) {
+            return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+        }
+
+        function getFileIcon(mimeType) {
+            if (mimeType.includes('pdf')) return '📄';
+            if (mimeType.includes('image')) return '🖼️';
+            if (mimeType.includes('video')) return '🎬';
+            if (mimeType.includes('audio')) return '🎵';
+            if (mimeType.includes('zip') || mimeType.includes('rar')) return '🗜️';
+            return '📎';
+        }
+
+        function openImage(src) {
+            window.open(src, '_blank');
+        }
+
+        function downloadFile(dataUrl, fileName) {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function handlePeerError(error) {
+            console.error("Peer error:", error);
+            document.getElementById('network-status').textContent = 'Error';
+            document.getElementById('network-status').style.color = '#ff4444';
+        }
+
+        // Add contact manually (for testing)
+        function addTestContact() {
+            const peerId = prompt("Enter peer ID:");
+            const name = prompt("Enter contact name:");
+            
+            if (peerId && name) {
+                addContact(peerId, name, peerId);
+                connectToPeer(peerId);
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', initializeApp);
+        
+        // Add test contact button (for debugging)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 't') {
+                e.preventDefault();
+                addTestContact();
+            }
+        });
+
+        // File input handler
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'attach-btn') {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.onchange = function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        sendFile(file);
+                    }
+                };
+                input.click();
             }
         });
     </script>
