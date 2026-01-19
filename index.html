@@ -829,7 +829,8 @@
                             if (decodedText && decodedText !== App.state.id) {
                                 // Add placeholder contact first
                                 if (!App.state.contacts[decodedText]) {
-                                    await App.addContact(decodedText, `Peer_${decodedText.substring(0, 6)}`, '');
+                                    const peerLabel = `Peer_${decodedText.substring(0, Math.min(6, decodedText.length))}`;
+                                    await App.addContact(decodedText, peerLabel, '');
                                 }
                                 Network.connectWithRetry(decodedText);
                                 UI.showToast("Connecting to peer...");
