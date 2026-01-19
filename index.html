@@ -245,7 +245,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v18.4 Stable</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v18.5 Stable - Girlfriend Mode</span>
             </div>
         </div>
 
@@ -291,8 +291,8 @@
                     <button onclick="UI.showMediaGallery()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942]">
                         <i data-lucide="image" class="w-4 h-4"></i> Media Gallery
                     </button>
-                    <button onclick="UI.clearChat()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942] text-red-400">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i> Clear Chat
+                    <button onclick="UI.clearAllChat()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942] text-red-400">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Clear All Messages
                     </button>
                 </div>
 
@@ -377,6 +377,34 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Message Context Menu -->
+    <div id="message-context-menu" class="hidden fixed z-[130] bg-[#202c33] border border-[#2a3942] rounded-lg shadow-2xl min-w-[200px]" style="top: 0; left: 0;">
+        <button onclick="UI.reactToMessage()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 text-white">
+            <span class="text-lg">😂</span> React
+        </button>
+        <button onclick="UI.replyToMessage()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 text-white border-t border-[#2a3942]">
+            <i data-lucide="corner-up-left" class="w-4 h-4"></i> Reply
+        </button>
+        <button onclick="UI.forwardMessage()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 text-white border-t border-[#2a3942]">
+            <i data-lucide="corner-up-right" class="w-4 h-4"></i> Forward
+        </button>
+        <button onclick="UI.copyMessage()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 text-white border-t border-[#2a3942]">
+            <i data-lucide="copy" class="w-4 h-4"></i> Copy
+        </button>
+        <button onclick="UI.starMessage()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 text-white border-t border-[#2a3942]">
+            <i data-lucide="star" class="w-4 h-4"></i> Star
+        </button>
+        <button onclick="UI.deleteMessageForMe()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 text-white border-t border-[#2a3942]">
+            <i data-lucide="trash-2" class="w-4 h-4"></i> Delete for me
+        </button>
+        <button onclick="UI.deleteMessageForEveryone()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 text-red-400 border-t border-[#2a3942]">
+            <i data-lucide="trash-2" class="w-4 h-4"></i> Delete for everyone
+        </button>
+        <button onclick="UI.showMessageInfo()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 text-white border-t border-[#2a3942]">
+            <i data-lucide="info" class="w-4 h-4"></i> Info
+        </button>
     </div>
 
     <!-- MODALS -->
@@ -786,12 +814,23 @@
                     return;
                 }
                 
-                if(Network.peer) {
-                    // Already initialized
-                    if (Network.peer.open) {
+                // ✅ FIX: Clear destroyed peer so we can reinitialize
+                if (Network.peer?.destroyed) {
+                    Network.peer = null;
+                }
+                
+                // ✅ FIX: Check if peer exists AND has correct ID
+                if (Network.peer) {
+                    if (Network.peer.id !== id) {
+                        console.warn('[Network] ID mismatch detected!', { expected: id, current: Network.peer.id });
+                        Network.peer.destroy();
+                        Network.peer = null;
+                    } else if (Network.peer.open) {
+                        console.log('[Network] Peer already initialized and open');
                         UI.updateNetworkStatus('online');
+                        UI.setNetworkButtons(true);
+                        return;
                     }
-                    return;
                 }
                 
                 if (typeof Peer === 'undefined') {
@@ -1272,6 +1311,29 @@
                     }
                     return;
                 }
+                
+                if (data.type === 'clear-chat') {
+                    await Store.deleteMessagesForPeer(sender);
+                    if (App.state.activeChat === sender) {
+                        UI.loadChat(sender);
+                    }
+                    UI.showToast('Chat was cleared by your contact');
+                    return;
+                }
+                
+                if (data.type === 'delete-for-everyone') {
+                    const msgs = await Store.getMessages(sender);
+                    const msg = msgs.find(m => m.id === data.msgId);
+                    if (msg) {
+                        msg.deletedForEveryone = true;
+                        msg.content = 'This message was deleted';
+                        await Store.put('messages', null, msg);
+                        if (App.state.activeChat === sender) {
+                            UI.loadChat(sender);
+                        }
+                    }
+                    return;
+                }
 
                 if (data.type === 'msg') {
                     try {
@@ -1748,6 +1810,22 @@
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     UI.showToast("Identity created successfully!");
                     
+                    // Verify peer ID matches stored ID
+                    setTimeout(() => {
+                        if (Network.peer?.id !== App.state.id) {
+                            console.error('[CRITICAL] Peer ID mismatch!', { 
+                                storedId: App.state.id, 
+                                peerId: Network.peer?.id 
+                            });
+                            UI.showToast('Fixing network configuration...');
+                            Network.peer?.destroy();
+                            Network.peer = null;
+                            Network.init(App.state.id);
+                        } else {
+                            console.log('[Network] ID verification passed ✓', { id: App.state.id });
+                        }
+                    }, 2000);
+                    
                     // Request notification permission
                     if ('Notification' in window && Notification.permission === 'default') {
                         Notification.requestPermission().then(permission => {
@@ -1829,6 +1907,22 @@
                     UI.renderContactList();
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     UI.showToast("Unlocked successfully!");
+                    
+                    // Verify peer ID matches stored ID
+                    setTimeout(() => {
+                        if (Network.peer?.id !== App.state.id) {
+                            console.error('[CRITICAL] Peer ID mismatch!', { 
+                                storedId: App.state.id, 
+                                peerId: Network.peer?.id 
+                            });
+                            UI.showToast('Fixing network configuration...');
+                            Network.peer?.destroy();
+                            Network.peer = null;
+                            Network.init(App.state.id);
+                        } else {
+                            console.log('[Network] ID verification passed ✓', { id: App.state.id });
+                        }
+                    }, 2000);
                     
                     // Load theme preference
                     const savedTheme = await Store.get('config', 'theme');
@@ -2897,13 +2991,51 @@
             },
             
             renderMessage: async (msg) => {
+                // Skip messages deleted for me
+                if (msg.deletedForMe) return;
+                
                 const container = document.getElementById('messages-container');
                 const existing = document.getElementById(`msg-${msg.id}`);
                 if (existing) existing.remove();
                 
+                // If deleted for everyone, show placeholder
+                if (msg.deletedForEveryone) {
+                    const deletedDiv = document.createElement('div');
+                    deletedDiv.id = `msg-${msg.id}`;
+                    deletedDiv.className = `flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'}`;
+                    deletedDiv.innerHTML = `
+                        <div class="bg-[#2a3942] px-3 py-2 rounded-lg max-w-xs">
+                            <p class="text-xs text-[#8696a0] italic">🚫 This message was deleted</p>
+                        </div>
+                    `;
+                    container.appendChild(deletedDiv);
+                    return;
+                }
+                
                 const div = document.createElement('div');
                 div.id = `msg-${msg.id}`;
                 div.className = `flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} group relative`;
+                
+                // Add context menu handlers
+                div.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    UI.showMessageContextMenu(msg.id, e.clientX, e.clientY);
+                });
+                
+                // For mobile long-press
+                let longPressTimer;
+                div.addEventListener('touchstart', (e) => {
+                    longPressTimer = setTimeout(() => {
+                        const touch = e.touches[0];
+                        UI.showMessageContextMenu(msg.id, touch.clientX, touch.clientY);
+                    }, 500);
+                });
+                div.addEventListener('touchend', () => {
+                    clearTimeout(longPressTimer);
+                });
+                div.addEventListener('touchmove', () => {
+                    clearTimeout(longPressTimer);
+                });
                 
                 let inner = '';
                 const bubbleClass = msg.direction === 'out' ? 'msg-sent' : 'msg-received';
@@ -3246,6 +3378,174 @@
                 
                 audio.playbackRate = nextSpeed;
                 speedEl.innerText = `${nextSpeed}x`;
+            },
+            
+            // Message context menu functionality
+            selectedMessageId: null,
+            
+            showMessageContextMenu: (msgId, x, y) => {
+                UI.selectedMessageId = msgId;
+                const menu = document.getElementById('message-context-menu');
+                if (!menu) return;
+                
+                menu.style.top = y + 'px';
+                menu.style.left = x + 'px';
+                menu.classList.remove('hidden');
+                
+                // Close menu on click outside
+                setTimeout(() => {
+                    document.addEventListener('click', UI.closeMessageContextMenu, { once: true });
+                }, 100);
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            closeMessageContextMenu: () => {
+                const menu = document.getElementById('message-context-menu');
+                if (menu) menu.classList.add('hidden');
+                UI.selectedMessageId = null;
+            },
+            
+            reactToMessage: () => {
+                UI.closeMessageContextMenu();
+                if (!UI.selectedMessageId) return;
+                
+                // Show reaction picker
+                const emojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+                const picker = document.createElement('div');
+                picker.id = 'quick-reaction-picker';
+                picker.className = 'fixed z-[140] reaction-picker';
+                picker.innerHTML = emojis.map(e => `<span class="reaction-btn cursor-pointer" onclick="UI.addReaction('${UI.selectedMessageId}', '${e}')">${e}</span>`).join('');
+                document.body.appendChild(picker);
+                
+                setTimeout(() => {
+                    picker.addEventListener('click', () => {
+                        picker.remove();
+                    }, { once: true });
+                }, 100);
+            },
+            
+            replyToMessage: () => {
+                UI.closeMessageContextMenu();
+                UI.showToast('Reply feature coming soon!');
+            },
+            
+            forwardMessage: () => {
+                UI.closeMessageContextMenu();
+                UI.forwardSelected();
+            },
+            
+            copyMessage: async () => {
+                UI.closeMessageContextMenu();
+                if (!UI.selectedMessageId) return;
+                
+                const msgs = await Store.getMessages(App.state.activeChat);
+                const msg = msgs.find(m => m.id === UI.selectedMessageId);
+                if (msg && msg.type === 'text') {
+                    navigator.clipboard.writeText(msg.content);
+                    UI.showToast('Message copied!');
+                }
+            },
+            
+            starMessage: async () => {
+                UI.closeMessageContextMenu();
+                if (!UI.selectedMessageId) return;
+                
+                const msgs = await Store.getMessages(App.state.activeChat);
+                const msg = msgs.find(m => m.id === UI.selectedMessageId);
+                if (msg) {
+                    msg.starred = !msg.starred;
+                    await Store.put('messages', null, msg);
+                    UI.showToast(msg.starred ? 'Message starred ⭐' : 'Star removed');
+                    UI.loadChat(App.state.activeChat);
+                }
+            },
+            
+            deleteMessageForMe: async () => {
+                UI.closeMessageContextMenu();
+                if (!UI.selectedMessageId) return;
+                
+                if (confirm('Delete this message for you?')) {
+                    const msgs = await Store.getMessages(App.state.activeChat);
+                    const msg = msgs.find(m => m.id === UI.selectedMessageId);
+                    if (msg) {
+                        msg.deletedForMe = true;
+                        await Store.put('messages', null, msg);
+                        UI.loadChat(App.state.activeChat);
+                        UI.showToast('Message deleted');
+                    }
+                }
+            },
+            
+            deleteMessageForEveryone: async () => {
+                UI.closeMessageContextMenu();
+                if (!UI.selectedMessageId) return;
+                
+                const msgs = await Store.getMessages(App.state.activeChat);
+                const msg = msgs.find(m => m.id === UI.selectedMessageId);
+                
+                if (!msg || msg.direction !== 'out') {
+                    UI.showToast('You can only delete your own messages for everyone');
+                    return;
+                }
+                
+                // Check if message is older than 1 hour
+                const oneHour = 60 * 60 * 1000;
+                if (Date.now() - msg.timestamp > oneHour) {
+                    UI.showToast('You can only delete messages within 1 hour');
+                    return;
+                }
+                
+                if (confirm('Delete this message for everyone?')) {
+                    // Send delete command to peer
+                    const connObj = Network.connections[App.state.activeChat];
+                    if (connObj?.conn?.open) {
+                        connObj.conn.send({ type: 'delete-for-everyone', msgId: UI.selectedMessageId });
+                    }
+                    
+                    // Delete locally
+                    msg.deletedForEveryone = true;
+                    msg.content = 'This message was deleted';
+                    await Store.put('messages', null, msg);
+                    UI.loadChat(App.state.activeChat);
+                    UI.showToast('Message deleted for everyone');
+                }
+            },
+            
+            showMessageInfo: () => {
+                UI.closeMessageContextMenu();
+                UI.showToast('Message info feature coming soon!');
+            },
+            
+            clearAllChat: async () => {
+                if (!App.state.activeChat) return;
+                
+                const choice = confirm('Clear all messages?\n\nClick OK to clear for YOU only\nClick Cancel to see more options');
+                
+                if (choice) {
+                    // Clear for me only
+                    await Store.deleteMessagesForPeer(App.state.activeChat);
+                    UI.loadChat(App.state.activeChat);
+                    UI.showToast('All messages cleared for you');
+                } else {
+                    // Show modal with options
+                    const clearForBoth = confirm('Clear for BOTH you and your contact?\n\n⚠️ This cannot be undone!');
+                    
+                    if (clearForBoth) {
+                        // Send clear command to peer
+                        const connObj = Network.connections[App.state.activeChat];
+                        if (connObj?.conn?.open) {
+                            connObj.conn.send({ type: 'clear-chat' });
+                        }
+                        
+                        // Clear locally
+                        await Store.deleteMessagesForPeer(App.state.activeChat);
+                        UI.loadChat(App.state.activeChat);
+                        UI.showToast('Chat cleared for both');
+                    }
+                }
+                
+                UI.toggleChatMenu(); // Close menu
             }
         };
 
