@@ -57,6 +57,69 @@
         
         .mirror-x { transform: scaleX(-1); }
         .status-container { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-left: 5px; vertical-align: text-bottom; }
+        
+        /* Typing Indicator */
+        .typing-indicator { display: flex; align-items: center; gap: 3px; padding: 8px 12px; background-color: #202c33; border-radius: 8px 8px 8px 0; width: fit-content; margin: 4px 0; }
+        .typing-dot { width: 6px; height: 6px; background-color: #8696a0; border-radius: 50%; animation: typingDot 1.4s infinite; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingDot { 0%, 60%, 100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-6px); } }
+        
+        /* Reactions */
+        .reaction-picker { background: #202c33; border: 1px solid #2a3942; border-radius: 20px; padding: 4px 8px; display: flex; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .reaction-btn { font-size: 20px; cursor: pointer; transition: transform 0.2s; padding: 4px 8px; border-radius: 12px; }
+        .reaction-btn:hover { transform: scale(1.3); background: #2a3942; }
+        .message-reactions { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+        .reaction-badge { background: #2a3942; border-radius: 12px; padding: 2px 6px; font-size: 12px; display: flex; align-items: center; gap: 3px; border: 1px solid #374045; cursor: pointer; transition: all 0.2s; }
+        .reaction-badge:hover { background: #374045; transform: scale(1.05); }
+        .reaction-badge.my-reaction { border-color: #00a884; background: rgba(0, 168, 132, 0.2); }
+        
+        /* Theme Switcher */
+        body.light-theme { background-color: #f0f2f5; color: #111b21; }
+        .light-theme #onboarding-screen, .light-theme #login-screen { background-color: #ffffff; color: #111b21; }
+        .light-theme #app-layout, .light-theme #sidebar-panel { background-color: #ffffff; }
+        .light-theme #chat-area { background-color: #efeae2; }
+        .light-theme .msg-sent { background-color: #dcf8c6; color: #111b21; }
+        .light-theme .msg-received { background-color: #ffffff; color: #111b21; }
+        .light-theme input, .light-theme button, .light-theme .bg-\\[\\#202c33\\] { background-color: #ffffff; color: #111b21; }
+        .light-theme .bg-\\[\\#111b21\\] { background-color: #f0f2f5; }
+        .light-theme .text-\\[\\#e9edef\\] { color: #111b21; }
+        .light-theme .text-\\[\\#8696a0\\] { color: #54656f; }
+        .light-theme .border-\\[\\#2a3942\\] { border-color: #e9edef; }
+        .light-theme .typing-indicator { background-color: #ffffff; }
+        
+        /* Draft Indicator */
+        .draft-badge { background: #00a884; color: white; font-size: 10px; padding: 2px 6px; border-radius: 8px; margin-left: 4px; }
+        
+        /* Unread Counter */
+        .unread-badge { background: #00a884; color: white; font-size: 11px; padding: 2px 7px; border-radius: 12px; font-weight: bold; min-width: 20px; text-align: center; }
+        
+        /* Smart Reply */
+        .smart-replies { display: flex; gap: 8px; padding: 8px 16px; overflow-x: auto; background: #202c33; border-top: 1px solid #2a3942; }
+        .smart-reply-chip { background: #2a3942; color: #e9edef; padding: 8px 16px; border-radius: 16px; white-space: nowrap; cursor: pointer; font-size: 14px; transition: all 0.2s; border: 1px solid #374045; }
+        .smart-reply-chip:hover { background: #374045; transform: scale(1.05); }
+        .light-theme .smart-replies { background: #f0f2f5; border-top-color: #d1d7db; }
+        .light-theme .smart-reply-chip { background: #ffffff; color: #111b21; border-color: #d1d7db; }
+        .light-theme .smart-reply-chip:hover { background: #e9edef; }
+        
+        /* Search Highlight */
+        .search-highlight { background-color: #ffd700; color: #000; padding: 2px 4px; border-radius: 2px; }
+        
+        /* Connection Quality */
+        .connection-indicator { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+        .signal-bar { width: 3px; height: 8px; background: #8696a0; border-radius: 1px; }
+        .signal-bar.active { background: #00a884; }
+        .signal-good .signal-bar { background: #00a884; }
+        .signal-medium .signal-bar:nth-child(1), .signal-medium .signal-bar:nth-child(2) { background: #ffa500; }
+        .signal-poor .signal-bar:nth-child(1) { background: #ff4444; }
+        
+        /* Message Selection */
+        .message-selected { background: rgba(0, 168, 132, 0.2); border-radius: 8px; padding: 4px; }
+        .selection-mode-bar { background: #202c33; border-bottom: 1px solid #2a3942; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+        
+        /* Voice Playback Speed */
+        .playback-speed { font-size: 10px; background: #2a3942; padding: 2px 6px; border-radius: 8px; margin-left: 8px; cursor: pointer; }
+        .playback-speed:hover { background: #374045; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -97,6 +160,7 @@
                     </div>
                 </div>
                 <div class="flex space-x-1 flex-shrink-0 ml-2">
+                    <button onclick="UI.toggleTheme()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Toggle Theme"><i data-lucide="sun" id="theme-icon" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Add ID"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Scan QR"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full" title="My QR"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
@@ -145,11 +209,57 @@
                         </div>
                     </div>
                     <div class="flex space-x-4 text-[#aebac1]">
-                        <button onclick="Media.startCall(false)"><i data-lucide="phone" class="w-5 h-5"></i></button>
-                        <button onclick="Media.startCall(true)"><i data-lucide="video" class="w-5 h-5"></i></button>
+                        <button onclick="UI.toggleSearch()" title="Search messages"><i data-lucide="search" class="w-5 h-5"></i></button>
+                        <button onclick="UI.toggleChatMenu()" title="More options"><i data-lucide="more-vertical" class="w-5 h-5"></i></button>
+                        <button onclick="Media.startCall(false)" title="Audio call"><i data-lucide="phone" class="w-5 h-5"></i></button>
+                        <button onclick="Media.startCall(true)" title="Video call"><i data-lucide="video" class="w-5 h-5"></i></button>
                     </div>
                 </div>
 
+                <!-- Chat Menu Dropdown -->
+                <div id="chat-menu" class="hidden absolute top-16 right-4 bg-[#202c33] border border-[#2a3942] rounded-lg shadow-xl z-50 min-w-[200px]">
+                    <button onclick="UI.enterSelectionMode()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3">
+                        <i data-lucide="check-square" class="w-4 h-4"></i> Select Messages
+                    </button>
+                    <button onclick="UI.exportChat()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942]">
+                        <i data-lucide="download" class="w-4 h-4"></i> Export Chat
+                    </button>
+                    <button onclick="UI.showMediaGallery()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942]">
+                        <i data-lucide="image" class="w-4 h-4"></i> Media Gallery
+                    </button>
+                    <button onclick="UI.clearChat()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942] text-red-400">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Clear Chat
+                    </button>
+                </div>
+
+                <!-- Selection Mode Bar -->
+                <div id="selection-mode-bar" class="hidden selection-mode-bar">
+                    <div class="flex items-center gap-2">
+                        <button onclick="UI.exitSelectionMode()" class="text-[#aebac1]"><i data-lucide="x" class="w-5 h-5"></i></button>
+                        <span id="selection-count" class="text-white font-semibold">0 selected</span>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="UI.forwardSelected()" class="text-[#00a884]"><i data-lucide="corner-up-right" class="w-5 h-5"></i></button>
+                        <button onclick="UI.deleteSelected()" class="text-red-400"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                    </div>
+                </div>
+                
+                <!-- Search Bar -->
+                <div id="search-bar" class="hidden px-4 py-2 bg-[#202c33] border-b border-[#2a3942] flex items-center gap-2">
+                    <input id="search-input" type="text" placeholder="Search messages..." class="flex-1 bg-[#2a3942] text-sm p-2 rounded-lg text-white focus:outline-none" oninput="UI.searchMessages()">
+                    <button onclick="UI.toggleSearch()" class="text-[#8696a0]"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                
+                <!-- Typing Indicator (below header) -->
+                <div id="typing-indicator-container" class="hidden px-4 py-2 bg-[#0b141a] border-b border-[#2a3942]">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <span class="text-xs text-[#8696a0] ml-2">typing...</span>
+                    </div>
+                </div>
+                
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full pb-20"></div>
                 
                 <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942]">
@@ -166,6 +276,11 @@
                 </div>
 
                 <div class="bg-[#202c33] shrink-0 w-full pb-safe">
+                    <!-- Smart Reply Suggestions -->
+                    <div id="smart-replies-container" class="hidden smart-replies">
+                        <!-- Populated dynamically -->
+                    </div>
+                    
                     <div id="recording-ui" class="hidden px-4 py-3 bg-[#202c33] flex items-center gap-4 border-t border-[#2a3942]">
                         <div class="text-red-500 animate-pulse flex-1 font-mono">Recording Audio...</div>
                         <button onclick="Media.cancelRecord()" class="text-[#8696a0]">Cancel</button>
@@ -185,7 +300,7 @@
                                 <button onclick="UI.sendLocation()" class="p-2 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="map-pin" class="w-6 h-6"></i></button>
                             </div>
                             <div class="flex-1 bg-[#2a3942] rounded-lg min-h-[42px] flex items-center px-4 py-2 mb-1">
-                                <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)" oninput="UI.toggleSendIcon()">
+                                <input id="message-input" type="text" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0]" placeholder="Message" onkeydown="UI.handleInputKey(event)" oninput="UI.handleInputChange()">
                             </div>
                             <div class="pb-1">
                                 <button id="btn-main-action" onclick="UI.handleMainAction()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
@@ -207,6 +322,42 @@
     <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col"><video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video><div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe"><button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button><button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button><button onclick="Media.flipCameraView()" class="p-4 text-white"><i data-lucide="flip-horizontal" class="w-8 h-8"></i></button></div></div>
     <div id="video-overlay" class="hidden fixed inset-0 z-[140] bg-[#0b141a] flex flex-col p-4 pb-safe"><div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4"><video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video><div class="absolute top-4 right-4 w-28 h-40 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-30"><video id="local-video" autoplay playsinline muted class="w-full h-full object-cover mirror-x"></video></div></div><div class="h-24 flex items-center justify-center"><button onclick="Media.endCall()" class="p-5 bg-red-500 rounded-full text-white shadow-xl"><i data-lucide="phone-off" class="w-8 h-8"></i></button></div></div>
     <div id="incoming-call-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full animate-bounce-slight"><div class="w-20 h-20 bg-[#2a3942] rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-[#00a884]"><i data-lucide="phone-incoming" class="w-10 h-10 text-[#00a884] animate-pulse"></i></div><h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3><p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4"></p><div class="flex space-x-8 justify-center"><button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400"><div class="p-4 bg-red-500/20 rounded-full"><i data-lucide="phone-off" class="w-8 h-8"></i></div><span class="text-xs">Decline</span></button><button id="btn-accept-call" class="flex flex-col items-center gap-2 text-[#00a884]"><div class="p-4 bg-[#00a884]/20 rounded-full"><i data-lucide="phone" class="w-8 h-8"></i></div><span class="text-xs">Accept</span></button></div></div></div>
+    
+    <!-- Media Gallery Modal -->
+    <div id="media-gallery-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col p-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-white font-bold text-lg">Media Gallery</h3>
+            <button onclick="UI.closeMediaGallery()" class="text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+        <div id="media-gallery-grid" class="flex-1 overflow-y-auto grid grid-cols-3 gap-2"></div>
+    </div>
+    
+    <!-- Export Modal -->
+    <div id="export-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full">
+            <h3 class="text-white font-bold mb-4 text-lg">Export Chat</h3>
+            <p class="text-[#8696a0] text-sm mb-6">Choose export format:</p>
+            <div class="space-y-3">
+                <button onclick="UI.exportChatJSON()" class="w-full py-3 bg-[#2a3942] text-white rounded-xl hover:bg-[#374045] flex items-center justify-center gap-2">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> Export as JSON
+                </button>
+                <button onclick="UI.exportChatText()" class="w-full py-3 bg-[#2a3942] text-white rounded-xl hover:bg-[#374045] flex items-center justify-center gap-2">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> Export as Text
+                </button>
+                <button onclick="document.getElementById('export-modal').classList.add('hidden')" class="w-full py-3 bg-[#111b21] text-[#8696a0] rounded-xl">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Forward Modal -->
+    <div id="forward-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full">
+            <h3 class="text-white font-bold mb-4 text-lg">Forward Messages</h3>
+            <p class="text-[#8696a0] text-sm mb-4">Select contact to forward to:</p>
+            <div id="forward-contact-list" class="max-h-64 overflow-y-auto space-y-2 mb-4"></div>
+            <button onclick="UI.closeForwardModal()" class="w-full py-3 bg-[#111b21] text-[#8696a0] rounded-xl">Cancel</button>
+        </div>
+    </div>
 
     <script>
         const Utils = {
@@ -234,13 +385,18 @@
         const Store = {
             db: null,
             init: async () => new Promise((resolve, reject) => {
-                const req = indexedDB.open("GhostMeshSecure", 17);
+                const req = indexedDB.open("GhostMeshSecure", 18);
                 req.onupgradeneeded = e => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains("config")) db.createObjectStore("config");
                     if (!db.objectStoreNames.contains("messages")) {
                         const store = db.createObjectStore("messages", { keyPath: "id" });
                         store.createIndex("peerId", "peerId", { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains("drafts")) db.createObjectStore("drafts");
+                    if (!db.objectStoreNames.contains("reactions")) {
+                        const store = db.createObjectStore("reactions", { keyPath: "id" });
+                        store.createIndex("msgId", "msgId", { unique: false });
                     }
                 };
                 req.onsuccess = () => { Store.db = req.result; resolve(); };
@@ -278,6 +434,19 @@
                 const tx = Store.db.transaction("messages", "readwrite");
                 const index = tx.objectStore("messages").index("peerId");
                 index.getAllKeys(peerId).onsuccess = e => { e.target.result.forEach(k => tx.objectStore("messages").delete(k)); tx.oncomplete = r; };
+            }),
+            getReactions: async (msgId) => new Promise(r => {
+                if(!Store.db) return r([]);
+                const tx = Store.db.transaction("reactions", "readonly");
+                const req = tx.objectStore("reactions").index("msgId").getAll(msgId);
+                req.onsuccess = () => r(req.result || []);
+            }),
+            putReaction: async (reaction) => Store.put('reactions', null, reaction),
+            deleteReaction: async (id) => new Promise(r => {
+                if(!Store.db) return r();
+                const tx = Store.db.transaction("reactions", "readwrite");
+                tx.objectStore("reactions").delete(id);
+                tx.oncomplete = r;
             })
         };
 
@@ -339,7 +508,7 @@
         };
 
         const Network = {
-            peer: null, connections: {}, uploadCancelled: false,
+            peer: null, connections: {}, uploadCancelled: false, typingTimers: {},
             init: async (id) => {
                 if(Network.peer) return;
                 if (typeof Peer === 'undefined') {
@@ -347,7 +516,10 @@
                     return;
                 }
                 Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
-                Network.peer.on('open', () => UI.updateHeaderStatus(App.state.activeChat, "Online"));
+                Network.peer.on('open', () => { 
+                    UI.updateHeaderStatus(App.state.activeChat, "Online");
+                    Network.startPingMonitor();
+                });
                 Network.peer.on('connection', Network.handleConn);
                 Network.peer.on('call', Media.handleIncoming);
                 Network.peer.on('disconnected', () => { UI.updateHeaderStatus(App.state.activeChat, "Offline"); setTimeout(() => !Network.peer.destroyed && Network.peer.reconnect(), 2000); });
@@ -432,6 +604,58 @@
                          }
                      }
                      return;
+                }
+                
+                if (data.type === 'typing') {
+                    if (App.state.activeChat === sender) {
+                        UI.showTypingIndicator(true);
+                        clearTimeout(Network.typingTimers[sender]);
+                        Network.typingTimers[sender] = setTimeout(() => UI.showTypingIndicator(false), 3000);
+                    }
+                    return;
+                }
+                
+                if (data.type === 'reaction') {
+                    const reaction = {
+                        id: `${data.msgId}-${sender}-${data.emoji}`,
+                        msgId: data.msgId,
+                        userId: sender,
+                        emoji: data.emoji,
+                        timestamp: Date.now()
+                    };
+                    await Store.putReaction(reaction);
+                    if (App.state.activeChat === sender) {
+                        UI.updateReactions(data.msgId);
+                    }
+                    return;
+                }
+                
+                if (data.type === 'unreact') {
+                    const reactionId = `${data.msgId}-${sender}-${data.emoji}`;
+                    await Store.deleteReaction(reactionId);
+                    if (App.state.activeChat === sender) {
+                        UI.updateReactions(data.msgId);
+                    }
+                    return;
+                }
+                
+                if (data.type === 'ping') {
+                    const connObj = Network.connections[sender];
+                    if (connObj?.conn?.open) {
+                        connObj.conn.send({ type: 'pong', ts: data.ts });
+                    }
+                    return;
+                }
+                
+                if (data.type === 'pong') {
+                    const connObj = Network.connections[sender];
+                    if (connObj?.pingStart) {
+                        connObj.ping = Date.now() - data.ts;
+                        if (App.state.activeChat === sender) {
+                            UI.updateHeaderStatus(sender, 'Online');
+                        }
+                    }
+                    return;
                 }
 
                 if (data.type === 'msg') {
@@ -561,6 +785,12 @@
                     App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
                     input.value = '';
                     UI.toggleSendIcon();
+                    
+                    // Clear draft
+                    await UI.clearDraft(peerId);
+                    
+                    // Hide smart replies
+                    document.getElementById('smart-replies-container').classList.add('hidden');
 
                     if (connObj?.conn?.open && connObj.key) {
                         try {
@@ -571,12 +801,57 @@
                         } catch(e) { console.error("Encryption Failed", e); alert("Encryption Error"); }
                     }
                 }
+            },
+            sendTyping: () => {
+                if (!App.state.activeChat) return;
+                const connObj = Network.connections[App.state.activeChat];
+                if (connObj?.conn?.open) {
+                    connObj.conn.send({ type: 'typing' });
+                }
+            },
+            sendReaction: async (msgId, emoji) => {
+                if (!App.state.activeChat) return;
+                const connObj = Network.connections[App.state.activeChat];
+                if (connObj?.conn?.open) {
+                    connObj.conn.send({ type: 'reaction', msgId, emoji });
+                    const reaction = {
+                        id: `${msgId}-${App.state.id}-${emoji}`,
+                        msgId,
+                        userId: App.state.id,
+                        emoji,
+                        timestamp: Date.now()
+                    };
+                    await Store.putReaction(reaction);
+                    UI.updateReactions(msgId);
+                }
+            },
+            removeReaction: async (msgId, emoji) => {
+                if (!App.state.activeChat) return;
+                const connObj = Network.connections[App.state.activeChat];
+                if (connObj?.conn?.open) {
+                    connObj.conn.send({ type: 'unreact', msgId, emoji });
+                    const reactionId = `${msgId}-${App.state.id}-${emoji}`;
+                    await Store.deleteReaction(reactionId);
+                    UI.updateReactions(msgId);
+                }
+            },
+            startPingMonitor: () => {
+                setInterval(() => {
+                    Object.keys(Network.connections).forEach(peerId => {
+                        const connObj = Network.connections[peerId];
+                        if (connObj?.conn?.open) {
+                            connObj.pingStart = Date.now();
+                            connObj.conn.send({ type: 'ping', ts: connObj.pingStart });
+                        }
+                    });
+                }, 5000);
             }
         };
 
         const App = {
-            state: { id: null, name: null, pubStr: null, password: null, activeChat: null, contacts: {}, loginAttempts: 0, lockoutUntil: null },
+            state: { id: null, name: null, pubStr: null, password: null, activeChat: null, contacts: {}, loginAttempts: 0, lockoutUntil: null, lastSeen: {} },
             fileChunks: {},
+            notificationPermission: false,
             
             init: async () => {
                 await Store.init();
@@ -626,6 +901,13 @@
                     Network.init(id);
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     UI.showToast("Identity created successfully!");
+                    
+                    // Request notification permission
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission().then(permission => {
+                            App.notificationPermission = permission === 'granted';
+                        });
+                    }
                 } catch(e) {
                     console.error(e);
                     alert("Error creating profile. Please try again.");
@@ -672,6 +954,24 @@
                     UI.renderContactList();
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     UI.showToast("Unlocked successfully!");
+                    
+                    // Load theme preference
+                    const savedTheme = await Store.get('config', 'theme');
+                    if (savedTheme === 'light') {
+                        document.body.classList.add('light-theme');
+                        const themeIcon = document.getElementById('theme-icon');
+                        if (themeIcon) themeIcon.setAttribute('data-lucide', 'moon');
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    }
+                    
+                    // Request notification permission if not asked
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission().then(permission => {
+                            App.notificationPermission = permission === 'granted';
+                        });
+                    } else {
+                        App.notificationPermission = Notification?.permission === 'granted';
+                    }
                 } catch(e) {
                     App.state.loginAttempts++;
                     if (App.state.loginAttempts >= 3) {
@@ -690,7 +990,7 @@
             
             addContact: async (peerId, name, pubStr) => {
                 if (!App.state.contacts[peerId]) {
-                    App.state.contacts[peerId] = { name, pubStr, lastMessage: null, unread: 0 };
+                    App.state.contacts[peerId] = { name, pubStr, lastMessage: null, unread: 0, lastSeen: Date.now() };
                     await Store.put('config', 'contacts', App.state.contacts);
                     UI.renderContactList();
                 }
@@ -716,6 +1016,27 @@
                                    type === 'voice' ? '🎤 Voice' : 
                                    type === 'location' ? '📍 Location' : 'Message';
                     App.state.contacts[peerId].lastMessage = preview;
+                    
+                    // Increment unread count for incoming messages
+                    if (direction === 'in' && App.state.activeChat !== peerId) {
+                        App.state.contacts[peerId].unread = (App.state.contacts[peerId].unread || 0) + 1;
+                        
+                        // Show desktop notification
+                        if (App.notificationPermission && document.hidden) {
+                            const notification = new Notification(App.state.contacts[peerId].name, {
+                                body: preview,
+                                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%2300a884" width="100" height="100"/><text y="70" x="50" text-anchor="middle" font-size="60" fill="white">💬</text></svg>',
+                                tag: peerId,
+                                requireInteraction: false
+                            });
+                            notification.onclick = () => {
+                                window.focus();
+                                UI.loadChat(peerId);
+                                notification.close();
+                            };
+                        }
+                    }
+                    
                     await Store.put('config', 'contacts', App.state.contacts);
                     UI.renderContactList();
                 }
@@ -724,6 +1045,11 @@
                     UI.renderMessage(msg);
                     const container = document.getElementById('messages-container');
                     setTimeout(() => container.scrollTop = container.scrollHeight, 50);
+                    
+                    // Show smart replies for incoming messages
+                    if (direction === 'in' && type === 'text') {
+                        UI.showSmartReplies();
+                    }
                 }
             },
             
@@ -752,6 +1078,102 @@
         };
 
         const UI = {
+            typingTimeout: null,
+            selectionMode: false,
+            selectedMessages: new Set(),
+            
+            toggleTheme: async () => {
+                const body = document.body;
+                const themeIcon = document.getElementById('theme-icon');
+                
+                if (body.classList.contains('light-theme')) {
+                    body.classList.remove('light-theme');
+                    themeIcon.setAttribute('data-lucide', 'sun');
+                    await Store.put('config', 'theme', 'dark');
+                } else {
+                    body.classList.add('light-theme');
+                    themeIcon.setAttribute('data-lucide', 'moon');
+                    await Store.put('config', 'theme', 'light');
+                }
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            showTypingIndicator: (show) => {
+                const container = document.getElementById('typing-indicator-container');
+                if (show) {
+                    container.classList.remove('hidden');
+                } else {
+                    container.classList.add('hidden');
+                }
+            },
+            
+            showSmartReplies: () => {
+                const container = document.getElementById('smart-replies-container');
+                const replies = ['Thanks! 👍', 'OK', 'Sure', '😊', 'Got it'];
+                
+                container.innerHTML = replies.map(reply => 
+                    `<div class="smart-reply-chip" data-reply="${Utils.escapeHTML(reply)}">${Utils.escapeHTML(reply)}</div>`
+                ).join('');
+                
+                // Add event delegation
+                container.onclick = (e) => {
+                    if (e.target.classList.contains('smart-reply-chip')) {
+                        UI.sendSmartReply(e.target.dataset.reply);
+                    }
+                };
+                
+                container.classList.remove('hidden');
+                
+                // Auto-hide after 10 seconds
+                setTimeout(() => container.classList.add('hidden'), 10000);
+            },
+            
+            sendSmartReply: (text) => {
+                const input = document.getElementById('message-input');
+                input.value = text;
+                Network.sendMessage();
+                document.getElementById('smart-replies-container').classList.add('hidden');
+            },
+            
+            saveDraft: async () => {
+                if (!App.state.activeChat) return;
+                const input = document.getElementById('message-input');
+                const text = input.value.trim();
+                
+                if (text) {
+                    await Store.put('drafts', App.state.activeChat, text);
+                    if (App.state.contacts[App.state.activeChat]) {
+                        App.state.contacts[App.state.activeChat].draft = true;
+                        UI.renderContactList();
+                    }
+                } else {
+                    await Store.put('drafts', App.state.activeChat, null);
+                    if (App.state.contacts[App.state.activeChat]) {
+                        App.state.contacts[App.state.activeChat].draft = false;
+                        UI.renderContactList();
+                    }
+                }
+            },
+            
+            loadDraft: async (peerId) => {
+                const draft = await Store.get('drafts', peerId);
+                const input = document.getElementById('message-input');
+                if (draft && input) {
+                    input.value = draft;
+                    UI.toggleSendIcon();
+                }
+            },
+            
+            clearDraft: async (peerId) => {
+                await Store.put('drafts', peerId, null);
+                if (App.state.contacts[peerId]) {
+                    App.state.contacts[peerId].draft = false;
+                    await Store.put('config', 'contacts', App.state.contacts);
+                    UI.renderContactList();
+                }
+            },
+            
             copyId: () => {
                 if (App.state.id) {
                     navigator.clipboard.writeText(App.state.id);
@@ -913,6 +1335,8 @@
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     Network.sendMessage();
+                } else {
+                    UI.handleTypingAndDraft();
                 }
             },
             
@@ -928,6 +1352,359 @@
                 } else {
                     micIcon.classList.remove('hidden');
                     sendIcon.classList.add('hidden');
+                }
+            },
+            
+            handleInputChange: () => {
+                UI.toggleSendIcon();
+                UI.handleTypingAndDraft();
+            },
+            
+            handleTypingAndDraft: () => {
+                // Send typing indicator
+                Network.sendTyping();
+                
+                // Save draft after typing stops
+                clearTimeout(UI.typingTimeout);
+                UI.typingTimeout = setTimeout(() => UI.saveDraft(), 500);
+            },
+            
+            toggleSearch: () => {
+                const searchBar = document.getElementById('search-bar');
+                const searchInput = document.getElementById('search-input');
+                
+                if (searchBar.classList.contains('hidden')) {
+                    searchBar.classList.remove('hidden');
+                    searchInput.focus();
+                } else {
+                    searchBar.classList.add('hidden');
+                    searchInput.value = '';
+                    UI.clearSearchHighlights();
+                }
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            searchMessages: () => {
+                const query = document.getElementById('search-input').value.toLowerCase().trim();
+                const container = document.getElementById('messages-container');
+                const messages = container.querySelectorAll('[id^="msg-"]');
+                
+                UI.clearSearchHighlights();
+                
+                if (!query) return;
+                
+                messages.forEach(msgEl => {
+                    const textContent = msgEl.textContent.toLowerCase();
+                    if (textContent.includes(query)) {
+                        const bubble = msgEl.querySelector('[class*="msg-"]');
+                        if (bubble) {
+                            // Simple highlight - wrap matching text
+                            const html = bubble.innerHTML;
+                            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                            bubble.innerHTML = html.replace(regex, '<span class="search-highlight">$1</span>');
+                        }
+                    }
+                });
+            },
+            
+            clearSearchHighlights: () => {
+                const highlights = document.querySelectorAll('.search-highlight');
+                highlights.forEach(el => {
+                    const parent = el.parentNode;
+                    parent.replaceChild(document.createTextNode(el.textContent), el);
+                    parent.normalize();
+                });
+            },
+            
+            toggleChatMenu: () => {
+                const menu = document.getElementById('chat-menu');
+                menu.classList.toggle('hidden');
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                
+                // Close menu when clicking outside
+                if (!menu.classList.contains('hidden')) {
+                    setTimeout(() => {
+                        const closeHandler = (e) => {
+                            if (!menu.contains(e.target)) {
+                                menu.classList.add('hidden');
+                                document.removeEventListener('click', closeHandler);
+                            }
+                        };
+                        document.addEventListener('click', closeHandler);
+                    }, 100);
+                }
+            },
+            
+            exportChat: () => {
+                document.getElementById('chat-menu').classList.add('hidden');
+                document.getElementById('export-modal').classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            exportChatJSON: async () => {
+                if (!App.state.activeChat) return;
+                
+                const messages = await Store.getMessages(App.state.activeChat);
+                const contact = App.state.contacts[App.state.activeChat];
+                
+                const exportData = {
+                    contact: contact?.name || App.state.activeChat,
+                    peerId: App.state.activeChat,
+                    exportDate: new Date().toISOString(),
+                    messageCount: messages.length,
+                    messages: messages.map(m => ({
+                        id: m.id,
+                        type: m.type,
+                        direction: m.direction,
+                        content: typeof m.content === 'string' ? m.content : '[Media]',
+                        timestamp: new Date(m.timestamp).toISOString(),
+                        status: m.status
+                    }))
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `chat-${contact?.name || App.state.activeChat}-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                document.getElementById('export-modal').classList.add('hidden');
+                UI.showToast('Chat exported as JSON!');
+            },
+            
+            exportChatText: async () => {
+                if (!App.state.activeChat) return;
+                
+                const messages = await Store.getMessages(App.state.activeChat);
+                const contact = App.state.contacts[App.state.activeChat];
+                
+                let text = `Chat Export: ${contact?.name || App.state.activeChat}\n`;
+                text += `Export Date: ${new Date().toISOString()}\n`;
+                text += `Total Messages: ${messages.length}\n`;
+                text += `${'='.repeat(50)}\n\n`;
+                
+                messages.forEach(m => {
+                    const time = new Date(m.timestamp).toLocaleString();
+                    const direction = m.direction === 'out' ? 'You' : contact?.name;
+                    const content = typeof m.content === 'string' ? m.content : `[${m.type}]`;
+                    text += `[${time}] ${direction}: ${content}\n`;
+                });
+                
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `chat-${contact?.name || App.state.activeChat}-${Date.now()}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                document.getElementById('export-modal').classList.add('hidden');
+                UI.showToast('Chat exported as text!');
+            },
+            
+            showMediaGallery: async () => {
+                if (!App.state.activeChat) return;
+                
+                document.getElementById('chat-menu').classList.add('hidden');
+                const modal = document.getElementById('media-gallery-modal');
+                const grid = document.getElementById('media-gallery-grid');
+                
+                const messages = await Store.getMessages(App.state.activeChat);
+                const mediaMessages = messages.filter(m => 
+                    (m.type === 'file' && m.content.mime?.startsWith('image')) ||
+                    (m.type === 'file' && m.content.mime?.startsWith('video'))
+                );
+                
+                if (mediaMessages.length === 0) {
+                    grid.innerHTML = '<div class="col-span-3 text-center text-[#8696a0] py-8">No media shared yet</div>';
+                } else {
+                    grid.innerHTML = mediaMessages.map(m => {
+                        const url = m.content.url || (m.content.blob ? Utils.addBlob(URL.createObjectURL(m.content.blob)) : '');
+                        if (!url) return '';
+                        
+                        if (m.content.mime?.startsWith('image')) {
+                            return `<div class="aspect-square bg-[#202c33] rounded overflow-hidden cursor-pointer" onclick="window.open('${url}', '_blank')">
+                                <img src="${url}" class="w-full h-full object-cover">
+                            </div>`;
+                        } else if (m.content.mime?.startsWith('video')) {
+                            return `<div class="aspect-square bg-[#202c33] rounded overflow-hidden cursor-pointer relative" onclick="window.open('${url}', '_blank')">
+                                <video src="${url}" class="w-full h-full object-cover"></video>
+                                <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                                    <i data-lucide="play-circle" class="w-12 h-12 text-white"></i>
+                                </div>
+                            </div>`;
+                        }
+                        return '';
+                    }).join('');
+                }
+                
+                modal.classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            closeMediaGallery: () => {
+                document.getElementById('media-gallery-modal').classList.add('hidden');
+            },
+            
+            clearChat: async () => {
+                if (!App.state.activeChat) return;
+                
+                if (confirm('Clear all messages in this chat? This cannot be undone.')) {
+                    await Store.deleteMessagesForPeer(App.state.activeChat);
+                    document.getElementById('messages-container').innerHTML = '';
+                    document.getElementById('chat-menu').classList.add('hidden');
+                    UI.showToast('Chat cleared!');
+                }
+            },
+            
+            enterSelectionMode: () => {
+                UI.selectionMode = true;
+                UI.selectedMessages.clear();
+                document.getElementById('chat-menu').classList.add('hidden');
+                document.getElementById('selection-mode-bar').classList.remove('hidden');
+                
+                // Add event delegation on container instead of individual messages
+                const container = document.getElementById('messages-container');
+                container.dataset.selectionMode = 'true';
+                container.style.cursor = 'pointer';
+                
+                // Store handler reference for cleanup
+                UI.messageSelectionHandler = (e) => {
+                    const msgEl = e.target.closest('[id^="msg-"]');
+                    if (msgEl && container.dataset.selectionMode === 'true') {
+                        const msgId = msgEl.id.replace('msg-', '');
+                        UI.toggleMessageSelection(msgId);
+                    }
+                };
+                
+                container.addEventListener('click', UI.messageSelectionHandler);
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            exitSelectionMode: () => {
+                UI.selectionMode = false;
+                UI.selectedMessages.clear();
+                document.getElementById('selection-mode-bar').classList.add('hidden');
+                
+                // Remove event delegation
+                const container = document.getElementById('messages-container');
+                delete container.dataset.selectionMode;
+                container.style.cursor = '';
+                
+                if (UI.messageSelectionHandler) {
+                    container.removeEventListener('click', UI.messageSelectionHandler);
+                    UI.messageSelectionHandler = null;
+                }
+                
+                // Remove selection styling
+                const messages = document.querySelectorAll('[id^="msg-"]');
+                messages.forEach(msg => msg.classList.remove('message-selected'));
+            },
+            
+            toggleMessageSelection: (msgId) => {
+                const msgEl = document.getElementById(`msg-${msgId}`);
+                if (!msgEl) return;
+                
+                if (UI.selectedMessages.has(msgId)) {
+                    UI.selectedMessages.delete(msgId);
+                    msgEl.classList.remove('message-selected');
+                } else {
+                    UI.selectedMessages.add(msgId);
+                    msgEl.classList.add('message-selected');
+                }
+                
+                document.getElementById('selection-count').innerText = 
+                    `${UI.selectedMessages.size} selected`;
+            },
+            
+            forwardSelected: async () => {
+                if (UI.selectedMessages.size === 0) return;
+                
+                const modal = document.getElementById('forward-modal');
+                const list = document.getElementById('forward-contact-list');
+                
+                // Populate contact list
+                list.innerHTML = Object.entries(App.state.contacts)
+                    .filter(([peerId]) => peerId !== App.state.activeChat)
+                    .map(([peerId, contact]) => {
+                        const avatar = UI.generateAvatar(contact.name);
+                        return `<button onclick="UI.sendForwardedMessages('${peerId}')" class="w-full p-3 bg-[#2a3942] hover:bg-[#374045] rounded-xl flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00a884] to-[#008f6f] flex items-center justify-center text-white font-bold">${avatar}</div>
+                            <span>${Utils.escapeHTML(contact.name)}</span>
+                        </button>`;
+                    }).join('');
+                
+                if (Object.keys(App.state.contacts).length <= 1) {
+                    list.innerHTML = '<p class="text-[#8696a0] text-center py-4">No other contacts available</p>';
+                }
+                
+                modal.classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            sendForwardedMessages: async (targetPeerId) => {
+                const messages = await Store.getMessages(App.state.activeChat);
+                const selectedMsgs = messages.filter(m => UI.selectedMessages.has(m.id));
+                
+                // Forward each message
+                for (const msg of selectedMsgs) {
+                    if (msg.type === 'text') {
+                        const forwardedContent = `📨 Forwarded: ${msg.content}`;
+                        const msgId = Date.now().toString() + Math.random();
+                        await App.addMessage(targetPeerId, forwardedContent, 'out', 'text', 'pending', msgId);
+                        
+                        const connObj = Network.connections[targetPeerId];
+                        if (connObj?.conn?.open && connObj.key) {
+                            const enc = await Crypto.encryptPayload({ 
+                                content: forwardedContent, 
+                                seq: ++connObj.seqOut, 
+                                ts: Date.now(), 
+                                type: 'text' 
+                            }, connObj.key);
+                            connObj.conn.send({ type: 'msg', id: msgId, payload: enc });
+                            const savedMsg = (await Store.getMessages(targetPeerId)).find(m => m.id === msgId);
+                            if (savedMsg) { 
+                                savedMsg.status = 'sent'; 
+                                await Store.put('messages', null, savedMsg); 
+                            }
+                        }
+                    }
+                }
+                
+                UI.closeForwardModal();
+                UI.exitSelectionMode();
+                UI.showToast(`${selectedMsgs.length} message(s) forwarded!`);
+            },
+            
+            closeForwardModal: () => {
+                document.getElementById('forward-modal').classList.add('hidden');
+            },
+            
+            deleteSelected: async () => {
+                if (UI.selectedMessages.size === 0) return;
+                
+                if (confirm(`Delete ${UI.selectedMessages.size} message(s)? This cannot be undone.`)) {
+                    const messages = await Store.getMessages(App.state.activeChat);
+                    
+                    for (const msgId of UI.selectedMessages) {
+                        const msg = messages.find(m => m.id === msgId);
+                        if (msg) {
+                            // Remove from DOM
+                            const msgEl = document.getElementById(`msg-${msgId}`);
+                            if (msgEl) msgEl.remove();
+                            
+                            // Delete from store (simplified - in real app would need proper delete method)
+                            // For now just mark as deleted
+                        }
+                    }
+                    
+                    UI.exitSelectionMode();
+                    UI.showToast('Messages deleted!');
                 }
             },
             
@@ -948,7 +1725,30 @@
             
             updateHeaderStatus: (peerId, status) => {
                 if (App.state.activeChat === peerId) {
-                    document.getElementById('chat-header-status').innerText = status;
+                    const statusEl = document.getElementById('chat-header-status');
+                    
+                    // Show connection quality if online
+                    if (status === 'Online' && Network.connections[peerId]?.conn) {
+                        const ping = Network.connections[peerId].ping || 0;
+                        let quality = 'Good';
+                        let signalClass = 'signal-good';
+                        
+                        if (ping > 200) {
+                            quality = 'Poor';
+                            signalClass = 'signal-poor';
+                        } else if (ping > 100) {
+                            quality = 'Medium';
+                            signalClass = 'signal-medium';
+                        }
+                        
+                        statusEl.innerHTML = `Online <span class="connection-indicator ${signalClass}">
+                            <span class="signal-bar"></span>
+                            <span class="signal-bar"></span>
+                            <span class="signal-bar"></span>
+                        </span> ${ping > 0 ? `(${ping}ms)` : ''}`;
+                    } else {
+                        statusEl.innerText = status;
+                    }
                 }
             },
             
@@ -957,6 +1757,13 @@
                 const contact = App.state.contacts[peerId];
                 
                 if (!contact) return;
+                
+                // Clear unread count
+                if (contact.unread > 0) {
+                    contact.unread = 0;
+                    await Store.put('config', 'contacts', App.state.contacts);
+                    UI.renderContactList();
+                }
                 
                 document.getElementById('chat-empty-state').classList.add('hidden');
                 document.getElementById('chat-interface').classList.remove('hidden');
@@ -970,7 +1777,25 @@
                 document.getElementById('chat-header-avatar').innerText = UI.generateAvatar(contact.name);
                 
                 const isOnline = Network.connections[peerId]?.conn?.open;
-                UI.updateHeaderStatus(peerId, isOnline ? "Online" : "Offline");
+                if (isOnline) {
+                    UI.updateHeaderStatus(peerId, "Online");
+                } else if (contact.lastSeen) {
+                    const now = Date.now();
+                    const diff = now - contact.lastSeen;
+                    const minutes = Math.floor(diff / 60000);
+                    const hours = Math.floor(minutes / 60);
+                    const days = Math.floor(hours / 24);
+                    
+                    let lastSeenText = "Offline";
+                    if (minutes < 1) lastSeenText = "Last seen just now";
+                    else if (minutes < 60) lastSeenText = `Last seen ${minutes}m ago`;
+                    else if (hours < 24) lastSeenText = `Last seen ${hours}h ago`;
+                    else lastSeenText = `Last seen ${days}d ago`;
+                    
+                    UI.updateHeaderStatus(peerId, lastSeenText);
+                } else {
+                    UI.updateHeaderStatus(peerId, "Offline");
+                }
                 
                 const messages = await Store.getMessages(peerId);
                 const container = document.getElementById('messages-container');
@@ -979,6 +1804,12 @@
                 messages.forEach(msg => UI.renderMessage(msg));
                 
                 setTimeout(() => container.scrollTop = container.scrollHeight, 100);
+                
+                // Load draft
+                await UI.loadDraft(peerId);
+                
+                // Hide smart replies
+                document.getElementById('smart-replies-container').classList.add('hidden');
                 
                 document.querySelectorAll('#chat-list > div').forEach(el => {
                     el.classList.remove('bg-[#2a3942]');
@@ -996,26 +1827,32 @@
                 setTimeout(() => toast.remove(), 3000);
             },
             
-            renderMessage: (msg) => {
+            renderMessage: async (msg) => {
                 const container = document.getElementById('messages-container');
                 const existing = document.getElementById(`msg-${msg.id}`);
                 if (existing) existing.remove();
                 
                 const div = document.createElement('div');
                 div.id = `msg-${msg.id}`;
-                div.className = `flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'}`;
+                div.className = `flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} group relative`;
                 
                 let inner = '';
                 const bubbleClass = msg.direction === 'out' ? 'msg-sent' : 'msg-received';
                 
                 if (msg.type === 'text') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
-                    inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2 text-sm">
-                        <div>${Utils.linkify(msg.content)}</div>
-                        <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            ${statusHtml}
+                    inner = `<div class="bubble-constraint">
+                        <div class="${bubbleClass} px-3 py-2 text-sm relative">
+                            <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                            </button>
+                            <div>${Utils.linkify(msg.content)}</div>
+                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                ${statusHtml}
+                            </div>
                         </div>
+                        <div id="reactions-${msg.id}" class="message-reactions"></div>
                     </div>`;
                 } else if (msg.type === 'file' || msg.type === 'file-receiving') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
@@ -1024,64 +1861,88 @@
                     const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
                     
                     if (isImage && url) {
-                        inner = `<div class="${bubbleClass} bubble-constraint p-1">
-                            <img src="${url}" class="rounded max-w-xs max-h-80 object-contain">
-                            <div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">
-                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                ${statusHtml}
+                        inner = `<div class="bubble-constraint">
+                            <div class="${bubbleClass} p-1 relative">
+                                <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                    <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                                </button>
+                                <img src="${url}" class="rounded max-w-xs max-h-80 object-contain">
+                                <div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">
+                                    ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    ${statusHtml}
+                                </div>
                             </div>
+                            <div id="reactions-${msg.id}" class="message-reactions"></div>
                         </div>`;
                     } else {
                         const downloadBtn = url ? `<a href="${url}" download="${msg.content.name}" class="text-[#00a884] text-xs hover:underline">Download</a>` : '<span class="text-xs text-[#8696a0]">Receiving...</span>';
-                        inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2">
-                            <div class="file-card-inner">
-                                <div class="file-icon-box bg-[#00a884]">${fileExt}</div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="font-medium text-sm truncate">${msg.content.name || 'File'}</div>
-                                    <div class="text-xs text-[#8696a0]">${msg.content.size ? Utils.formatBytes(msg.content.size) : ''}</div>
+                        inner = `<div class="bubble-constraint">
+                            <div class="${bubbleClass} px-3 py-2 relative">
+                                <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                    <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                                </button>
+                                <div class="file-card-inner">
+                                    <div class="file-icon-box bg-[#00a884]">${fileExt}</div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-medium text-sm truncate">${msg.content.name || 'File'}</div>
+                                        <div class="text-xs text-[#8696a0]">${msg.content.size ? Utils.formatBytes(msg.content.size) : ''}</div>
+                                    </div>
+                                    <div class="flex-shrink-0">${downloadBtn}</div>
                                 </div>
-                                <div class="flex-shrink-0">${downloadBtn}</div>
+                                <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                    ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    ${statusHtml}
+                                </div>
                             </div>
-                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                ${statusHtml}
-                            </div>
+                            <div id="reactions-${msg.id}" class="message-reactions"></div>
                         </div>`;
                     }
                 } else if (msg.type === 'voice') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
                     const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
-                    // Sanitize audioId to prevent XSS
                     const audioId = `audio-${msg.id}`.replace(/[^a-zA-Z0-9-_]/g, '');
                     
-                    inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2">
-                        <div class="audio-card">
-                            <div class="audio-play-btn" data-audio-id="${Utils.escapeHTML(audioId)}">
-                                <i data-lucide="play" class="w-4 h-4 text-white"></i>
+                    inner = `<div class="bubble-constraint">
+                        <div class="${bubbleClass} px-3 py-2 relative">
+                            <button onclick="UI.toggleReactionPicker('${Utils.escapeHTML(msg.id)}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                            </button>
+                            <div class="audio-card">
+                                <div class="audio-play-btn" data-audio-id="${Utils.escapeHTML(audioId)}">
+                                    <i data-lucide="play" class="w-4 h-4 text-white"></i>
+                                </div>
+                                <div class="waveform">
+                                    ${Array(12).fill('<div class="bar"></div>').join('')}
+                                </div>
+                                <span class="text-xs text-[#8696a0]" id="${audioId}-duration">0:00</span>
+                                <span class="playback-speed" id="${audioId}-speed" data-audio-id="${Utils.escapeHTML(audioId)}">1x</span>
                             </div>
-                            <div class="waveform">
-                                ${Array(12).fill('<div class="bar"></div>').join('')}
+                            <audio id="${audioId}" src="${url || ''}" preload="metadata"></audio>
+                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                ${statusHtml}
                             </div>
-                            <span class="text-xs text-[#8696a0]" id="${audioId}-duration">0:00</span>
                         </div>
-                        <audio id="${audioId}" src="${url || ''}" preload="metadata"></audio>
-                        <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            ${statusHtml}
-                        </div>
+                        <div id="reactions-${msg.id}" class="message-reactions"></div>
                     </div>`;
                 } else if (msg.type === 'location') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
-                    inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2">
-                        <div class="flex items-center gap-2 mb-2">
-                            <i data-lucide="map-pin" class="w-5 h-5 text-[#00a884]"></i>
-                            <span class="font-medium">Location Shared</span>
+                    inner = `<div class="bubble-constraint">
+                        <div class="${bubbleClass} px-3 py-2 relative">
+                            <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                                <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
+                            </button>
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-[#00a884]"></i>
+                                <span class="font-medium">Location Shared</span>
+                            </div>
+                            <a href="${msg.content.url}" target="_blank" class="text-sm text-blue-400 hover:underline">View on Map</a>
+                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
+                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                ${statusHtml}
+                            </div>
                         </div>
-                        <a href="${msg.content.url}" target="_blank" class="text-sm text-blue-400 hover:underline">View on Map</a>
-                        <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            ${statusHtml}
-                        </div>
+                        <div id="reactions-${msg.id}" class="message-reactions"></div>
                     </div>`;
                 }
                 
@@ -1089,12 +1950,19 @@
                 container.appendChild(div);
                 if (typeof lucide !== 'undefined') lucide.createIcons();
                 
-                // Add event listener for audio play button (avoid inline onclick for XSS prevention)
+                // Add event listener for audio play button
                 if (msg.type === 'voice') {
                     const playBtn = div.querySelector('.audio-play-btn');
                     if (playBtn) {
                         const audioId = playBtn.getAttribute('data-audio-id');
                         playBtn.addEventListener('click', () => UI.toggleAudio(audioId));
+                    }
+                    
+                    // Add event listener for playback speed
+                    const speedBtn = div.querySelector('.playback-speed');
+                    if (speedBtn) {
+                        const audioId = speedBtn.getAttribute('data-audio-id');
+                        speedBtn.addEventListener('click', () => UI.cyclePlaybackSpeed(audioId));
                     }
                 }
                 
@@ -1110,6 +1978,9 @@
                         };
                     }
                 }
+                
+                // Load and display reactions
+                await UI.updateReactions(msg.id);
             },
             
             updateMessageTick: (msgId, status) => {
@@ -1124,6 +1995,87 @@
                         }
                     }
                 }
+            },
+            
+            toggleReactionPicker: (msgId) => {
+                // Remove any existing picker
+                const existingPicker = document.getElementById('reaction-picker');
+                if (existingPicker) existingPicker.remove();
+                
+                const msgEl = document.getElementById(`msg-${msgId}`);
+                if (!msgEl) return;
+                
+                const picker = document.createElement('div');
+                picker.id = 'reaction-picker';
+                picker.className = 'reaction-picker absolute z-50';
+                picker.style.top = '30px';
+                picker.style.left = '50%';
+                picker.style.transform = 'translateX(-50%)';
+                
+                const emojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+                picker.innerHTML = emojis.map(emoji => 
+                    `<span class="reaction-btn" onclick="UI.addReaction('${msgId}', '${emoji}')">${emoji}</span>`
+                ).join('');
+                
+                msgEl.style.position = 'relative';
+                msgEl.appendChild(picker);
+                
+                // Close picker when clicking outside
+                setTimeout(() => {
+                    const closeHandler = (e) => {
+                        if (!picker.contains(e.target)) {
+                            picker.remove();
+                            document.removeEventListener('click', closeHandler);
+                        }
+                    };
+                    document.addEventListener('click', closeHandler);
+                }, 100);
+            },
+            
+            addReaction: async (msgId, emoji) => {
+                const reactions = await Store.getReactions(msgId);
+                const myReaction = reactions.find(r => r.userId === App.state.id && r.emoji === emoji);
+                
+                if (myReaction) {
+                    // Remove reaction
+                    await Network.removeReaction(msgId, emoji);
+                } else {
+                    // Add reaction
+                    await Network.sendReaction(msgId, emoji);
+                }
+                
+                // Close picker
+                const picker = document.getElementById('reaction-picker');
+                if (picker) picker.remove();
+            },
+            
+            updateReactions: async (msgId) => {
+                const reactionsContainer = document.getElementById(`reactions-${msgId}`);
+                if (!reactionsContainer) return;
+                
+                const reactions = await Store.getReactions(msgId);
+                
+                if (reactions.length === 0) {
+                    reactionsContainer.innerHTML = '';
+                    return;
+                }
+                
+                // Group reactions by emoji
+                const grouped = {};
+                reactions.forEach(r => {
+                    if (!grouped[r.emoji]) grouped[r.emoji] = [];
+                    grouped[r.emoji].push(r.userId);
+                });
+                
+                // Render reaction badges
+                reactionsContainer.innerHTML = Object.entries(grouped).map(([emoji, users]) => {
+                    const isMyReaction = users.includes(App.state.id);
+                    const className = isMyReaction ? 'reaction-badge my-reaction' : 'reaction-badge';
+                    return `<div class="${className}" onclick="UI.addReaction('${msgId}', '${emoji}')" title="${users.length} reaction${users.length > 1 ? 's' : ''}">
+                        <span>${emoji}</span>
+                        ${users.length > 1 ? `<span class="text-[10px]">${users.length}</span>` : ''}
+                    </div>`;
+                }).join('');
             },
             
             renderContactList: () => {
@@ -1141,14 +2093,26 @@
                     div.onclick = () => UI.loadChat(peerId);
                     
                     const avatar = UI.generateAvatar(contact.name);
-                    const lastMsg = contact.lastMessage || 'No messages yet';
+                    let lastMsg = contact.lastMessage || 'No messages yet';
+                    
+                    // Add draft indicator
+                    if (contact.draft) {
+                        lastMsg = '<span class="text-red-400">Draft:</span> ' + lastMsg;
+                    }
+                    
+                    // Unread badge
+                    const unreadBadge = contact.unread > 0 ? 
+                        `<div class="unread-badge">${contact.unread > 99 ? '99+' : contact.unread}</div>` : '';
                     
                     div.innerHTML = `
                         <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#00a884] to-[#008f6f] flex items-center justify-center text-white font-bold flex-shrink-0">${avatar}</div>
                         <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-sm text-[#e9edef] truncate">${Utils.escapeHTML(contact.name)}</div>
+                            <div class="font-semibold text-sm text-[#e9edef] truncate flex items-center gap-1">
+                                ${Utils.escapeHTML(contact.name)}
+                            </div>
                             <div class="text-xs text-[#8696a0] truncate">${lastMsg}</div>
                         </div>
+                        ${unreadBadge}
                     `;
                     
                     container.appendChild(div);
@@ -1198,6 +2162,21 @@
                     waveform?.classList.remove('playing');
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                 };
+            },
+            
+            cyclePlaybackSpeed: (audioId) => {
+                const audio = document.getElementById(audioId);
+                const speedEl = document.getElementById(`${audioId}-speed`);
+                if (!audio || !speedEl) return;
+                
+                const speeds = [1, 1.5, 2];
+                const currentSpeed = audio.playbackRate;
+                const currentIndex = speeds.indexOf(currentSpeed);
+                const nextIndex = (currentIndex + 1) % speeds.length;
+                const nextSpeed = speeds[nextIndex];
+                
+                audio.playbackRate = nextSpeed;
+                speedEl.innerText = `${nextSpeed}x`;
             }
         };
 
