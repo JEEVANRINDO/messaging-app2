@@ -952,7 +952,10 @@
                     // BUG FIX #1: Detect mime type with fallback
                     const detectedMime = Utils.detectMimeType(file.name, file.type);
                     
-                    App.addMessage(peerId, { name: file.name, blob: file, mime: detectedMime, size: file.size }, 'out', 'file', 'pending', msgId);
+                    // BUG FIX #2: Create ObjectURL once and save it in the message
+                    const fileUrl = Utils.addBlob(URL.createObjectURL(file));
+                    
+                    App.addMessage(peerId, { name: file.name, blob: file, mime: detectedMime, size: file.size, url: fileUrl }, 'out', 'file', 'pending', msgId);
                     
                     // Fix #2: Clear file input explicitly
                     fileInput.value = '';
@@ -1327,8 +1330,8 @@
                 const media = msgs.filter(m => (m.type === 'file' && (m.content.mime?.startsWith('image') || m.content.mime?.startsWith('video'))));
                 const grid = document.getElementById('media-gallery-grid');
                 grid.innerHTML = media.length ? media.map(m => {
-                    const url = m.content.url || (m.content.blob ? Utils.addBlob(URL.createObjectURL(m.content.blob)) : '');
-                    return `<div class="aspect-square bg-[#202c33] rounded overflow-hidden cursor-pointer" onclick="window.open('${url}', '_blank')"><img src="${url}" class="w-full h-full object-cover"></div>`;
+                    const url = m.content.url || '';
+                    return url ? `<div class="aspect-square bg-[#202c33] rounded overflow-hidden cursor-pointer" onclick="window.open('${url}', '_blank')"><img src="${url}" class="w-full h-full object-cover"></div>` : '';
                 }).join('') : '<div class="col-span-3 text-center text-[#8696a0] py-8">No media</div>';
                 document.getElementById('media-gallery-modal').classList.remove('hidden');
             },
@@ -1413,22 +1416,14 @@
                     const locUrl = msg.content.url || `https://www.openstreetmap.org/?mlat=${msg.content.lat}&mlon=${msg.content.lon}#map=15/${msg.content.lat}/${msg.content.lon}`;
                     inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 text-sm relative"><div class="flex items-center gap-2"><i data-lucide="map-pin" class="w-5 h-5 text-[#00a884]"></i><a href="${locUrl}" target="_blank" class="text-blue-400 hover:underline">View Location</a></div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
                 } else if (msg.type === 'voice') {
-                    // BUG FIX #2: Only create blob URL if not already cached
-                    let url = msg.content.url;
-                    if (!url && msg.content.blob) {
-                        url = Utils.addBlob(URL.createObjectURL(msg.content.blob));
-                        msg.content.url = url; // Cache the URL
-                    }
+                    // BUG FIX #2: Use only pre-created URL from message object
+                    const url = msg.content.url;
                     if (url) {
                         inner = `<div class="bubble-constraint"><div class="${bubbleClass} px-3 py-2 relative"><div class="audio-card"><button class="audio-play-btn" onclick="UI.playAudio(this, '${url}')"><i data-lucide="play" class="w-4 h-4"></i></button><div class="waveform">${Array(15).fill('<div class="bar"></div>').join('')}</div></div><div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
                     }
                 } else if (msg.type === 'file' || msg.type === 'file-receiving') {
-                    // BUG FIX #2: Only create blob URL if not already cached
-                    let url = msg.content.url;
-                    if (!url && msg.content.blob) {
-                        url = Utils.addBlob(URL.createObjectURL(msg.content.blob));
-                        msg.content.url = url; // Cache the URL
-                    }
+                    // BUG FIX #2: Use only pre-created URL from message object
+                    const url = msg.content.url;
                     
                     // BUG FIX #1: Detect mime type with fallback
                     const mime = Utils.detectMimeType(msg.content.name, msg.content.mime);
