@@ -1172,12 +1172,15 @@
                         App.state.activeChat = peerId;
                     }
                     
-                    // Migrate messages from old peer ID to new peer ID
+                    // Migrate messages from old peer ID to new peer ID (optimized with Promise.all)
                     const oldMessages = await Store.getMessages(existingPeerId);
-                    for (const msg of oldMessages) {
+                    await Promise.all(oldMessages.map(msg => {
                         msg.peerId = peerId;
-                        await Store.put('messages', null, msg);
-                    }
+                        return Store.put('messages', null, msg);
+                    }));
+                    
+                    // Clean up old messages under the old peer ID
+                    await Store.deleteMessagesForPeer(existingPeerId);
                     
                     // Remove old contact entry
                     delete App.state.contacts[existingPeerId];
@@ -1190,7 +1193,7 @@
                         unread: existingContact.unread || 0,
                         lastSeen: Date.now()
                     };
-                } else if (!App.state.contacts[peerId]) {
+                }else if (!App.state.contacts[peerId]) {
                     // New contact
                     App.state.contacts[peerId] = { name: sanitizedName, pubStr, lastMessage: null, unread: 0, lastSeen: Date.now() };
                 } else {
