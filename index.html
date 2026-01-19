@@ -953,6 +953,9 @@
                     const detectedMime = Utils.detectMimeType(file.name, file.type);
                     
                     App.addMessage(peerId, { name: file.name, blob: file, mime: detectedMime, size: file.size }, 'out', 'file', 'pending', msgId);
+                    
+                    // Fix #2: Clear file input explicitly
+                    fileInput.value = '';
                     UI.clearFile();
 
                     connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: detectedMime, encSize: totalEncSize });
@@ -1153,56 +1156,33 @@
                 if (!peerId || !name || !pubStr) return;
                 const sanitizedName = name.trim().substring(0, App.CONFIG.MAX_NAME_LENGTH);
                 
-                // BUG FIX #4: Use public key as stable identity to prevent duplicates
-                // Check if this public key already exists under a different peer ID
-                let existingPeerId = null;
-                for (const [pid, contact] of Object.entries(App.state.contacts)) {
-                    if (contact.pubStr === pubStr && pid !== peerId) {
-                        existingPeerId = pid;
+                // Fix #3: Check if contact with same public key already exists
+                for (const [existingId, contact] of Object.entries(App.state.contacts)) {
+                    if (contact.pubStr === pubStr && existingId !== peerId) {
+                        // Same person, different peer ID - UPDATE not duplicate
+                        console.log(`Updating peer ID from ${existingId} to ${peerId}`);
+                        
+                        // Migrate messages to new peer ID
+                        const msgs = await Store.getMessages(existingId);
+                        for (const msg of msgs) {
+                            msg.peerId = peerId;
+                            await Store.put('messages', null, msg);
+                        }
+                        
+                        // Delete old contact entry
+                        delete App.state.contacts[existingId];
+                        
+                        // Update active chat if needed
+                        if (App.state.activeChat === existingId) {
+                            App.state.activeChat = peerId;
+                        }
+                        
                         break;
                     }
                 }
                 
-                if (existingPeerId) {
-                    // BUG FIX #4 & #5: Update the peer ID mapping for existing contact
-                    const existingContact = App.state.contacts[existingPeerId];
-                    
-                    // Update active chat if it was pointing to the old peer ID
-                    if (App.state.activeChat === existingPeerId) {
-                        App.state.activeChat = peerId;
-                    }
-                    
-                    // Migrate messages from old peer ID to new peer ID (optimized with Promise.all)
-                    const oldMessages = await Store.getMessages(existingPeerId);
-                    await Promise.all(oldMessages.map(msg => {
-                        msg.peerId = peerId;
-                        return Store.put('messages', null, msg);
-                    }));
-                    
-                    // Clean up old messages under the old peer ID
-                    await Store.deleteMessagesForPeer(existingPeerId);
-                    
-                    // Remove old contact entry
-                    delete App.state.contacts[existingPeerId];
-                    
-                    // Add/update with new peer ID but preserve contact info
-                    App.state.contacts[peerId] = {
-                        name: sanitizedName,
-                        pubStr,
-                        lastMessage: existingContact.lastMessage || null,
-                        unread: existingContact.unread || 0,
-                        lastSeen: Date.now()
-                    };
-                }else if (!App.state.contacts[peerId]) {
-                    // New contact
-                    App.state.contacts[peerId] = { name: sanitizedName, pubStr, lastMessage: null, unread: 0, lastSeen: Date.now() };
-                } else {
-                    // Update existing contact with same peer ID
-                    App.state.contacts[peerId].name = sanitizedName;
-                    App.state.contacts[peerId].pubStr = pubStr;
-                    App.state.contacts[peerId].lastSeen = Date.now();
-                }
-                
+                // Now add/update with current peer ID
+                App.state.contacts[peerId] = { name: sanitizedName, pubStr, lastSeen: Date.now() };
                 await Store.put('config', 'contacts', App.state.contacts);
                 UI.renderContactList();
             },
@@ -1455,8 +1435,12 @@
                     const fileName = msg.content.name || 'File';
                     const fileSize = msg.content.size ? Utils.formatBytes(msg.content.size) : '';
                     
-                    if (mime.startsWith('image/') && url) {
-                        // Image preview with thumbnail (WhatsApp style)
+                    // Fix #1: Add explicit image detection by MIME type OR file extension
+                    const isImage = (mime && mime.startsWith('image/')) || 
+                                    (fileName && /\.(jpg|jpeg|png|gif|webp|heic)$/i.test(fileName));
+                    
+                    if (isImage && url) {
+                        // Show actual <img> element
                         inner = `<div class="bubble-constraint"><div class="${bubbleClass} p-1 relative max-w-xs"><img src="${url}" class="rounded-lg max-w-full h-auto cursor-pointer" onclick="(function(u){const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener noreferrer';a.click();}('${url}'))" style="max-height: 300px; object-fit: cover;"><div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
                     } else if (mime.startsWith('video/') && url) {
                         // Video preview with play button overlay (WhatsApp style)
