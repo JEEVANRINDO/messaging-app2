@@ -197,9 +197,9 @@
         <h2 class="text-2xl font-bold mb-4">Unlock Identity</h2>
         <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center" onkeydown="if(event.key==='Enter')App.login()">
         
-        <!-- Remember Me Checkbox -->
+        <!-- Remember Me Checkbox (unchecked by default for security) -->
         <label class="flex items-center justify-center gap-2 text-sm text-[#8696a0] mb-4 cursor-pointer">
-            <input type="checkbox" id="remember-me" class="w-4 h-4 accent-[#00a884]" checked>
+            <input type="checkbox" id="remember-me" class="w-4 h-4 accent-[#00a884]">
             <span>Remember me on this device</span>
         </label>
         
@@ -691,7 +691,7 @@
                     {
                         name: "PBKDF2",
                         salt: salt,
-                        iterations: 100000, // Increased to match password encryption
+                        iterations: 100000, // Consistent with password encryption standard
                         hash: "SHA-256"
                     },
                     keyMaterial,
@@ -719,10 +719,11 @@
                 const timestamp = new Date().toISOString();
                 const logEntry = `[${timestamp}] ${message}`;
                 
-                console.log(logEntry, data || '');
-                
-                // Also append to UI debug panel if enabled
+                // Only log to console if debug mode enabled
                 if (Network.CONFIG.DEBUG_MODE) {
+                    console.log(logEntry, data || '');
+                    
+                    // Also append to UI debug panel
                     const debugLogs = document.getElementById('debug-logs');
                     if (debugLogs) {
                         const logDiv = document.createElement('div');
@@ -1624,7 +1625,7 @@
                 
                 const passwordInput = document.getElementById('login-password');
                 const password = passwordInput.value;
-                const rememberMe = document.getElementById('remember-me')?.checked ?? true;
+                const rememberMe = document.getElementById('remember-me')?.checked ?? false; // Default to false for security
                 
                 if (!password) {
                     UI.showToast("Please enter your password");
@@ -1994,7 +1995,9 @@
                                 return;
                             }
                             
-                            // REMOVED: Self-connection check (moved to Network.connectWithRetry)
+                            // Self-connection check removed from here and consolidated in Network.connectWithRetry()
+                            // This prevents false positives when Device A shows QR and Device B scans it
+                            // The check in connectWithRetry properly validates against App.state.id
                             
                             // Check if already connected
                             if (Network.connections[scannedId]?.conn?.open && Network.connections[scannedId]?.handshakeComplete) {
