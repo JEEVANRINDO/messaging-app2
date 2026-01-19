@@ -508,8 +508,19 @@
         };
 
         const Network = {
+            // Configuration constants
+            CONFIG: {
+                CONNECTION_TIMEOUT: 15000,        // 15 seconds
+                RECONNECT_INTERVAL: 30000,        // 30 seconds
+                PING_INTERVAL: 5000,              // 5 seconds
+                MAX_RETRY_ATTEMPTS: 3,
+                INITIAL_BACKOFF: 1000,            // 1 second
+                DEBUG_MODE: true                   // Set to false for production
+            },
+            
             peer: null, connections: {}, uploadCancelled: false, typingTimers: {}, connectionStates: {},
             debugLog: (message, data) => {
+                if (!Network.CONFIG.DEBUG_MODE) return;
                 const timestamp = new Date().toISOString();
                 console.log(`[${timestamp}] ${message}`, data || '');
             },
@@ -534,9 +545,9 @@
                 };
                 
                 Network.peer = new Peer(id, { 
-                    pingInterval: 5000,
+                    pingInterval: Network.CONFIG.PING_INTERVAL,
                     config: config,
-                    debug: 1 // Enable debug logging
+                    debug: Network.CONFIG.DEBUG_MODE ? 1 : 0
                 });
                 
                 Network.peer.on('open', (peerId) => { 
@@ -629,9 +640,9 @@
                             Network.debugLog('Connection timeout', { id, retries });
                             conn.close();
                             
-                            if (retries < 3) {
+                            if (retries < Network.CONFIG.MAX_RETRY_ATTEMPTS) {
                                 const nextBackoff = backoff * 2; // Exponential backoff
-                                UI.showToast(`Retrying connection... (${retries + 1}/3)`);
+                                UI.showToast(`Retrying connection... (${retries + 1}/${Network.CONFIG.MAX_RETRY_ATTEMPTS})`);
                                 setTimeout(() => Network.connectWithRetry(id, retries + 1, nextBackoff), nextBackoff);
                             } else {
                                 Network.connectionStates[id] = 'failed';
@@ -639,7 +650,7 @@
                                 UI.showToast('Connection failed. Peer may be offline.');
                             }
                         }
-                    }, 15000); // 15 second timeout
+                    }, Network.CONFIG.CONNECTION_TIMEOUT);
 
                     conn.on('open', () => {
                         Network.debugLog('Connection opened', { id });
@@ -661,9 +672,9 @@
                         Network.debugLog('Connection error', { id, error: err });
                         clearTimeout(connectionTimeout);
                         
-                        if (retries < 3) {
+                        if (retries < Network.CONFIG.MAX_RETRY_ATTEMPTS) {
                             const nextBackoff = backoff * 2;
-                            UI.showToast(`Connection error, retrying... (${retries + 1}/3)`);
+                            UI.showToast(`Connection error, retrying... (${retries + 1}/${Network.CONFIG.MAX_RETRY_ATTEMPTS})`);
                             setTimeout(() => Network.connectWithRetry(id, retries + 1, nextBackoff), nextBackoff);
                         } else {
                             Network.connectionStates[id] = 'failed';
@@ -1163,7 +1174,7 @@
                             connObj.conn.send({ type: 'ping', ts: connObj.pingStart });
                         }
                     });
-                }, 5000);
+                }, Network.CONFIG.PING_INTERVAL);
                 
                 // Check for disconnected contacts and attempt reconnection
                 setInterval(() => {
@@ -1181,11 +1192,19 @@
                             Network.connectWithRetry(peerId, 0, 5000);
                         }
                     });
-                }, 30000); // Check every 30 seconds
+                }, Network.CONFIG.RECONNECT_INTERVAL);
             }
         };
 
         const App = {
+            // Configuration constants
+            CONFIG: {
+                MIN_NAME_LENGTH: 2,
+                MAX_NAME_LENGTH: 50,
+                MIN_PASSWORD_LENGTH: 4,
+                MAX_PASSWORD_LENGTH: 100
+            },
+            
             state: { id: null, name: null, pubStr: null, password: null, activeChat: null, contacts: {}, loginAttempts: 0, lockoutUntil: null, lastSeen: {} },
             fileChunks: {},
             notificationPermission: false,
@@ -1212,27 +1231,27 @@
                 const password = passwordInput.value;
                 
                 // Validate name
-                if (!name || name.length < 2) {
-                    UI.showToast("Name must be at least 2 characters");
+                if (!name || name.length < App.CONFIG.MIN_NAME_LENGTH) {
+                    UI.showToast(`Name must be at least ${App.CONFIG.MIN_NAME_LENGTH} characters`);
                     nameInput.focus();
                     return;
                 }
                 
-                if (name.length > 50) {
-                    UI.showToast("Name must be under 50 characters");
+                if (name.length > App.CONFIG.MAX_NAME_LENGTH) {
+                    UI.showToast(`Name must be under ${App.CONFIG.MAX_NAME_LENGTH} characters`);
                     nameInput.focus();
                     return;
                 }
                 
                 // Validate password
-                if (!password || password.length < 4) {
-                    UI.showToast("Password must be at least 4 characters");
+                if (!password || password.length < App.CONFIG.MIN_PASSWORD_LENGTH) {
+                    UI.showToast(`Password must be at least ${App.CONFIG.MIN_PASSWORD_LENGTH} characters`);
                     passwordInput.focus();
                     return;
                 }
                 
-                if (password.length > 100) {
-                    UI.showToast("Password must be under 100 characters");
+                if (password.length > App.CONFIG.MAX_PASSWORD_LENGTH) {
+                    UI.showToast(`Password must be under ${App.CONFIG.MAX_PASSWORD_LENGTH} characters`);
                     passwordInput.focus();
                     return;
                 }
@@ -1382,7 +1401,7 @@
                 }
                 
                 // Sanitize name
-                const sanitizedName = name.trim().substring(0, 50);
+                const sanitizedName = name.trim().substring(0, App.CONFIG.MAX_NAME_LENGTH);
                 
                 if (!App.state.contacts[peerId]) {
                     App.state.contacts[peerId] = { 
@@ -1404,7 +1423,6 @@
                     UI.renderContactList();
                     Network.debugLog('Contact updated', { peerId, name: sanitizedName });
                 }
-            },
             },
             
             addMessage: async (peerId, content, direction, type, status, id) => {
