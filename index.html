@@ -342,6 +342,10 @@
             peer: null, connections: {}, uploadCancelled: false,
             init: async (id) => {
                 if(Network.peer) return;
+                if (typeof Peer === 'undefined') {
+                    console.warn('PeerJS not loaded, network features disabled');
+                    return;
+                }
                 Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
                 Network.peer.on('open', () => UI.updateHeaderStatus(App.state.activeChat, "Online"));
                 Network.peer.on('connection', Network.handleConn);
@@ -586,7 +590,7 @@
                     App.state.name = savedName;
                 }
                 
-                lucide.createIcons();
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             },
             
             createProfile: async () => {
@@ -620,7 +624,7 @@
                     document.getElementById('my-avatar').innerText = UI.generateAvatar(name);
                     
                     Network.init(id);
-                    lucide.createIcons();
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
                     UI.showToast("Identity created successfully!");
                 } catch(e) {
                     console.error(e);
@@ -666,7 +670,7 @@
                     
                     Network.init(id);
                     UI.renderContactList();
-                    lucide.createIcons();
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
                     UI.showToast("Unlocked successfully!");
                 } catch(e) {
                     App.state.loginAttempts++;
@@ -764,6 +768,11 @@
             },
             
             startScanner: async () => {
+                if (typeof Html5Qrcode === 'undefined') {
+                    UI.showToast('QR Scanner library not available');
+                    return;
+                }
+                
                 const modal = document.getElementById('scanner-modal');
                 modal.classList.remove('hidden');
                 
@@ -800,6 +809,11 @@
                 const modal = document.getElementById('qr-modal');
                 const container = document.getElementById('qrcode-container');
                 container.innerHTML = '';
+                
+                if (typeof QRCode === 'undefined') {
+                    UI.showToast('QR Code library not available');
+                    return;
+                }
                 
                 if (App.state.id) {
                     new QRCode(container, {
@@ -965,7 +979,7 @@
                 });
                 document.querySelector(`#chat-list > div[data-peer="${peerId}"]`)?.classList.add('bg-[#2a3942]');
                 
-                lucide.createIcons();
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             },
             
             showToast: (message) => {
@@ -1066,7 +1080,7 @@
                 
                 div.innerHTML = inner;
                 container.appendChild(div);
-                lucide.createIcons();
+                if (typeof lucide !== 'undefined') lucide.createIcons();
                 
                 if (msg.type === 'voice') {
                     const audio = document.getElementById(audioId);
@@ -1146,18 +1160,18 @@
                     audio.play();
                     icon.setAttribute('data-lucide', 'pause');
                     waveform?.classList.add('playing');
-                    lucide.createIcons();
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
                 } else {
                     audio.pause();
                     icon.setAttribute('data-lucide', 'play');
                     waveform?.classList.remove('playing');
-                    lucide.createIcons();
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
                 }
                 
                 audio.onended = () => {
                     icon.setAttribute('data-lucide', 'play');
                     waveform?.classList.remove('playing');
-                    lucide.createIcons();
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
                 };
             }
         };
