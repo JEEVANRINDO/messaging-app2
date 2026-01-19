@@ -1437,12 +1437,12 @@
                     
                     // Fix #1: Add explicit image detection by MIME type OR file extension
                     const isImage = (mime && mime.startsWith('image/')) || 
-                                    (fileName && /\.(jpg|jpeg|png|gif|webp|heic)$/i.test(fileName));
+                                    (fileName && /\.(jpg|jpeg|png|gif|webp|heic|heif)$/i.test(fileName));
                     
                     if (isImage && url) {
                         // Show actual <img> element
                         inner = `<div class="bubble-constraint"><div class="${bubbleClass} p-1 relative max-w-xs"><img src="${url}" class="rounded-lg max-w-full h-auto cursor-pointer" onclick="(function(u){const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener noreferrer';a.click();}('${url}'))" style="max-height: 300px; object-fit: cover;"><div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
-                    } else if (mime.startsWith('video/') && url) {
+                    } else if (mime && mime.startsWith('video/') && url) {
                         // Video preview with play button overlay (WhatsApp style)
                         inner = `<div class="bubble-constraint"><div class="${bubbleClass} p-1 relative max-w-xs"><div class="relative"><video src="${url}" class="rounded-lg max-w-full h-auto" style="max-height: 300px; object-fit: cover;" controls></video></div><div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">${timestamp} ${statusHtml}</div></div><div id="reactions-${msg.id}" class="message-reactions"></div></div>`;
                     } else {
