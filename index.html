@@ -786,12 +786,23 @@
                     return;
                 }
                 
-                if(Network.peer) {
-                    // Already initialized
-                    if (Network.peer.open) {
+                // ✅ FIX: Clear destroyed peer so we can reinitialize
+                if (Network.peer?.destroyed) {
+                    Network.peer = null;
+                }
+                
+                // ✅ FIX: Check if peer exists AND has correct ID
+                if (Network.peer) {
+                    if (Network.peer.id !== id) {
+                        console.warn('[Network] ID mismatch detected!', { expected: id, current: Network.peer.id });
+                        Network.peer.destroy();
+                        Network.peer = null;
+                    } else if (Network.peer.open) {
+                        console.log('[Network] Peer already initialized and open');
                         UI.updateNetworkStatus('online');
+                        UI.setNetworkButtons(true);
+                        return;
                     }
-                    return;
                 }
                 
                 if (typeof Peer === 'undefined') {
@@ -1748,6 +1759,22 @@
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     UI.showToast("Identity created successfully!");
                     
+                    // Verify peer ID matches stored ID
+                    setTimeout(() => {
+                        if (Network.peer?.id !== App.state.id) {
+                            console.error('[CRITICAL] Peer ID mismatch!', { 
+                                storedId: App.state.id, 
+                                peerId: Network.peer?.id 
+                            });
+                            UI.showToast('Fixing network configuration...');
+                            Network.peer?.destroy();
+                            Network.peer = null;
+                            Network.init(App.state.id);
+                        } else {
+                            console.log('[Network] ID verification passed ✓', { id: App.state.id });
+                        }
+                    }, 2000);
+                    
                     // Request notification permission
                     if ('Notification' in window && Notification.permission === 'default') {
                         Notification.requestPermission().then(permission => {
@@ -1829,6 +1856,22 @@
                     UI.renderContactList();
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                     UI.showToast("Unlocked successfully!");
+                    
+                    // Verify peer ID matches stored ID
+                    setTimeout(() => {
+                        if (Network.peer?.id !== App.state.id) {
+                            console.error('[CRITICAL] Peer ID mismatch!', { 
+                                storedId: App.state.id, 
+                                peerId: Network.peer?.id 
+                            });
+                            UI.showToast('Fixing network configuration...');
+                            Network.peer?.destroy();
+                            Network.peer = null;
+                            Network.init(App.state.id);
+                        } else {
+                            console.log('[Network] ID verification passed ✓', { id: App.state.id });
+                        }
+                    }, 2000);
                     
                     // Load theme preference
                     const savedTheme = await Store.get('config', 'theme');
