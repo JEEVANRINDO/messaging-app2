@@ -1113,8 +1113,15 @@
                 const replies = ['Thanks! 👍', 'OK', 'Sure', '😊', 'Got it'];
                 
                 container.innerHTML = replies.map(reply => 
-                    `<div class="smart-reply-chip" onclick="UI.sendSmartReply('${Utils.escapeHTML(reply)}')">${Utils.escapeHTML(reply)}</div>`
+                    `<div class="smart-reply-chip" data-reply="${Utils.escapeHTML(reply)}">${Utils.escapeHTML(reply)}</div>`
                 ).join('');
+                
+                // Add event delegation
+                container.onclick = (e) => {
+                    if (e.target.classList.contains('smart-reply-chip')) {
+                        UI.sendSmartReply(e.target.dataset.reply);
+                    }
+                };
                 
                 container.classList.remove('hidden');
                 
@@ -1329,12 +1336,7 @@
                     e.preventDefault();
                     Network.sendMessage();
                 } else {
-                    // Send typing indicator
-                    Network.sendTyping();
-                    
-                    // Save draft after typing stops
-                    clearTimeout(UI.typingTimeout);
-                    UI.typingTimeout = setTimeout(() => UI.saveDraft(), 500);
+                    UI.handleTypingAndDraft();
                 }
             },
             
@@ -1355,6 +1357,11 @@
             
             handleInputChange: () => {
                 UI.toggleSendIcon();
+                UI.handleTypingAndDraft();
+            },
+            
+            handleTypingAndDraft: () => {
+                // Send typing indicator
                 Network.sendTyping();
                 
                 // Save draft after typing stops
@@ -1560,12 +1567,21 @@
                 document.getElementById('chat-menu').classList.add('hidden');
                 document.getElementById('selection-mode-bar').classList.remove('hidden');
                 
-                // Add click handlers to messages
-                const messages = document.querySelectorAll('[id^="msg-"]');
-                messages.forEach(msg => {
-                    msg.style.cursor = 'pointer';
-                    msg.onclick = () => UI.toggleMessageSelection(msg.id.replace('msg-', ''));
-                });
+                // Add event delegation on container instead of individual messages
+                const container = document.getElementById('messages-container');
+                container.dataset.selectionMode = 'true';
+                container.style.cursor = 'pointer';
+                
+                // Store handler reference for cleanup
+                UI.messageSelectionHandler = (e) => {
+                    const msgEl = e.target.closest('[id^="msg-"]');
+                    if (msgEl && container.dataset.selectionMode === 'true') {
+                        const msgId = msgEl.id.replace('msg-', '');
+                        UI.toggleMessageSelection(msgId);
+                    }
+                };
+                
+                container.addEventListener('click', UI.messageSelectionHandler);
                 
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             },
@@ -1575,13 +1591,19 @@
                 UI.selectedMessages.clear();
                 document.getElementById('selection-mode-bar').classList.add('hidden');
                 
-                // Remove selection styling and handlers
+                // Remove event delegation
+                const container = document.getElementById('messages-container');
+                delete container.dataset.selectionMode;
+                container.style.cursor = '';
+                
+                if (UI.messageSelectionHandler) {
+                    container.removeEventListener('click', UI.messageSelectionHandler);
+                    UI.messageSelectionHandler = null;
+                }
+                
+                // Remove selection styling
                 const messages = document.querySelectorAll('[id^="msg-"]');
-                messages.forEach(msg => {
-                    msg.classList.remove('message-selected');
-                    msg.style.cursor = '';
-                    msg.onclick = null;
-                });
+                messages.forEach(msg => msg.classList.remove('message-selected'));
             },
             
             toggleMessageSelection: (msgId) => {
@@ -1882,7 +1904,7 @@
                     
                     inner = `<div class="bubble-constraint">
                         <div class="${bubbleClass} px-3 py-2 relative">
-                            <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
+                            <button onclick="UI.toggleReactionPicker('${Utils.escapeHTML(msg.id)}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
                                 <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
                             </button>
                             <div class="audio-card">
@@ -1893,7 +1915,7 @@
                                     ${Array(12).fill('<div class="bar"></div>').join('')}
                                 </div>
                                 <span class="text-xs text-[#8696a0]" id="${audioId}-duration">0:00</span>
-                                <span class="playback-speed" id="${audioId}-speed" onclick="UI.cyclePlaybackSpeed('${audioId}')">1x</span>
+                                <span class="playback-speed" id="${audioId}-speed" data-audio-id="${Utils.escapeHTML(audioId)}">1x</span>
                             </div>
                             <audio id="${audioId}" src="${url || ''}" preload="metadata"></audio>
                             <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
@@ -1934,6 +1956,13 @@
                     if (playBtn) {
                         const audioId = playBtn.getAttribute('data-audio-id');
                         playBtn.addEventListener('click', () => UI.toggleAudio(audioId));
+                    }
+                    
+                    // Add event listener for playback speed
+                    const speedBtn = div.querySelector('.playback-speed');
+                    if (speedBtn) {
+                        const audioId = speedBtn.getAttribute('data-audio-id');
+                        speedBtn.addEventListener('click', () => UI.cyclePlaybackSpeed(audioId));
                     }
                 }
                 
