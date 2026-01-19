@@ -1133,15 +1133,34 @@
                 }
             },
             startPingMonitor: () => {
+                // Ping active connections
                 setInterval(() => {
                     Object.keys(Network.connections).forEach(peerId => {
                         const connObj = Network.connections[peerId];
-                        if (connObj?.conn?.open) {
+                        if (connObj?.conn?.open && connObj.handshakeComplete) {
                             connObj.pingStart = Date.now();
                             connObj.conn.send({ type: 'ping', ts: connObj.pingStart });
                         }
                     });
                 }, 5000);
+                
+                // Check for disconnected contacts and attempt reconnection
+                setInterval(() => {
+                    Object.keys(App.state.contacts).forEach(peerId => {
+                        const connObj = Network.connections[peerId];
+                        
+                        // Skip if already connected or currently connecting
+                        if (connObj?.conn?.open || Network.connectionStates[peerId] === 'connecting') {
+                            return;
+                        }
+                        
+                        // Attempt reconnection for offline contacts
+                        if (!connObj || !connObj.conn || connObj.conn.disconnected) {
+                            Network.debugLog('Auto-reconnect attempt', { peerId });
+                            Network.connectWithRetry(peerId, 0, 5000);
+                        }
+                    });
+                }, 30000); // Check every 30 seconds
             }
         };
 
@@ -1166,11 +1185,41 @@
             },
             
             createProfile: async () => {
-                const name = document.getElementById('setup-name').value.trim();
-                const password = document.getElementById('setup-password').value;
+                const nameInput = document.getElementById('setup-name');
+                const passwordInput = document.getElementById('setup-password');
+                const name = nameInput.value.trim();
+                const password = passwordInput.value;
                 
-                if (!name || name.length < 2) return alert("Name must be at least 2 characters");
-                if (!password || password.length < 4) return alert("Password must be at least 4 characters");
+                // Validate name
+                if (!name || name.length < 2) {
+                    UI.showToast("Name must be at least 2 characters");
+                    nameInput.focus();
+                    return;
+                }
+                
+                if (name.length > 50) {
+                    UI.showToast("Name must be under 50 characters");
+                    nameInput.focus();
+                    return;
+                }
+                
+                // Validate password
+                if (!password || password.length < 4) {
+                    UI.showToast("Password must be at least 4 characters");
+                    passwordInput.focus();
+                    return;
+                }
+                
+                if (password.length > 100) {
+                    UI.showToast("Password must be under 100 characters");
+                    passwordInput.focus();
+                    return;
+                }
+                
+                // Disable button during creation
+                const btn = document.getElementById('btn-create-profile');
+                btn.disabled = true;
+                btn.innerText = 'Creating...';
                 
                 try {
                     const keyPair = await Crypto.generateIdentity();
@@ -1206,8 +1255,10 @@
                         });
                     }
                 } catch(e) {
-                    console.error(e);
-                    alert("Error creating profile. Please try again.");
+                    console.error('Profile creation error:', e);
+                    UI.showToast("Error creating profile. Please try again.");
+                    btn.disabled = false;
+                    btn.innerText = 'Initialize Identity';
                 }
             },
             
@@ -1220,11 +1271,22 @@
                     return;
                 }
                 
-                const password = document.getElementById('login-password').value;
-                if (!password) return alert("Enter password");
+                const passwordInput = document.getElementById('login-password');
+                const password = passwordInput.value;
+                
+                if (!password) {
+                    UI.showToast("Please enter your password");
+                    passwordInput.focus();
+                    return;
+                }
                 
                 try {
                     const encPrivKey = await Store.get('config', 'privateKey');
+                    if (!encPrivKey) {
+                        UI.showToast("No identity found. Please create a new profile.");
+                        return;
+                    }
+                    
                     const privKey = await Crypto.decryptPrivateKey(encPrivKey, password);
                     const pubKey = await Store.get('config', 'publicKey');
                     const id = await Store.get('config', 'id');
@@ -1243,6 +1305,7 @@
                     
                     document.getElementById('login-screen').classList.add('hidden');
                     document.getElementById('app-layout').classList.remove('hidden');
+                    document.getElementById('lockout-msg').classList.add('hidden');
                     
                     document.getElementById('my-display-name').innerText = name;
                     document.getElementById('my-avatar').innerText = UI.generateAvatar(name);
@@ -1270,27 +1333,57 @@
                         App.notificationPermission = Notification?.permission === 'granted';
                     }
                 } catch(e) {
+                    console.error('Login error:', e);
                     App.state.loginAttempts++;
+                    
                     if (App.state.loginAttempts >= 3) {
                         App.state.lockoutUntil = Date.now() + 30000;
                         document.getElementById('lockout-msg').innerText = "Too many attempts. Locked for 30s";
                         document.getElementById('lockout-msg').classList.remove('hidden');
+                        UI.showToast("Too many login attempts. Please wait 30 seconds.");
                         setTimeout(() => {
                             App.state.loginAttempts = 0;
                             document.getElementById('lockout-msg').classList.add('hidden');
                         }, 30000);
                     } else {
-                        alert(`Invalid password (${App.state.loginAttempts}/3)`);
+                        UI.showToast(`Invalid password (${App.state.loginAttempts}/3)`);
+                        passwordInput.value = '';
+                        passwordInput.focus();
                     }
                 }
             },
             
             addContact: async (peerId, name, pubStr) => {
+                // Validate inputs
+                if (!peerId || !name || !pubStr) {
+                    Network.debugLog('Invalid contact data', { peerId, name, pubStr });
+                    return;
+                }
+                
+                // Sanitize name
+                const sanitizedName = name.trim().substring(0, 50);
+                
                 if (!App.state.contacts[peerId]) {
-                    App.state.contacts[peerId] = { name, pubStr, lastMessage: null, unread: 0, lastSeen: Date.now() };
+                    App.state.contacts[peerId] = { 
+                        name: sanitizedName, 
+                        pubStr, 
+                        lastMessage: null, 
+                        unread: 0, 
+                        lastSeen: Date.now() 
+                    };
                     await Store.put('config', 'contacts', App.state.contacts);
                     UI.renderContactList();
+                    Network.debugLog('Contact added', { peerId, name: sanitizedName });
+                } else {
+                    // Update existing contact
+                    App.state.contacts[peerId].name = sanitizedName;
+                    App.state.contacts[peerId].pubStr = pubStr;
+                    App.state.contacts[peerId].lastSeen = Date.now();
+                    await Store.put('config', 'contacts', App.state.contacts);
+                    UI.renderContactList();
+                    Network.debugLog('Contact updated', { peerId, name: sanitizedName });
                 }
+            },
             },
             
             addMessage: async (peerId, content, direction, type, status, id) => {
