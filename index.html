@@ -26,8 +26,8 @@
         .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         
-        .file-card-inner { background-color: rgba(30, 40, 45, 0.6); border-radius: 6px; padding: 10px; margin-top: 4px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(5px); }
-        .file-icon-box { width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0; position: relative; }
+        .file-card-inner { background-color: rgba(30, 40, 45, 0.4); border-radius: 8px; padding: 12px; margin-top: 4px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.08); }
+        .file-icon-box { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; flex-shrink: 0; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         
         /* Status Orbs */
         .status-orb { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-left: 4px; transition: all 0.3s ease; }
@@ -379,6 +379,34 @@
                 else if(status === 'delivered') cl += ' status-delivered';
                 else if(status === 'read') cl += ' status-read';
                 return `<div class="status-container"><div class="${cl}"></div></div>`;
+            },
+            isImage: (mime, filename) => {
+                // Check mime type first
+                if (mime && mime.startsWith('image/')) return true;
+                // Fallback: check file extension
+                if (!filename) return false;
+                const ext = filename.split('.').pop()?.toLowerCase();
+                return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico'].includes(ext);
+            },
+            detectMimeType: (filename, originalMime) => {
+                // If we have a valid mime type, use it
+                if (originalMime && originalMime.trim()) return originalMime;
+                // Otherwise, detect from extension
+                if (!filename) return 'application/octet-stream';
+                const ext = filename.split('.').pop()?.toLowerCase();
+                const mimeMap = {
+                    'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+                    'gif': 'image/gif', 'webp': 'image/webp', 'bmp': 'image/bmp',
+                    'svg': 'image/svg+xml', 'ico': 'image/x-icon',
+                    'pdf': 'application/pdf', 'doc': 'application/msword',
+                    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'xls': 'application/vnd.ms-excel',
+                    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'zip': 'application/zip', 'rar': 'application/x-rar-compressed',
+                    'mp3': 'audio/mpeg', 'mp4': 'video/mp4', 'avi': 'video/x-msvideo',
+                    'txt': 'text/plain', 'csv': 'text/csv', 'json': 'application/json'
+                };
+                return mimeMap[ext] || 'application/octet-stream';
             }
         };
 
@@ -570,7 +598,8 @@
                     const pub = await Crypto.importKey(data.key);
                     const shared = await Crypto.deriveShared(pub);
                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                    App.addContact(sender, data.name, pubStr);
+                    // Fixed: Pass userId to maintain persistent contact identity
+                    App.addContact(sender, data.name, pubStr, data.id);
                     Network.connections[sender] = { ...Network.connections[sender], conn, key: shared, seqOut: 0 };
                     conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
                     if (!App.state.activeChat) UI.loadChat(sender);
@@ -581,7 +610,8 @@
                      const pub = await Crypto.importKey(data.key);
                      const shared = await Crypto.deriveShared(pub);
                      const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                     App.addContact(sender, data.name, pubStr);
+                     // Fixed: Pass userId to maintain persistent contact identity
+                     App.addContact(sender, data.name, pubStr, data.id);
                      Network.connections[sender] = { ...Network.connections[sender], conn, key: shared, seqOut: 0 };
                      Network.processQueue(sender); 
                      if (App.state.activeChat === sender) UI.loadChat(sender);
@@ -742,11 +772,14 @@
                     const numChunks = Math.ceil(file.size / CHUNK);
                     const totalEncSize = file.size + (numChunks * overhead);
 
+                    // Detect mime type with fallback to extension
+                    const detectedMime = Utils.detectMimeType(file.name, file.type);
+                    
                     const msgId = Date.now().toString(); 
-                    App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
+                    App.addMessage(peerId, { name: file.name, blob: file, mime: detectedMime, size: file.size }, 'out', 'file', 'pending', msgId);
                     UI.clearFile();
 
-                    connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: file.type, encSize: totalEncSize });
+                    connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: detectedMime, encSize: totalEncSize });
                     
                     let offset = 0;
                     document.getElementById('upload-progress').classList.remove('hidden');
@@ -776,8 +809,10 @@
                         requestAnimationFrame(streamLoop);
                     };
                     streamLoop();
-                } 
-                else if (input.value.trim()) {
+                }
+                
+                // FIXED: Changed from 'else if' to separate 'if' to allow sending text with file
+                if (input.value.trim()) {
                     const text = input.value.trim();
                     const connObj = Network.connections[peerId];
                     const msgId = Date.now().toString();
@@ -988,11 +1023,64 @@
                 }
             },
             
-            addContact: async (peerId, name, pubStr) => {
-                if (!App.state.contacts[peerId]) {
-                    App.state.contacts[peerId] = { name, pubStr, lastMessage: null, unread: 0, lastSeen: Date.now() };
+            addContact: async (peerId, name, pubStr, userId) => {
+                // Fixed: Use persistent userId instead of peerId for contact identity
+                // Find existing contact with same userId (persistent ID)
+                let existingContactPeerId = null;
+                if (userId) {
+                    for (const [pid, contact] of Object.entries(App.state.contacts)) {
+                        if (contact.userId === userId) {
+                            existingContactPeerId = pid;
+                            break;
+                        }
+                    }
+                }
+                
+                if (existingContactPeerId && existingContactPeerId !== peerId) {
+                    // Update existing contact with new peerId (they reconnected)
+                    const existingContact = App.state.contacts[existingContactPeerId];
+                    delete App.state.contacts[existingContactPeerId];
+                    App.state.contacts[peerId] = {
+                        ...existingContact,
+                        name,
+                        pubStr,
+                        userId,
+                        lastSeen: Date.now()
+                    };
+                    
+                    // Update activeChat if needed
+                    if (App.state.activeChat === existingContactPeerId) {
+                        App.state.activeChat = peerId;
+                    }
+                    
+                    // Migrate messages from old peerId to new peerId
+                    const messages = await Store.getMessages(existingContactPeerId);
+                    for (const msg of messages) {
+                        msg.peerId = peerId;
+                        await Store.put('messages', null, msg);
+                    }
+                    
                     await Store.put('config', 'contacts', App.state.contacts);
                     UI.renderContactList();
+                } else if (!App.state.contacts[peerId]) {
+                    // New contact
+                    App.state.contacts[peerId] = { 
+                        name, 
+                        pubStr, 
+                        userId: userId || peerId, // Use userId if provided, otherwise use peerId
+                        lastMessage: null, 
+                        unread: 0, 
+                        lastSeen: Date.now() 
+                    };
+                    await Store.put('config', 'contacts', App.state.contacts);
+                    UI.renderContactList();
+                } else {
+                    // Update existing contact
+                    App.state.contacts[peerId].name = name;
+                    App.state.contacts[peerId].pubStr = pubStr;
+                    App.state.contacts[peerId].userId = userId || App.state.contacts[peerId].userId || peerId;
+                    App.state.contacts[peerId].lastSeen = Date.now();
+                    await Store.put('config', 'contacts', App.state.contacts);
                 }
             },
             
@@ -1857,8 +1945,17 @@
                 } else if (msg.type === 'file' || msg.type === 'file-receiving') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
                     const fileExt = msg.content.name?.split('.').pop()?.toUpperCase().substring(0, 3) || 'FILE';
-                    const isImage = msg.content.mime?.startsWith('image');
-                    const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
+                    
+                    // Fixed: Use helper function to detect images with fallback to file extension
+                    const isImage = Utils.isImage(msg.content.mime, msg.content.name);
+                    
+                    // Fixed: Only create URL once if it doesn't exist, preventing memory leaks
+                    let url = msg.content.url;
+                    if (!url && msg.content.blob) {
+                        url = Utils.addBlob(URL.createObjectURL(msg.content.blob));
+                        // Store the URL back to avoid recreating it
+                        msg.content.url = url;
+                    }
                     
                     if (isImage && url) {
                         inner = `<div class="bubble-constraint">
@@ -1866,7 +1963,7 @@
                                 <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
                                     <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
                                 </button>
-                                <img src="${url}" class="rounded max-w-xs max-h-80 object-contain">
+                                <img src="${url}" class="rounded max-w-xs max-h-80 object-contain cursor-pointer" onclick="window.open('${url}', '_blank')">
                                 <div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">
                                     ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                     ${statusHtml}
@@ -1875,7 +1972,13 @@
                             <div id="reactions-${msg.id}" class="message-reactions"></div>
                         </div>`;
                     } else {
-                        const downloadBtn = url ? `<a href="${url}" download="${msg.content.name}" class="text-[#00a884] text-xs hover:underline">Download</a>` : '<span class="text-xs text-[#8696a0]">Receiving...</span>';
+                        // Improved: Better download button UI like WhatsApp
+                        const downloadBtn = url ? 
+                            `<a href="${url}" download="${Utils.escapeHTML(msg.content.name)}" class="bg-[#00a884] text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-[#008f6f] transition-colors flex items-center gap-1">
+                                <i data-lucide="download" class="w-3 h-3"></i> Download
+                            </a>` : 
+                            '<span class="text-xs text-[#8696a0] bg-[#2a3942] px-3 py-1 rounded-full">Downloading...</span>';
+                        
                         inner = `<div class="bubble-constraint">
                             <div class="${bubbleClass} px-3 py-2 relative">
                                 <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
@@ -1884,7 +1987,7 @@
                                 <div class="file-card-inner">
                                     <div class="file-icon-box bg-[#00a884]">${fileExt}</div>
                                     <div class="flex-1 min-w-0">
-                                        <div class="font-medium text-sm truncate">${msg.content.name || 'File'}</div>
+                                        <div class="font-medium text-sm truncate">${Utils.escapeHTML(msg.content.name || 'File')}</div>
                                         <div class="text-xs text-[#8696a0]">${msg.content.size ? Utils.formatBytes(msg.content.size) : ''}</div>
                                     </div>
                                     <div class="flex-shrink-0">${downloadBtn}</div>
@@ -1897,7 +2000,7 @@
                             <div id="reactions-${msg.id}" class="message-reactions"></div>
                         </div>`;
                     }
-                } else if (msg.type === 'voice') {
+                }else if (msg.type === 'voice') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
                     const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
                     const audioId = `audio-${msg.id}`.replace(/[^a-zA-Z0-9-_]/g, '');
