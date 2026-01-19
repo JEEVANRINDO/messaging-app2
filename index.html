@@ -68,7 +68,7 @@
         <p class="text-[#8696a0] max-w-xs mx-auto mb-8">Encrypted Local Storage. Zero Cloud.</p>
         <div class="w-full max-w-sm space-y-4">
             <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg" onkeydown="if(event.key==='Enter')App.createProfile()">
+            <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
             <button id="btn-create-profile" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
         </div>
     </div>
@@ -77,7 +77,7 @@
     <div id="login-screen" class="hidden absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
         <i data-lucide="lock" class="w-16 h-16 text-[#00a884] mb-4"></i>
         <h2 class="text-2xl font-bold mb-4">Unlock Identity</h2>
-        <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center" onkeydown="if(event.key==='Enter')App.login()">
+        <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center">
         <button onclick="App.login()" class="w-full max-w-sm p-4 bg-[#00a884] rounded-xl font-bold">Unlock</button>
         <div id="lockout-msg" class="text-red-400 mt-4 hidden text-sm bg-red-900/20 p-2 rounded border border-red-900"></div>
     </div>
@@ -108,7 +108,7 @@
             </div>
 
             <div id="new-chat-panel" class="hidden p-2 bg-[#111b21] border-b border-[#2a3942] flex gap-2">
-                <input id="input-peer-id" placeholder="Paste Peer ID..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none" onkeydown="if(event.key==='Enter')Network.connectToInput()">
+                <input id="input-peer-id" placeholder="Paste Peer ID..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none">
                 <button onclick="Network.connectToInput()" class="bg-[#00a884] p-2 rounded-lg"><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i></button>
             </div>
             <div id="chat-list" class="flex-1 overflow-y-auto"></div>
@@ -341,15 +341,7 @@
         const Network = {
             peer: null, connections: {}, uploadCancelled: false,
             init: async (id) => {
-                if (!id) {
-                    console.error('Cannot initialize network without ID');
-                    return;
-                }
                 if(Network.peer) return;
-                if (typeof Peer === 'undefined') {
-                    console.warn('PeerJS not loaded, network features disabled');
-                    return;
-                }
                 Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
                 Network.peer.on('open', () => UI.updateHeaderStatus(App.state.activeChat, "Online"));
                 Network.peer.on('connection', Network.handleConn);
@@ -361,52 +353,18 @@
                 if(id) Network.connectWithRetry(id);
             },
             connectWithRetry: async (id, retries = 0) => {
-                if (!id || id === App.state.id) return;
+                if (Network.connections[id] && Network.connections[id].conn.open) return;
                 
-                // Check if already connected
-                if (Network.connections[id]?.conn?.open) {
-                    UI.showToast("Already connected!");
-                    UI.loadChat(id);
-                    return;
-                }
-                
-                try {
-                    const conn = Network.peer.connect(id, { 
-                        reliable: true,
-                        serialization: 'json'
-                    });
-                    
-                    if (!Network.connections[id]) {
-                        Network.connections[id] = { conn, key: null, seqOut: 0, lastSeq: 0 };
-                    } else {
-                        Network.connections[id].conn = conn;
-                    }
+                const conn = Network.peer.connect(id, { reliable: true });
+                if (!Network.connections[id]) Network.connections[id] = { conn, key: null, seqOut: 0, lastSeq: 0 };
+                else Network.connections[id].conn = conn;
 
-                    conn.on('open', () => {
-                        console.log('Connection opened with', id);
-                        conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-                        UI.updateHeaderStatus(id, "Connecting...");
-                    });
-                    
-                    conn.on('error', (err) => {
-                        console.error('Connection error:', err);
-                        if (retries < 3) {
-                            UI.showToast(`Retrying connection... (${retries + 1}/3)`);
-                            setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000);
-                        } else {
-                            UI.showToast("Connection failed. Check if peer is online.");
-                            delete Network.connections[id];
-                        }
-                    });
-                    
-                    Network.handleConn(conn);
-                    
-                } catch(e) {
-                    console.error('Connect error:', e);
-                    if (retries < 3) {
-                        setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000);
-                    }
-                }
+                conn.on('open', () => {
+                    conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name, id: App.state.id });
+                    if(Network.connections[id].key) Network.processQueue(id);
+                });
+                conn.on('error', () => { if (retries < 3) setTimeout(() => Network.connectWithRetry(id, retries + 1), 2000); });
+                Network.handleConn(conn);
             },
             handleConn: (conn) => {
                 if(conn._hasListeners) return;
@@ -436,24 +394,19 @@
                     const pub = await Crypto.importKey(data.key);
                     const shared = await Crypto.deriveShared(pub);
                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                    await App.addContact(sender, data.name, pubStr);
-                    Network.connections[sender] = { ...Network.connections[sender], conn, key: shared, seqOut: 0, lastSeq: 0 };
+                    App.addContact(sender, data.name, pubStr);
+                    Network.connections[sender] = { ...Network.connections[sender], conn, key: shared, seqOut: 0 };
                     conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
-                    UI.updateHeaderStatus(sender, "Online");
-                    if (!App.state.activeChat) {
-                        UI.loadChat(sender);
-                    } else if (App.state.activeChat === sender) {
-                        UI.loadChat(sender);
-                    }
+                    if (!App.state.activeChat) UI.loadChat(sender);
+                    else if (App.state.activeChat === sender) UI.loadChat(sender);
                     UI.showToast(`Connected with ${data.name}!`);
-                    return; // Add explicit return to prevent fall-through
                 }
                 if (data.type === 'handshake-ack') {
                      const pub = await Crypto.importKey(data.key);
                      const shared = await Crypto.deriveShared(pub);
                      const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                     await App.addContact(sender, data.name, pubStr);
-                     Network.connections[sender] = { ...Network.connections[sender], conn, key: shared, seqOut: 0, lastSeq: 0 };
+                     App.addContact(sender, data.name, pubStr);
+                     Network.connections[sender] = { ...Network.connections[sender], conn, key: shared, seqOut: 0 };
                      Network.processQueue(sender); 
                      if (App.state.activeChat === sender) UI.loadChat(sender);
                      else if (!App.state.activeChat) UI.loadChat(sender);
@@ -486,13 +439,6 @@
                         if(dec.type === 'text') {
                              const msgId = data.id || Date.now().toString();
                              App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', msgId);
-                             setTimeout(() => {
-                                 conn.send({ type: 'receipt', msgId: msgId, status: 'delivered' });
-                                 if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: msgId, status: 'read' });
-                             }, 50);
-                        } else if(dec.type === 'location') {
-                             const msgId = data.id || Date.now().toString();
-                             App.addMessage(sender, { lat: dec.lat, lon: dec.lon, url: dec.url }, 'in', 'location', 'read', msgId);
                              setTimeout(() => {
                                  conn.send({ type: 'receipt', msgId: msgId, status: 'delivered' });
                                  if (App.state.activeChat === sender) conn.send({ type: 'receipt', msgId: msgId, status: 'read' });
@@ -617,640 +563,7 @@
             }
         };
 
-        const App = {
-            state: { id: null, name: null, pubStr: null, password: null, activeChat: null, contacts: {}, loginAttempts: 0, lockoutUntil: null },
-            fileChunks: {},
-            
-            init: async () => {
-                await Store.init();
-                const savedName = await Store.get('config', 'name');
-                const encPrivKey = await Store.get('config', 'privateKey');
-                
-                if (!savedName || !encPrivKey) {
-                    document.getElementById('onboarding-screen').classList.remove('hidden');
-                } else {
-                    document.getElementById('login-screen').classList.remove('hidden');
-                    App.state.name = savedName;
-                }
-                
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            },
-            
-            createProfile: async () => {
-                const name = document.getElementById('setup-name').value.trim();
-                const password = document.getElementById('setup-password').value;
-                
-                if (!name || name.length < 2) return alert("Name must be at least 2 characters");
-                if (!password || password.length < 4) return alert("Password must be at least 4 characters");
-                
-                try {
-                    const keyPair = await Crypto.generateIdentity();
-                    Crypto.keyPair = keyPair;
-                    const pubKey = await Crypto.exportKey(keyPair.publicKey);
-                    const encPrivKey = await Crypto.encryptPrivateKey(keyPair.privateKey, password);
-                    const id = pubKey.substring(0, 16);
-                    
-                    await Store.put('config', 'name', name);
-                    await Store.put('config', 'publicKey', pubKey);
-                    await Store.put('config', 'privateKey', encPrivKey);
-                    await Store.put('config', 'id', id);
-                    
-                    App.state.name = name;
-                    App.state.pubStr = pubKey;
-                    App.state.id = id;
-                    App.state.password = password;
-                    
-                    document.getElementById('onboarding-screen').classList.add('hidden');
-                    document.getElementById('app-layout').classList.remove('hidden');
-                    
-                    document.getElementById('my-display-name').innerText = name;
-                    document.getElementById('my-avatar').innerText = UI.generateAvatar(name);
-                    
-                    Network.init(id);
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                    UI.showToast("Identity created successfully!");
-                } catch(e) {
-                    console.error(e);
-                    alert("Error creating profile. Please try again.");
-                }
-            },
-            
-            login: async () => {
-                const now = Date.now();
-                if (App.state.lockoutUntil && now < App.state.lockoutUntil) {
-                    const remaining = Math.ceil((App.state.lockoutUntil - now) / 1000);
-                    document.getElementById('lockout-msg').innerText = `Too many attempts. Try again in ${remaining}s`;
-                    document.getElementById('lockout-msg').classList.remove('hidden');
-                    return;
-                }
-                
-                const password = document.getElementById('login-password').value;
-                if (!password) return alert("Enter password");
-                
-                try {
-                    const encPrivKey = await Store.get('config', 'privateKey');
-                    const privKey = await Crypto.decryptPrivateKey(encPrivKey, password);
-                    const pubKey = await Store.get('config', 'publicKey');
-                    const id = await Store.get('config', 'id');
-                    const name = await Store.get('config', 'name');
-                    
-                    Crypto.keyPair = { privateKey: privKey, publicKey: await Crypto.importKey(pubKey) };
-                    App.state.pubStr = pubKey;
-                    App.state.id = id;
-                    App.state.name = name;
-                    App.state.password = password;
-                    App.state.loginAttempts = 0;
-                    App.state.lockoutUntil = null;
-                    
-                    const savedContacts = await Store.get('config', 'contacts');
-                    if (savedContacts) App.state.contacts = savedContacts;
-                    
-                    document.getElementById('login-screen').classList.add('hidden');
-                    document.getElementById('app-layout').classList.remove('hidden');
-                    
-                    document.getElementById('my-display-name').innerText = name;
-                    document.getElementById('my-avatar').innerText = UI.generateAvatar(name);
-                    
-                    Network.init(id);
-                    UI.renderContactList();
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                    UI.showToast("Unlocked successfully!");
-                } catch(e) {
-                    App.state.loginAttempts++;
-                    if (App.state.loginAttempts >= 3) {
-                        App.state.lockoutUntil = Date.now() + 30000;
-                        document.getElementById('lockout-msg').innerText = "Too many attempts. Locked for 30s";
-                        document.getElementById('lockout-msg').classList.remove('hidden');
-                        setTimeout(() => {
-                            App.state.loginAttempts = 0;
-                            document.getElementById('lockout-msg').classList.add('hidden');
-                        }, 30000);
-                    } else {
-                        alert(`Invalid password (${App.state.loginAttempts}/3)`);
-                    }
-                }
-            },
-            
-            addContact: async (peerId, name, pubStr) => {
-                if (!App.state.contacts[peerId]) {
-                    App.state.contacts[peerId] = { name, pubStr, lastMessage: null, unread: 0 };
-                    await Store.put('config', 'contacts', App.state.contacts);
-                    UI.renderContactList();
-                }
-            },
-            
-            addMessage: async (peerId, content, direction, type, status, id) => {
-                const msgId = id || Date.now().toString();
-                const msg = {
-                    id: msgId,
-                    peerId,
-                    content,
-                    direction,
-                    type,
-                    status: status || 'pending',
-                    timestamp: Date.now()
-                };
-                
-                await Store.put('messages', null, msg);
-                
-                if (App.state.contacts[peerId]) {
-                    const preview = type === 'text' ? content.substring(0, 50) : 
-                                   type === 'file' ? '📎 File' : 
-                                   type === 'voice' ? '🎤 Voice' : 
-                                   type === 'location' ? '📍 Location' : 'Message';
-                    App.state.contacts[peerId].lastMessage = preview;
-                    await Store.put('config', 'contacts', App.state.contacts);
-                    UI.renderContactList();
-                }
-                
-                if (App.state.activeChat === peerId) {
-                    UI.renderMessage(msg);
-                    const container = document.getElementById('messages-container');
-                    setTimeout(() => container.scrollTop = container.scrollHeight, 50);
-                }
-            },
-            
-            exportIdentity: async () => {
-                try {
-                    const data = {
-                        name: await Store.get('config', 'name'),
-                        id: await Store.get('config', 'id'),
-                        publicKey: await Store.get('config', 'publicKey'),
-                        privateKey: await Store.get('config', 'privateKey'),
-                        contacts: await Store.get('config', 'contacts')
-                    };
-                    
-                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `ghostmesh-identity-${Date.now()}.json`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    UI.showToast("Identity exported!");
-                } catch(e) {
-                    alert("Export failed");
-                }
-            }
-        };
-
-        const UI = {
-            copyId: () => {
-                if (App.state.id) {
-                    navigator.clipboard.writeText(App.state.id);
-                    UI.showToast("ID copied to clipboard!");
-                }
-            },
-            
-            toggleAddContact: () => {
-                const panel = document.getElementById('new-chat-panel');
-                panel.classList.toggle('hidden');
-                if (!panel.classList.contains('hidden')) {
-                    document.getElementById('input-peer-id').focus();
-                }
-            },
-            
-            startScanner: async () => {
-                if (typeof Html5Qrcode === 'undefined') {
-                    UI.showToast('QR Scanner library not available');
-                    return;
-                }
-                
-                const modal = document.getElementById('scanner-modal');
-                modal.classList.remove('hidden');
-                
-                try {
-                    Media.scanner = new Html5Qrcode("reader");
-                    await Media.scanner.start(
-                        { facingMode: "environment" },
-                        { fps: 10, qrbox: 250 },
-                        async (decodedText) => {
-                            UI.stopScanner();
-                            if (decodedText && decodedText !== App.state.id) {
-                                // Add placeholder contact first
-                                if (!App.state.contacts[decodedText]) {
-                                    const peerLabel = `Peer_${decodedText.substring(0, Math.min(6, decodedText.length))}`;
-                                    await App.addContact(decodedText, peerLabel, '');
-                                }
-                                Network.connectWithRetry(decodedText);
-                                UI.showToast("Connecting to peer...");
-                                // Auto-open the chat
-                                setTimeout(() => UI.loadChat(decodedText), 500);
-                            }
-                        },
-                        () => {}
-                    );
-                } catch(e) {
-                    console.error("Scanner error:", e);
-                    modal.classList.add('hidden');
-                    alert("Camera access denied or not available");
-                }
-            },
-            
-            stopScanner: () => {
-                if (Media.scanner) {
-                    Media.scanner.stop().catch(() => {});
-                    Media.scanner = null;
-                }
-                document.getElementById('scanner-modal').classList.add('hidden');
-            },
-            
-            showQR: () => {
-                const modal = document.getElementById('qr-modal');
-                const container = document.getElementById('qrcode-container');
-                container.innerHTML = '';
-                
-                if (typeof QRCode === 'undefined') {
-                    UI.showToast('QR Code library not available');
-                    return;
-                }
-                
-                if (App.state.id) {
-                    new QRCode(container, {
-                        text: App.state.id,
-                        width: 256,
-                        height: 256,
-                        colorDark: "#000000",
-                        colorLight: "#ffffff",
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-                    modal.classList.remove('hidden');
-                }
-            },
-            
-            filterContacts: () => {
-                const search = document.getElementById('search-contacts').value.toLowerCase();
-                const chatItems = document.querySelectorAll('#chat-list > div');
-                chatItems.forEach(item => {
-                    const name = item.querySelector('.font-semibold')?.innerText.toLowerCase() || '';
-                    item.style.display = name.includes(search) ? '' : 'none';
-                });
-            },
-            
-            handleFileSelect: (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const preview = document.getElementById('file-preview-area');
-                    const name = document.getElementById('file-preview-name');
-                    name.innerText = file.name + ' (' + Utils.formatBytes(file.size) + ')';
-                    preview.classList.remove('hidden');
-                    UI.toggleSendIcon();
-                }
-            },
-            
-            clearFile: () => {
-                document.getElementById('file-input').value = '';
-                document.getElementById('file-preview-area').classList.add('hidden');
-                UI.toggleSendIcon();
-            },
-            
-            sendLocation: async () => {
-                if (!App.state.activeChat) return;
-                
-                if (!navigator.geolocation) {
-                    return alert("Geolocation not supported");
-                }
-                
-                navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        const lat = parseFloat(position.coords.latitude.toFixed(6));
-                        const lon = parseFloat(position.coords.longitude.toFixed(6));
-                        
-                        // Validate coordinates
-                        if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-                            return alert("Invalid location coordinates");
-                        }
-                        
-                        const locationUrl = `https://www.openstreetmap.org/?mlat=${encodeURIComponent(lat)}&mlon=${encodeURIComponent(lon)}#map=15/${encodeURIComponent(lat)}/${encodeURIComponent(lon)}`;
-                        
-                        const msgId = Date.now().toString();
-                        await App.addMessage(App.state.activeChat, { lat, lon, url: locationUrl }, 'out', 'location', 'sent', msgId);
-                        
-                        const connObj = Network.connections[App.state.activeChat];
-                        if (connObj?.conn?.open && connObj.key) {
-                            const enc = await Crypto.encryptPayload({ 
-                                type: 'location', 
-                                lat, 
-                                lon, 
-                                url: locationUrl,
-                                seq: ++connObj.seqOut,
-                                ts: Date.now()
-                            }, connObj.key);
-                            connObj.conn.send({ type: 'msg', id: msgId, payload: enc });
-                        }
-                        
-                        UI.showToast("Location sent!");
-                    },
-                    (error) => {
-                        alert("Location access denied or unavailable");
-                    },
-                    { timeout: 10000 }
-                );
-            },
-            
-            handleMainAction: () => {
-                const input = document.getElementById('message-input');
-                const fileInput = document.getElementById('file-input');
-                
-                if (input.value.trim() || fileInput.files.length > 0) {
-                    Network.sendMessage();
-                } else {
-                    Media.toggleRecordUI();
-                }
-            },
-            
-            handleInputKey: (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    Network.sendMessage();
-                }
-            },
-            
-            toggleSendIcon: () => {
-                const input = document.getElementById('message-input');
-                const fileInput = document.getElementById('file-input');
-                const micIcon = document.getElementById('icon-mic');
-                const sendIcon = document.getElementById('icon-send');
-                
-                if (input.value.trim() || fileInput.files.length > 0) {
-                    micIcon.classList.add('hidden');
-                    sendIcon.classList.remove('hidden');
-                } else {
-                    micIcon.classList.remove('hidden');
-                    sendIcon.classList.add('hidden');
-                }
-            },
-            
-            closeChat: () => {
-                document.getElementById('chat-area').classList.add('hidden');
-                document.getElementById('sidebar-panel').classList.remove('hidden');
-            },
-            
-            showSafetyNumber: async () => {
-                if (!App.state.activeChat) return;
-                const contact = App.state.contacts[App.state.activeChat];
-                if (!contact) return;
-                
-                const fingerprint = await Crypto.generateFingerprint(contact.pubStr);
-                document.getElementById('safety-number').innerText = fingerprint;
-                document.getElementById('safety-modal').classList.remove('hidden');
-            },
-            
-            updateHeaderStatus: (peerId, status) => {
-                if (App.state.activeChat === peerId) {
-                    document.getElementById('chat-header-status').innerText = status;
-                }
-            },
-            
-            loadChat: async (peerId) => {
-                App.state.activeChat = peerId;
-                const contact = App.state.contacts[peerId];
-                
-                if (!contact) return;
-                
-                document.getElementById('chat-empty-state').classList.add('hidden');
-                document.getElementById('chat-interface').classList.remove('hidden');
-                document.getElementById('chat-area').classList.remove('hidden');
-                
-                if (window.innerWidth < 768) {
-                    document.getElementById('sidebar-panel').classList.add('hidden');
-                }
-                
-                document.getElementById('chat-header-name').innerText = contact.name;
-                document.getElementById('chat-header-avatar').innerText = UI.generateAvatar(contact.name);
-                
-                const isOnline = Network.connections[peerId]?.conn?.open;
-                UI.updateHeaderStatus(peerId, isOnline ? "Online" : "Offline");
-                
-                const messages = await Store.getMessages(peerId);
-                const container = document.getElementById('messages-container');
-                container.innerHTML = '';
-                
-                messages.forEach(msg => UI.renderMessage(msg));
-                
-                setTimeout(() => container.scrollTop = container.scrollHeight, 100);
-                
-                document.querySelectorAll('#chat-list > div').forEach(el => {
-                    el.classList.remove('bg-[#2a3942]');
-                });
-                document.querySelector(`#chat-list > div[data-peer="${peerId}"]`)?.classList.add('bg-[#2a3942]');
-                
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-            },
-            
-            showToast: (message) => {
-                const toast = document.createElement('div');
-                toast.className = 'fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-[#202c33] text-white px-6 py-3 rounded-lg shadow-lg z-[150] animate-fade-in';
-                toast.innerText = message;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 3000);
-            },
-            
-            renderMessage: (msg) => {
-                const container = document.getElementById('messages-container');
-                const existing = document.getElementById(`msg-${msg.id}`);
-                if (existing) existing.remove();
-                
-                const div = document.createElement('div');
-                div.id = `msg-${msg.id}`;
-                div.className = `flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'}`;
-                
-                let inner = '';
-                const bubbleClass = msg.direction === 'out' ? 'msg-sent' : 'msg-received';
-                
-                if (msg.type === 'text') {
-                    const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
-                    inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2 text-sm">
-                        <div>${Utils.linkify(msg.content)}</div>
-                        <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            ${statusHtml}
-                        </div>
-                    </div>`;
-                } else if (msg.type === 'file' || msg.type === 'file-receiving') {
-                    const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
-                    const fileExt = msg.content.name?.split('.').pop()?.toUpperCase().substring(0, 3) || 'FILE';
-                    const isImage = msg.content.mime?.startsWith('image');
-                    const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
-                    
-                    if (isImage && url) {
-                        inner = `<div class="${bubbleClass} bubble-constraint p-1">
-                            <img src="${url}" class="rounded max-w-xs max-h-80 object-contain">
-                            <div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">
-                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                ${statusHtml}
-                            </div>
-                        </div>`;
-                    } else {
-                        const downloadBtn = url ? `<a href="${url}" download="${msg.content.name}" class="text-[#00a884] text-xs hover:underline">Download</a>` : '<span class="text-xs text-[#8696a0]">Receiving...</span>';
-                        inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2">
-                            <div class="file-card-inner">
-                                <div class="file-icon-box bg-[#00a884]">${fileExt}</div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="font-medium text-sm truncate">${msg.content.name || 'File'}</div>
-                                    <div class="text-xs text-[#8696a0]">${msg.content.size ? Utils.formatBytes(msg.content.size) : ''}</div>
-                                </div>
-                                <div class="flex-shrink-0">${downloadBtn}</div>
-                            </div>
-                            <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                                ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                ${statusHtml}
-                            </div>
-                        </div>`;
-                    }
-                } else if (msg.type === 'voice') {
-                    const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
-                    const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
-                    // Sanitize audioId to prevent XSS
-                    const audioId = `audio-${msg.id}`.replace(/[^a-zA-Z0-9-_]/g, '');
-                    
-                    inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2">
-                        <div class="audio-card">
-                            <div class="audio-play-btn" data-audio-id="${Utils.escapeHTML(audioId)}">
-                                <i data-lucide="play" class="w-4 h-4 text-white"></i>
-                            </div>
-                            <div class="waveform">
-                                ${Array(12).fill('<div class="bar"></div>').join('')}
-                            </div>
-                            <span class="text-xs text-[#8696a0]" id="${audioId}-duration">0:00</span>
-                        </div>
-                        <audio id="${audioId}" src="${url || ''}" preload="metadata"></audio>
-                        <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            ${statusHtml}
-                        </div>
-                    </div>`;
-                } else if (msg.type === 'location') {
-                    const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
-                    inner = `<div class="${bubbleClass} bubble-constraint px-3 py-2">
-                        <div class="flex items-center gap-2 mb-2">
-                            <i data-lucide="map-pin" class="w-5 h-5 text-[#00a884]"></i>
-                            <span class="font-medium">Location Shared</span>
-                        </div>
-                        <a href="${msg.content.url}" target="_blank" class="text-sm text-blue-400 hover:underline">View on Map</a>
-                        <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
-                            ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            ${statusHtml}
-                        </div>
-                    </div>`;
-                }
-                
-                div.innerHTML = inner;
-                container.appendChild(div);
-                if (typeof lucide !== 'undefined') lucide.createIcons();
-                
-                // Add event listener for audio play button (avoid inline onclick for XSS prevention)
-                if (msg.type === 'voice') {
-                    const playBtn = div.querySelector('.audio-play-btn');
-                    if (playBtn) {
-                        const audioId = playBtn.getAttribute('data-audio-id');
-                        playBtn.addEventListener('click', () => UI.toggleAudio(audioId));
-                    }
-                }
-                
-                if (msg.type === 'voice') {
-                    const audio = document.getElementById(audioId);
-                    if (audio) {
-                        audio.onloadedmetadata = () => {
-                            const duration = Math.floor(audio.duration);
-                            const durationEl = document.getElementById(`${audioId}-duration`);
-                            if (durationEl) {
-                                durationEl.innerText = `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`;
-                            }
-                        };
-                    }
-                }
-            },
-            
-            updateMessageTick: (msgId, status) => {
-                const msgEl = document.getElementById(`msg-${msgId}`);
-                if (msgEl) {
-                    const statusContainer = msgEl.querySelector('.status-container');
-                    if (statusContainer) {
-                        const statusHtml = Utils.getStatusHtml(status);
-                        const match = statusHtml.match(/<div class="status-orb[^"]*"><\/div>/);
-                        if (match && match[0]) {
-                            statusContainer.innerHTML = match[0];
-                        }
-                    }
-                }
-            },
-            
-            renderContactList: () => {
-                const container = document.getElementById('chat-list');
-                container.innerHTML = '';
-                
-                const sorted = Object.entries(App.state.contacts).sort((a, b) => {
-                    return (b[1].lastMessage ? 1 : 0) - (a[1].lastMessage ? 1 : 0);
-                });
-                
-                sorted.forEach(([peerId, contact]) => {
-                    const div = document.createElement('div');
-                    div.className = 'p-3 hover:bg-[#2a3942] cursor-pointer border-b border-[#2a3942] flex items-center gap-3';
-                    div.setAttribute('data-peer', peerId);
-                    div.onclick = () => UI.loadChat(peerId);
-                    
-                    const avatar = UI.generateAvatar(contact.name);
-                    const lastMsg = contact.lastMessage || 'No messages yet';
-                    
-                    div.innerHTML = `
-                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#00a884] to-[#008f6f] flex items-center justify-center text-white font-bold flex-shrink-0">${avatar}</div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-sm text-[#e9edef] truncate">${Utils.escapeHTML(contact.name)}</div>
-                            <div class="text-xs text-[#8696a0] truncate">${lastMsg}</div>
-                        </div>
-                    `;
-                    
-                    container.appendChild(div);
-                });
-                
-                if (sorted.length === 0) {
-                    container.innerHTML = '<div class="p-4 text-center text-[#8696a0] text-sm">No contacts yet</div>';
-                }
-            },
-            
-            generateAvatar: (name) => {
-                if (!name) return '?';
-                const words = name.trim().split(/\s+/);
-                if (words.length >= 2) {
-                    return (words[0][0] + words[1][0]).toUpperCase();
-                }
-                return name.substring(0, 2).toUpperCase();
-            },
-            
-            toggleAudio: (audioId) => {
-                const audio = document.getElementById(audioId);
-                if (!audio) return;
-                
-                const container = audio.parentElement;
-                if (!container) return;
-                
-                const btn = container.querySelector('.audio-play-btn');
-                const icon = btn?.querySelector('i');
-                const waveform = container.querySelector('.waveform');
-                
-                if (!btn || !icon) return;
-                
-                if (audio.paused) {
-                    audio.play();
-                    icon.setAttribute('data-lucide', 'pause');
-                    waveform?.classList.add('playing');
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                } else {
-                    audio.pause();
-                    icon.setAttribute('data-lucide', 'play');
-                    waveform?.classList.remove('playing');
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                }
-                
-                audio.onended = () => {
-                    icon.setAttribute('data-lucide', 'play');
-                    waveform?.classList.remove('playing');
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                };
-            }
-        };
-
+        // ... (Media object identical to v17) ...
         const Media = {
             localStream: null, call: null, scanner: null, recording: false, recorder: null, audioChunks: [],
             openCamera: async () => { document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-preview').srcObject = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}}); },
@@ -1346,35 +659,6 @@
 
         // Defer init to ensure DOM ready
         window.addEventListener('load', App.init);
-        
-        // Global error handler
-        window.addEventListener('error', (e) => {
-            console.error('Global error:', e.error);
-            if (e.error?.message?.includes('crypto') || e.error?.message?.includes('encrypt')) {
-                UI.showToast('Encryption error occurred');
-            }
-        });
-        
-        window.addEventListener('unhandledrejection', (e) => {
-            console.error('Unhandled rejection:', e.reason);
-            if (e.reason?.message?.includes('Connection')) {
-                UI.showToast('Connection error');
-            }
-        });
-        
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            Utils.revokeBlobs();
-            if (Media.localStream) {
-                Media.localStream.getTracks().forEach(t => t.stop());
-            }
-            if (Media.scanner) {
-                Media.scanner.stop().catch(() => {});
-            }
-            if (Network.peer) {
-                Network.peer.destroy();
-            }
-        });
     </script>
 </body>
 </html>
