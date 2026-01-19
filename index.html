@@ -244,7 +244,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v18.2 Production</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v18.3 Hotfix</span>
             </div>
         </div>
 
@@ -1474,6 +1474,32 @@
                     return;
                 }
                 
+                // ✅ MIGRATION: Fix old IDs that used the header
+                const savedId = await Store.get('config', 'id');
+                const pubKey = await Store.get('config', 'publicKey');
+                
+                if (savedId && savedId === 'MFkwEwYHKoZIzj0C' && pubKey) {
+                    console.log('[Migration] Detected old ID format, regenerating...');
+                    
+                    // Generate new unique ID from existing public key
+                    const pubKeyBytes = new TextEncoder().encode(pubKey);
+                    const hashBuffer = await window.crypto.subtle.digest('SHA-256', pubKeyBytes);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                    const newId = hashHex.substring(0, 16);
+                    
+                    console.log('[Migration] Old ID:', savedId);
+                    console.log('[Migration] New ID:', newId);
+                    
+                    await Store.put('config', 'id', newId);
+                    
+                    UI.showToast('Profile updated with unique ID!');
+                    
+                    // Reload to apply changes
+                    setTimeout(() => location.reload(), 1500);
+                    return;
+                }
+                
                 // Auto-login if "Remember Me" was enabled
                 if (rememberMe && sessionToken) {
                     try {
@@ -1578,7 +1604,16 @@
                     Crypto.keyPair = keyPair;
                     const pubKey = await Crypto.exportKey(keyPair.publicKey);
                     const encPrivKey = await Crypto.encryptPrivateKey(keyPair.privateKey, password);
-                    const id = pubKey.substring(0, 16);
+                    
+                    // ✅ FIX: Generate unique ID from public key hash
+                    const pubKeyBytes = new TextEncoder().encode(pubKey);
+                    const hashBuffer = await window.crypto.subtle.digest('SHA-256', pubKeyBytes);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                    const id = hashHex.substring(0, 16);
+                    
+                    console.log('[Profile Creation] Generated unique ID:', id);
+                    console.log('[Profile Creation] Public key (first 32 chars):', pubKey.substring(0, 32));
                     
                     await Store.put('config', 'name', name);
                     await Store.put('config', 'publicKey', pubKey);
@@ -1985,19 +2020,28 @@
                             
                             const scannedId = decodedText.trim();
                             
-                            // Log for debugging
                             console.log('[QR Scanner] Scanned ID:', scannedId);
                             console.log('[QR Scanner] My ID:', App.state.id);
+                            console.log('[QR Scanner] Match:', scannedId === App.state.id);
                             
-                            // Validate peer ID
-                            if (!scannedId || scannedId.length < 10) {
-                                UI.showToast('Invalid QR code');
+                            if (!scannedId) {
+                                UI.showToast('Invalid QR code - empty ID');
                                 return;
                             }
                             
-                            // Self-connection check removed from here and consolidated in Network.connectWithRetry()
-                            // This prevents false positives when Device A shows QR and Device B scans it
-                            // The check in connectWithRetry properly validates against App.state.id
+                            // ✅ Validate ID format (16 hex characters)
+                            if (!/^[a-fA-F0-9]{16}$/.test(scannedId)) {
+                                UI.showToast('Invalid QR code format');
+                                console.error('[QR Scanner] Invalid ID format:', scannedId);
+                                return;
+                            }
+                            
+                            // Check if scanning own ID
+                            if (scannedId === App.state.id) {
+                                UI.showToast('Cannot scan your own QR code');
+                                console.warn('[QR Scanner] Self-scan detected');
+                                return;
+                            }
                             
                             // Check if already connected
                             if (Network.connections[scannedId]?.conn?.open && Network.connections[scannedId]?.handshakeComplete) {
@@ -2046,6 +2090,9 @@
                 }
                 
                 if (App.state.id) {
+                    // Show the unique peer ID in QR code
+                    console.log('[QR Code] Generating QR for ID:', App.state.id);
+                    
                     new QRCode(container, {
                         text: App.state.id,
                         width: 256,
@@ -2054,6 +2101,16 @@
                         colorLight: "#ffffff",
                         correctLevel: QRCode.CorrectLevel.H
                     });
+                    
+                    // Show ID and name for verification
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'mt-4 text-xs text-[#8696a0]';
+                    infoDiv.innerHTML = `
+                        <div class="mb-2"><strong>Name:</strong> ${Utils.escapeHTML(App.state.name)}</div>
+                        <div class="font-mono text-[10px] break-all"><strong>ID:</strong> ${App.state.id}</div>
+                    `;
+                    container.appendChild(infoDiv);
+                    
                     modal.classList.remove('hidden');
                 }
             },
