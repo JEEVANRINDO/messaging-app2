@@ -74,19 +74,74 @@
         .reaction-badge:hover { background: #374045; transform: scale(1.05); }
         .reaction-badge.my-reaction { border-color: #00a884; background: rgba(0, 168, 132, 0.2); }
         
-        /* Theme Switcher */
-        body.light-theme { background-color: #f0f2f5; color: #111b21; }
-        .light-theme #onboarding-screen, .light-theme #login-screen { background-color: #ffffff; color: #111b21; }
-        .light-theme #app-layout, .light-theme #sidebar-panel { background-color: #ffffff; }
-        .light-theme #chat-area { background-color: #efeae2; }
-        .light-theme .msg-sent { background-color: #dcf8c6; color: #111b21; }
-        .light-theme .msg-received { background-color: #ffffff; color: #111b21; }
-        .light-theme input, .light-theme button, .light-theme .bg-\\[\\#202c33\\] { background-color: #ffffff; color: #111b21; }
-        .light-theme .bg-\\[\\#111b21\\] { background-color: #f0f2f5; }
-        .light-theme .text-\\[\\#e9edef\\] { color: #111b21; }
-        .light-theme .text-\\[\\#8696a0\\] { color: #54656f; }
-        .light-theme .border-\\[\\#2a3942\\] { border-color: #e9edef; }
-        .light-theme .typing-indicator { background-color: #ffffff; }
+        /* Theme Switcher - IMPROVED */
+        body.light-theme { 
+            background-color: #e5ddd5; 
+            color: #111b21; 
+        }
+        
+        .light-theme #onboarding-screen, 
+        .light-theme #login-screen { 
+            background: linear-gradient(135deg, #00a884 0%, #008069 100%);
+            color: #ffffff; 
+        }
+        
+        .light-theme #app-layout, 
+        .light-theme #sidebar-panel { 
+            background-color: #ffffff; 
+        }
+        
+        .light-theme #chat-area { 
+            background-color: #e5ddd5; /* WhatsApp light background */
+        }
+        
+        .light-theme .msg-sent { 
+            background-color: #d9fdd3; /* WhatsApp green */
+            color: #111b21; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .light-theme .msg-received { 
+            background-color: #ffffff; 
+            color: #111b21; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .light-theme input, 
+        .light-theme button { 
+            background-color: #f0f2f5; 
+            color: #111b21; 
+            border-color: #d1d7db;
+        }
+        
+        .light-theme .bg-\\[\\#202c33\\] { 
+            background-color: #f0f2f5; 
+        }
+        
+        .light-theme .bg-\\[\\#111b21\\] { 
+            background-color: #ffffff; 
+        }
+        
+        .light-theme .bg-\\[\\#2a3942\\] { 
+            background-color: #ffffff; 
+            border: 1px solid #e9edef;
+        }
+        
+        .light-theme .text-\\[\\#e9edef\\] { 
+            color: #111b21; 
+        }
+        
+        .light-theme .text-\\[\\#8696a0\\] { 
+            color: #667781; 
+        }
+        
+        .light-theme .border-\\[\\#2a3942\\] { 
+            border-color: #e9edef; 
+        }
+        
+        .light-theme .typing-indicator { 
+            background-color: #ffffff; 
+        }
         
         /* Draft Indicator */
         .draft-badge { background: #00a884; color: white; font-size: 10px; padding: 2px 6px; border-radius: 8px; margin-left: 4px; }
@@ -141,6 +196,13 @@
         <i data-lucide="lock" class="w-16 h-16 text-[#00a884] mb-4"></i>
         <h2 class="text-2xl font-bold mb-4">Unlock Identity</h2>
         <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center" onkeydown="if(event.key==='Enter')App.login()">
+        
+        <!-- Remember Me Checkbox -->
+        <label class="flex items-center justify-center gap-2 text-sm text-[#8696a0] mb-4 cursor-pointer">
+            <input type="checkbox" id="remember-me" class="w-4 h-4 accent-[#00a884]" checked>
+            <span>Remember me on this device</span>
+        </label>
+        
         <button onclick="App.login()" class="w-full max-w-sm p-4 bg-[#00a884] rounded-xl font-bold">Unlock</button>
         <div id="lockout-msg" class="text-red-400 mt-4 hidden text-sm bg-red-900/20 p-2 rounded border border-red-900"></div>
     </div>
@@ -161,6 +223,7 @@
                 </div>
                 <div class="flex space-x-1 flex-shrink-0 ml-2">
                     <button onclick="UI.toggleTheme()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Toggle Theme"><i data-lucide="sun" id="theme-icon" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.toggleDebugMode()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Debug Mode"><i data-lucide="bug" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Add ID"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.startScanner()" class="p-2 hover:bg-[#2a3942] rounded-full" title="Scan QR"><i data-lucide="scan-line" class="w-5 h-5 text-[#aebac1]"></i></button>
                     <button onclick="UI.showQR()" class="p-2 hover:bg-[#2a3942] rounded-full" title="My QR"><i data-lucide="qr-code" class="w-5 h-5 text-[#aebac1]"></i></button>
@@ -181,7 +244,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v18.1 Enhanced</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v18.2 Production</span>
             </div>
         </div>
 
@@ -358,6 +421,19 @@
             <button onclick="UI.closeForwardModal()" class="w-full py-3 bg-[#111b21] text-[#8696a0] rounded-xl">Cancel</button>
         </div>
     </div>
+    
+    <!-- Debug Panel -->
+    <div id="debug-panel" class="hidden fixed bottom-4 right-4 bg-[#202c33] border border-[#00a884] rounded-lg p-4 max-w-md max-h-96 overflow-y-auto z-[150] shadow-2xl">
+        <div class="flex justify-between items-center mb-2 border-b border-[#2a3942] pb-2">
+            <h3 class="text-[#00a884] font-bold text-sm">🔍 Debug Console</h3>
+            <button onclick="UI.toggleDebugMode()" class="text-[#8696a0] hover:text-white">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <div id="debug-logs" class="text-xs font-mono text-[#8696a0] space-y-1">
+            <!-- Logs appear here -->
+        </div>
+    </div>
 
     <script>
         const Utils = {
@@ -504,6 +580,80 @@
             decryptBin: async (buffer, key) => {
                 const u8 = new Uint8Array(buffer), iv = u8.slice(0, 12), data = u8.slice(12);
                 return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+            },
+            createSessionToken: async (password) => {
+                // Create a time-limited encrypted token
+                const tokenData = {
+                    password: password,
+                    created: Date.now(),
+                    expires: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 days
+                };
+                
+                const salt = window.crypto.getRandomValues(new Uint8Array(16));
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                
+                // Use device-specific key (derived from browser fingerprint)
+                const deviceKey = await Crypto.deriveDeviceKey(salt);
+                const encrypted = await window.crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv },
+                    deviceKey,
+                    new TextEncoder().encode(JSON.stringify(tokenData))
+                );
+                
+                return {
+                    salt: Array.from(salt),
+                    iv: Array.from(iv),
+                    data: Array.from(new Uint8Array(encrypted))
+                };
+            },
+            validateSessionToken: async (tokenObj) => {
+                try {
+                    const salt = new Uint8Array(tokenObj.salt);
+                    const iv = new Uint8Array(tokenObj.iv);
+                    const data = new Uint8Array(tokenObj.data);
+                    
+                    const deviceKey = await Crypto.deriveDeviceKey(salt);
+                    const decrypted = await window.crypto.subtle.decrypt(
+                        { name: "AES-GCM", iv },
+                        deviceKey,
+                        data
+                    );
+                    
+                    const tokenData = JSON.parse(new TextDecoder().decode(decrypted));
+                    
+                    // Check if expired
+                    if (Date.now() > tokenData.expires) {
+                        throw new Error('Session expired');
+                    }
+                    
+                    return tokenData.password;
+                } catch(e) {
+                    throw new Error('Invalid session');
+                }
+            },
+            deriveDeviceKey: async (salt) => {
+                // Create device-specific key using browser/device fingerprint
+                const fingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
+                const keyMaterial = await window.crypto.subtle.importKey(
+                    "raw",
+                    new TextEncoder().encode(fingerprint),
+                    { name: "PBKDF2" },
+                    false,
+                    ["deriveKey"]
+                );
+                
+                return await window.crypto.subtle.deriveKey(
+                    {
+                        name: "PBKDF2",
+                        salt: salt,
+                        iterations: 10000,
+                        hash: "SHA-256"
+                    },
+                    keyMaterial,
+                    { name: "AES-GCM", length: 256 },
+                    true,
+                    ["encrypt", "decrypt"]
+                );
             }
         };
 
@@ -521,9 +671,26 @@
             peer: null, connections: {}, uploadCancelled: false, typingTimers: {}, connectionStates: {}, 
             pingIntervalId: null, reconnectIntervalId: null,
             debugLog: (message, data) => {
-                if (!Network.CONFIG.DEBUG_MODE) return;
                 const timestamp = new Date().toISOString();
-                console.log(`[${timestamp}] ${message}`, data || '');
+                const logEntry = `[${timestamp}] ${message}`;
+                
+                console.log(logEntry, data || '');
+                
+                // Also append to UI debug panel if enabled
+                if (Network.CONFIG.DEBUG_MODE) {
+                    const debugLogs = document.getElementById('debug-logs');
+                    if (debugLogs) {
+                        const logDiv = document.createElement('div');
+                        logDiv.className = 'text-[#00a884]';
+                        logDiv.textContent = `${message} ${data ? JSON.stringify(data) : ''}`;
+                        debugLogs.prepend(logDiv);
+                        
+                        // Keep only last 50 logs
+                        while (debugLogs.children.length > 50) {
+                            debugLogs.removeChild(debugLogs.lastChild);
+                        }
+                    }
+                }
             },
             init: async (id) => {
                 if(Network.peer) return;
@@ -603,27 +770,48 @@
                 Network.connectWithRetry(id);
             },
             connectWithRetry: async (id, retries = 0, backoff = 1000) => {
-                Network.debugLog('Connecting to peer', { id, retries, backoff });
+                const cleanId = id.trim();
+                
+                // Detailed logging
+                Network.debugLog('Connection attempt', { 
+                    scannedId: cleanId, 
+                    myId: App.state.id,
+                    match: cleanId === App.state.id,
+                    retries 
+                });
+                
+                // PROPER validation
+                if (!cleanId) {
+                    UI.showToast('Invalid peer ID');
+                    return;
+                }
+                
+                if (cleanId === App.state.id) {
+                    UI.showToast('Cannot connect to your own device');
+                    console.error('[Connection] Self-connection attempted:', { cleanId, myId: App.state.id });
+                    return;
+                }
                 
                 // Check if already connected
-                if (Network.connections[id]?.conn?.open) {
-                    Network.debugLog('Already connected', { id });
+                if (Network.connections[cleanId]?.conn?.open && Network.connections[cleanId]?.handshakeComplete) {
+                    Network.debugLog('Already connected', { id: cleanId });
                     UI.showToast('Already connected!');
+                    UI.loadChat(cleanId);
                     return;
                 }
                 
                 // Set connection state to connecting
-                Network.connectionStates[id] = 'connecting';
-                UI.updateConnectionState(id, 'connecting');
+                Network.connectionStates[cleanId] = 'connecting';
+                UI.updateConnectionState(cleanId, 'connecting');
                 
                 try {
-                    const conn = Network.peer.connect(id, { 
+                    const conn = Network.peer.connect(cleanId, { 
                         reliable: true,
                         serialization: 'json'
                     });
                     
-                    if (!Network.connections[id]) {
-                        Network.connections[id] = { 
+                    if (!Network.connections[cleanId]) {
+                        Network.connections[cleanId] = { 
                             conn, 
                             key: null, 
                             seqOut: 0, 
@@ -631,32 +819,32 @@
                             handshakeComplete: false
                         };
                     } else {
-                        Network.connections[id].conn = conn;
-                        Network.connections[id].handshakeComplete = false;
+                        Network.connections[cleanId].conn = conn;
+                        Network.connections[cleanId].handshakeComplete = false;
                     }
 
                     // Set timeout for connection attempt
                     const connectionTimeout = setTimeout(() => {
-                        if (!Network.connections[id]?.handshakeComplete) {
-                            Network.debugLog('Connection timeout', { id, retries });
+                        if (!Network.connections[cleanId]?.handshakeComplete) {
+                            Network.debugLog('Connection timeout', { id: cleanId, retries });
                             conn.close();
                             
                             if (retries < Network.CONFIG.MAX_RETRY_ATTEMPTS) {
                                 const nextBackoff = backoff * 2; // Exponential backoff
                                 UI.showToast(`Retrying connection... (${retries + 1}/${Network.CONFIG.MAX_RETRY_ATTEMPTS})`);
-                                setTimeout(() => Network.connectWithRetry(id, retries + 1, nextBackoff), nextBackoff);
+                                setTimeout(() => Network.connectWithRetry(cleanId, retries + 1, nextBackoff), nextBackoff);
                             } else {
-                                Network.connectionStates[id] = 'failed';
-                                UI.updateConnectionState(id, 'failed');
+                                Network.connectionStates[cleanId] = 'failed';
+                                UI.updateConnectionState(cleanId, 'failed');
                                 UI.showToast('Connection failed. Peer may be offline.');
                             }
                         }
                     }, Network.CONFIG.CONNECTION_TIMEOUT);
 
                     conn.on('open', () => {
-                        Network.debugLog('Connection opened', { id });
+                        Network.debugLog('Connection opened', { id: cleanId });
                         clearTimeout(connectionTimeout);
-                        Network.connectionStates[id] = 'handshaking';
+                        Network.connectionStates[cleanId] = 'handshaking';
                         
                         // Send handshake
                         conn.send({ 
@@ -670,25 +858,25 @@
                     });
                     
                     conn.on('error', (err) => {
-                        Network.debugLog('Connection error', { id, error: err });
+                        Network.debugLog('Connection error', { id: cleanId, error: err });
                         clearTimeout(connectionTimeout);
                         
                         if (retries < Network.CONFIG.MAX_RETRY_ATTEMPTS) {
                             const nextBackoff = backoff * 2;
                             UI.showToast(`Connection error, retrying... (${retries + 1}/${Network.CONFIG.MAX_RETRY_ATTEMPTS})`);
-                            setTimeout(() => Network.connectWithRetry(id, retries + 1, nextBackoff), nextBackoff);
+                            setTimeout(() => Network.connectWithRetry(cleanId, retries + 1, nextBackoff), nextBackoff);
                         } else {
-                            Network.connectionStates[id] = 'failed';
-                            UI.updateConnectionState(id, 'failed');
+                            Network.connectionStates[cleanId] = 'failed';
+                            UI.updateConnectionState(cleanId, 'failed');
                             UI.showToast('Connection failed after multiple attempts');
                         }
                     });
                     
                     Network.handleConn(conn);
                 } catch (err) {
-                    Network.debugLog('Connect exception', { id, error: err });
-                    Network.connectionStates[id] = 'failed';
-                    UI.updateConnectionState(id, 'failed');
+                    Network.debugLog('Connect exception', { id: cleanId, error: err });
+                    Network.connectionStates[cleanId] = 'failed';
+                    UI.updateConnectionState(cleanId, 'failed');
                     UI.showToast('Failed to initiate connection');
                 }
             },
@@ -1231,13 +1419,73 @@
                 await Store.init();
                 const savedName = await Store.get('config', 'name');
                 const encPrivKey = await Store.get('config', 'privateKey');
+                const rememberMe = await Store.get('config', 'rememberMe');
+                const sessionToken = await Store.get('config', 'sessionToken');
                 
                 if (!savedName || !encPrivKey) {
                     document.getElementById('onboarding-screen').classList.remove('hidden');
-                } else {
-                    document.getElementById('login-screen').classList.remove('hidden');
-                    App.state.name = savedName;
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    return;
                 }
+                
+                // Auto-login if "Remember Me" was enabled
+                if (rememberMe && sessionToken) {
+                    try {
+                        const password = await Crypto.validateSessionToken(sessionToken);
+                        
+                        // Auto-unlock
+                        const privKey = await Crypto.decryptPrivateKey(encPrivKey, password);
+                        const pubKey = await Store.get('config', 'publicKey');
+                        const id = await Store.get('config', 'id');
+                        
+                        Crypto.keyPair = { privateKey: privKey, publicKey: await Crypto.importKey(pubKey) };
+                        App.state.pubStr = pubKey;
+                        App.state.id = id;
+                        App.state.name = savedName;
+                        App.state.password = password;
+                        
+                        const savedContacts = await Store.get('config', 'contacts');
+                        if (savedContacts) App.state.contacts = savedContacts;
+                        
+                        // Show app directly, skip login screen
+                        document.getElementById('app-layout').classList.remove('hidden');
+                        document.getElementById('my-display-name').innerText = savedName;
+                        document.getElementById('my-avatar').innerText = UI.generateAvatar(savedName);
+                        
+                        Network.init(id);
+                        UI.renderContactList();
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                        
+                        // Load theme
+                        const savedTheme = await Store.get('config', 'theme');
+                        if (savedTheme === 'light') {
+                            document.body.classList.add('light-theme');
+                            const themeIcon = document.getElementById('theme-icon');
+                            if (themeIcon) themeIcon.setAttribute('data-lucide', 'moon');
+                            if (typeof lucide !== 'undefined') lucide.createIcons();
+                        }
+                        
+                        // Request notification permission if not asked
+                        if ('Notification' in window && Notification.permission === 'default') {
+                            Notification.requestPermission().then(permission => {
+                                App.notificationPermission = permission === 'granted';
+                            });
+                        } else {
+                            App.notificationPermission = Notification?.permission === 'granted';
+                        }
+                        
+                        UI.showToast("Welcome back!");
+                        return;
+                    } catch(e) {
+                        // Session expired or invalid, show login
+                        console.log('Auto-login failed, showing login screen:', e.message);
+                        await Store.put('config', 'rememberMe', false);
+                    }
+                }
+                
+                // Show login screen
+                document.getElementById('login-screen').classList.remove('hidden');
+                App.state.name = savedName;
                 
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             },
@@ -1331,6 +1579,7 @@
                 
                 const passwordInput = document.getElementById('login-password');
                 const password = passwordInput.value;
+                const rememberMe = document.getElementById('remember-me')?.checked ?? true;
                 
                 if (!password) {
                     UI.showToast("Please enter your password");
@@ -1357,6 +1606,20 @@
                     App.state.password = password;
                     App.state.loginAttempts = 0;
                     App.state.lockoutUntil = null;
+                    
+                    // Store encrypted session token if "Remember Me" checked
+                    if (rememberMe) {
+                        try {
+                            const sessionToken = await Crypto.createSessionToken(password);
+                            await Store.put('config', 'sessionToken', sessionToken);
+                            await Store.put('config', 'rememberMe', true);
+                        } catch(e) {
+                            console.error('Failed to save session token:', e);
+                        }
+                    } else {
+                        await Store.put('config', 'rememberMe', false);
+                        await Store.put('config', 'sessionToken', null);
+                    }
                     
                     const savedContacts = await Store.get('config', 'contacts');
                     if (savedContacts) App.state.contacts = savedContacts;
@@ -1553,6 +1816,19 @@
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             },
             
+            toggleDebugMode: () => {
+                Network.CONFIG.DEBUG_MODE = !Network.CONFIG.DEBUG_MODE;
+                UI.showToast(Network.CONFIG.DEBUG_MODE ? 'Debug mode enabled' : 'Debug mode disabled');
+                
+                // Show/hide debug panel
+                const debugPanel = document.getElementById('debug-panel');
+                if (debugPanel) {
+                    debugPanel.classList.toggle('hidden', !Network.CONFIG.DEBUG_MODE);
+                }
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
             showTypingIndicator: (show) => {
                 const container = document.getElementById('typing-indicator-container');
                 if (show) {
@@ -1658,29 +1934,40 @@
                     await Media.scanner.start(
                         { facingMode: "environment" },
                         { fps: 10, qrbox: 250 },
-                        (decodedText) => {
+                        async (decodedText) => {
                             UI.stopScanner();
                             
+                            const scannedId = decodedText.trim();
+                            
+                            // Log for debugging
+                            console.log('[QR Scanner] Scanned ID:', scannedId);
+                            console.log('[QR Scanner] My ID:', App.state.id);
+                            
                             // Validate peer ID
-                            if (!decodedText || decodedText.length < 10) {
+                            if (!scannedId || scannedId.length < 10) {
                                 UI.showToast('Invalid QR code');
                                 return;
                             }
                             
-                            if (decodedText === App.state.id) {
-                                UI.showToast('Cannot connect to yourself');
-                                return;
-                            }
+                            // REMOVED: Self-connection check (moved to Network.connectWithRetry)
                             
                             // Check if already connected
-                            if (Network.connections[decodedText]?.conn?.open) {
-                                UI.showToast('Already connected to this peer');
-                                UI.loadChat(decodedText);
+                            if (Network.connections[scannedId]?.conn?.open && Network.connections[scannedId]?.handshakeComplete) {
+                                UI.showToast('Already connected!');
+                                UI.loadChat(scannedId);
                                 return;
                             }
                             
-                            UI.showToast(`Connecting to ${decodedText.substring(0, 8)}...`);
-                            Network.connectWithRetry(decodedText);
+                            // Add contact if not exists
+                            if (!App.state.contacts[scannedId]) {
+                                await App.addContact(scannedId, `Peer_${scannedId.substring(0, Math.min(6, scannedId.length))}`, '');
+                            }
+                            
+                            UI.showToast('Initiating connection...');
+                            Network.connectWithRetry(scannedId);
+                            
+                            // Auto-open chat after slight delay
+                            setTimeout(() => UI.loadChat(scannedId), 500);
                         },
                         () => {}
                     );
