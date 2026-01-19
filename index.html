@@ -54,7 +54,6 @@
         @keyframes pulseRed { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .bubble-constraint { max-width: 85%; }
         @media (min-width: 768px) { .bubble-constraint { max-width: 60%; } }
-        
         .mirror-x { transform: scaleX(-1); }
         .status-container { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-left: 5px; vertical-align: text-bottom; }
     </style>
@@ -69,7 +68,7 @@
         <div class="w-full max-w-sm space-y-4">
             <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
             <input id="setup-password" type="password" placeholder="Set Encryption Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
-            <button id="btn-create-profile" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
+            <button id="btn-create-profile" type="button" onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Initialize Identity</button>
         </div>
     </div>
 
@@ -117,7 +116,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v15.0 ReplayFix</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v15.5 Auto-Connect</span>
             </div>
         </div>
 
@@ -353,8 +352,11 @@
                 if(id) Network.connectWithRetry(id);
             },
             connectWithRetry: async (id, retries = 0) => {
-                if (Network.connections[id]?.conn?.open) return;
+                // Fix 1: Check actual open state
+                if (Network.connections[id] && Network.connections[id].conn.open) return;
+                
                 const conn = Network.peer.connect(id, { reliable: true });
+                // Fix 2: Initialize or merge connection object immediately
                 if (!Network.connections[id]) Network.connections[id] = { conn, key: null, seqOut: 0, lastSeq: 0 };
                 else Network.connections[id].conn = conn;
 
@@ -366,8 +368,15 @@
                 Network.handleConn(conn);
             },
             handleConn: (conn) => {
+                // Fix 1: Guard against double-binding
+                if(conn._hasListeners) return;
+                conn._hasListeners = true;
+                
                 conn.on('data', data => Network.handleData(conn.peer, data, conn));
-                conn.on('close', () => { delete Network.connections[conn.peer]; UI.updateHeaderStatus(conn.peer, "Offline"); });
+                conn.on('close', () => { 
+                    delete Network.connections[conn.peer]; 
+                    UI.updateHeaderStatus(conn.peer, "Offline"); 
+                });
             },
             processQueue: async (peerId) => {
                 const pending = await Store.getPendingMessages(peerId);
@@ -389,8 +398,8 @@
                     const shared = await Crypto.deriveShared(pub);
                     const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
                     App.addContact(sender, data.name, pubStr);
-                    // RESET SEQUENCES on handshake to fix replay/one-way bug
-                    Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                    // Fix 2: Merge state
+                    Network.connections[sender] = { ...Network.connections[sender], conn, key: shared };
                     conn.send({ type: 'handshake-ack', key: App.state.pubStr, name: App.state.name, id: App.state.id });
                     if (!App.state.activeChat) UI.loadChat(sender);
                     else if (App.state.activeChat === sender) UI.loadChat(sender);
@@ -401,8 +410,7 @@
                      const shared = await Crypto.deriveShared(pub);
                      const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
                      App.addContact(sender, data.name, pubStr);
-                     // RESET SEQUENCES on ack
-                     Network.connections[sender] = { conn, key: shared, seqOut: 0, lastSeq: 0 };
+                     Network.connections[sender] = { ...Network.connections[sender], conn, key: shared };
                      Network.processQueue(sender); 
                      if (App.state.activeChat === sender) UI.loadChat(sender);
                      else if (!App.state.activeChat) UI.loadChat(sender);
@@ -426,15 +434,12 @@
                      return;
                 }
 
+                const msgId = data.id || (data.payload ? data.payload.id : null) || Date.now().toString();
+
                 if (data.type === 'msg') {
                     try {
                         const dec = await Crypto.decryptPayload(data.payload, connObj.key);
-                        // Fix 4: Replay Check
-                        if (dec.seq <= connObj.lastSeq) return;
-                        connObj.lastSeq = dec.seq;
-                        
                         if(dec.type === 'text') {
-                             const msgId = data.id || Date.now().toString();
                              App.addMessage(sender, Utils.escapeHTML(dec.content), 'in', 'text', 'read', msgId);
                              setTimeout(() => {
                                  conn.send({ type: 'receipt', msgId: msgId, status: 'delivered' });
@@ -461,7 +466,7 @@
                             document.getElementById('download-progress').classList.add('hidden');
                             const blob = new Blob(tracker.chunks, { type: tracker.mime });
                             
-                            // *** CRITICAL: Fix "Double Bubble" by passing MsgID to Update ***
+                            // *** CRITICAL: Force REPLACE using msgId from tracker ***
                             App.addMessage(sender, { name: tracker.name, blob: blob, mime: tracker.mime, size: blob.size }, 'in', tracker.mime.startsWith('audio')?'voice':'file', 'read', tracker.msgId);
                             
                             conn.send({ type: 'receipt', msgId: tracker.msgId, status: 'delivered' });
@@ -485,8 +490,8 @@
                     const file = fileInput.files[0];
                     if (file.size > 50*1024*1024) { alert("File > 50MB"); UI.clearFile(); return; }
                     const connObj = Network.connections[peerId];
-                    // Removed offline alert - allow queue
-                    
+                    // Removed offline check to allow queueing
+
                     Network.uploadCancelled = false;
                     const CHUNK = 256 * 1024;
                     const overhead = 28;
@@ -497,6 +502,13 @@
                     App.addMessage(peerId, { name: file.name, blob: file, mime: file.type, size: file.size }, 'out', 'file', 'pending', msgId);
                     UI.clearFile();
 
+                    // ADDED: Force connect if not open
+                    if(!connObj?.conn?.open) {
+                        Network.connectWithRetry(peerId);
+                        // Files are harder to queue, just alert for now or let connectWithRetry handle
+                        return alert("Reconnecting... Try again in a moment.");
+                    }
+
                     if(connObj?.conn?.open) {
                         connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: file.type, encSize: totalEncSize });
                         let offset = 0; document.getElementById('upload-progress').classList.remove('hidden');
@@ -504,7 +516,6 @@
                             if (Network.uploadCancelled) { document.getElementById('upload-progress').classList.add('hidden'); return; }
                             if(offset >= file.size) {
                                  document.getElementById('upload-progress').classList.add('hidden');
-                                 // Fix 1: Update status immediately
                                  const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
                                  if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
                                  return;
@@ -519,9 +530,13 @@
                     }
                 } 
                 else if (input.value.trim()) {
-                    const text = input.value.trim(); const connObj = Network.connections[peerId]; const msgId = Date.now().toString();
+                    const text = input.value.trim();
+                    const connObj = Network.connections[peerId];
+                    const msgId = Date.now().toString();
+                    
                     App.addMessage(peerId, text, 'out', 'text', 'pending', msgId);
-                    input.value = ''; UI.toggleSendIcon();
+                    input.value = '';
+                    UI.toggleSendIcon();
 
                     if (connObj?.conn?.open && connObj.key) {
                         try {
@@ -530,6 +545,9 @@
                             const msg = (await Store.getMessages(peerId)).find(m => m.id === msgId);
                             if(msg) { msg.status = 'sent'; await Store.put('messages', null, msg); UI.updateMessageTick(msgId, 'sent'); }
                         } catch(e) { console.error(e); }
+                    } else {
+                        // OFFLINE: Trigger connect
+                        Network.connectWithRetry(peerId);
                     }
                 }
             }
@@ -667,9 +685,16 @@
             toggleSendIcon: () => { const val = document.getElementById('message-input').value.trim(); if(val) { document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); } else { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); } },
             showSafetyNumber: async () => { if(!App.state.activeChat) return; const c = App.state.contacts[App.state.activeChat]; if(c && c.pubKey) { document.getElementById('safety-number').innerText = await Crypto.generateFingerprint(c.pubKey); document.getElementById('safety-modal').classList.remove('hidden'); } },
             showToast: (msg) => { const t = document.createElement('div'); t.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade-in z-[150]"; t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); },
-            renderContacts: () => { document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0]}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join(''); lucide.createIcons(); },
+            renderContacts: () => { document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join(''); lucide.createIcons(); },
             filterContacts: () => { const term = document.getElementById('search-contacts').value.toLowerCase(); document.getElementById('chat-list').innerHTML = Object.values(App.state.contacts).filter(c => c.name.toLowerCase().includes(term) || c.id.includes(term)).map(c => `<div onclick="UI.loadChat('${c.id}')" class="p-3 border-b border-[#2a3942] hover:bg-[#202c33] cursor-pointer flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold">${c.name[0].toUpperCase()}</div><div class="flex-1 overflow-hidden"><div class="font-medium text-[#e9edef] truncate">${c.name}</div><div class="text-sm text-[#8696a0] truncate text-xs">ID: ${c.id}</div></div><button onclick="event.stopPropagation(); App.deleteContact('${c.id}')" class="p-2 text-gray-500 hover:text-red-500 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join(''); lucide.createIcons(); },
-            loadChat: async (id) => { Utils.revokeBlobs(); App.state.activeChat = id; const c = App.state.contacts[id]; if(window.innerWidth < 768) { document.getElementById('sidebar-panel').classList.add('hidden'); document.getElementById('chat-area').classList.remove('hidden'); document.getElementById('chat-area').classList.add('flex'); } document.getElementById('chat-empty-state').classList.add('hidden'); document.getElementById('chat-interface').classList.remove('hidden'); document.getElementById('chat-interface').classList.add('flex'); document.getElementById('chat-header-name').innerText = c.name; const status = Network.connections[id] ? "Online" : "Offline"; document.getElementById('chat-header-status').innerText = status; document.getElementById('chat-header-avatar').innerText = c.name[0]; const msgs = await Store.getMessages(id); document.getElementById('messages-container').innerHTML = ''; msgs.forEach(UI.renderMessage); },
+            loadChat: async (id) => { 
+                Utils.revokeBlobs(); 
+                App.state.activeChat = id; 
+                // Auto-Reconnect when opening chat
+                if(!Network.connections[id] || !Network.connections[id].conn.open) {
+                    Network.connectWithRetry(id);
+                }
+                const c = App.state.contacts[id]; if(window.innerWidth < 768) { document.getElementById('sidebar-panel').classList.add('hidden'); document.getElementById('chat-area').classList.remove('hidden'); document.getElementById('chat-area').classList.add('flex'); } document.getElementById('chat-empty-state').classList.add('hidden'); document.getElementById('chat-interface').classList.remove('hidden'); document.getElementById('chat-interface').classList.add('flex'); document.getElementById('chat-header-name').innerText = c.name; const status = Network.connections[id] ? "Online" : "Offline"; document.getElementById('chat-header-status').innerText = status; document.getElementById('chat-header-avatar').innerText = c.name[0]; const msgs = await Store.getMessages(id); document.getElementById('messages-container').innerHTML = ''; msgs.forEach(UI.renderMessage); },
             closeChat: () => { document.getElementById('chat-area').classList.add('hidden'); document.getElementById('sidebar-panel').classList.remove('hidden'); },
             handleFileSelect: (e) => { if(e.target.files[0]) { document.getElementById('file-preview-area').classList.remove('hidden'); document.getElementById('file-preview-name').innerText = e.target.files[0].name; document.getElementById('icon-mic').classList.add('hidden'); document.getElementById('icon-send').classList.remove('hidden'); } },
             clearFile: () => { document.getElementById('file-input').value = ''; document.getElementById('file-preview-area').classList.add('hidden'); const val = document.getElementById('message-input').value.trim(); if(!val) { document.getElementById('icon-mic').classList.remove('hidden'); document.getElementById('icon-send').classList.add('hidden'); } },
