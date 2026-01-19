@@ -452,8 +452,8 @@
                      const pub = await Crypto.importKey(data.key);
                      const shared = await Crypto.deriveShared(pub);
                      const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
-                     App.addContact(sender, data.name, pubStr);
-                     Network.connections[sender] = { ...Network.connections[sender], conn, key: shared, seqOut: 0 };
+                     await App.addContact(sender, data.name, pubStr);
+                     Network.connections[sender] = { ...Network.connections[sender], conn, key: shared, seqOut: 0, lastSeq: 0 };
                      Network.processQueue(sender); 
                      if (App.state.activeChat === sender) UI.loadChat(sender);
                      else if (!App.state.activeChat) UI.loadChat(sender);
