@@ -1963,7 +1963,9 @@
                                 <button onclick="UI.toggleReactionPicker('${msg.id}')" class="absolute -top-2 ${msg.direction === 'out' ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity bg-[#2a3942] rounded-full p-1 hover:bg-[#374045]" title="React">
                                     <i data-lucide="smile" class="w-4 h-4 text-[#aebac1]"></i>
                                 </button>
-                                <img src="${url}" class="rounded max-w-xs max-h-80 object-contain cursor-pointer" onclick="window.open('${url}', '_blank')">
+                                <a href="${url}" target="_blank" rel="noopener noreferrer">
+                                    <img src="${url}" class="rounded max-w-xs max-h-80 object-contain cursor-pointer">
+                                </a>
                                 <div class="text-[10px] text-right mt-1 px-2 opacity-60 flex items-center justify-end">
                                     ${new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                     ${statusHtml}
@@ -2000,7 +2002,7 @@
                             <div id="reactions-${msg.id}" class="message-reactions"></div>
                         </div>`;
                     }
-                }else if (msg.type === 'voice') {
+                } else if (msg.type === 'voice') {
                     const statusHtml = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
                     const url = msg.content.url || (msg.content.blob ? Utils.addBlob(URL.createObjectURL(msg.content.blob)) : null);
                     const audioId = `audio-${msg.id}`.replace(/[^a-zA-Z0-9-_]/g, '');
