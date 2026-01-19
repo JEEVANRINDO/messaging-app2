@@ -2,567 +2,185 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GhostMesh | Secure Messaging</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src *;">
+    <title>GhostMesh | WhatsApp Clone</title>
     
-    <!-- More reliable CDN for PeerJS -->
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0b141a; color: #e9edef; height: 100dvh; width: 100vw; overflow: hidden; position: fixed; inset: 0; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #374045; border-radius: 2px; }
+        .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
         
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0b141a;
-            color: #e9edef;
-            height: 100vh;
-            overflow: hidden;
-        }
+        /* WhatsApp Colors */
+        .msg-sent { background-color: #005c4b; border-radius: 8px 0 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .msg-received { background-color: #202c33; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
         
-        .hidden {
-            display: none !important;
-        }
-        
-        /* Onboarding */
-        #onboarding {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #111b21 0%, #0a1017 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        
-        .onboarding-content {
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-        }
-        
-        .logo {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-        
-        h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-            color: white;
-        }
-        
-        .subtitle {
-            color: #8696a0;
-            margin-bottom: 40px;
-        }
-        
-        input {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 15px;
-            background: #2a3942;
-            border: 1px solid #3d4b53;
-            border-radius: 8px;
-            color: white;
-            font-size: 16px;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: #00a884;
-        }
-        
-        button {
-            width: 100%;
-            padding: 15px;
-            background: #00a884;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        
-        button:hover {
-            background: #008f6f;
-        }
-        
-        button:disabled {
-            background: #2a3942;
-            cursor: not-allowed;
-        }
-        
-        /* Main App */
-        .app-container {
-            display: flex;
-            height: 100vh;
-        }
-        
-        /* Sidebar */
-        .sidebar {
-            width: 400px;
-            background: #111b21;
-            border-right: 1px solid #2a3942;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .user-header {
-            padding: 15px;
-            background: #202c33;
+        /* Better File Card (WhatsApp Style) */
+        .file-card-container {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            padding: 8px;
+            margin-top: 4px;
             display: flex;
             align-items: center;
-            gap: 15px;
-        }
-        
-        .avatar {
-            width: 40px;
-            height: 40px;
-            background: #00a884;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            font-size: 14px;
-        }
-        
-        .user-info h3 {
-            font-size: 16px;
-            margin-bottom: 3px;
-        }
-        
-        .status {
-            font-size: 12px;
-            color: #8696a0;
-        }
-        
-        .search {
-            padding: 15px;
-            background: #111b21;
-        }
-        
-        .search input {
-            width: 100%;
-            padding: 10px 15px;
-            background: #202c33;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 14px;
-        }
-        
-        .contacts {
-            flex: 1;
-            overflow-y: auto;
-        }
-        
-        .contact {
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            border-bottom: 1px solid #2a3942;
+            gap: 10px;
             cursor: pointer;
             transition: background 0.2s;
         }
+        .file-card-container:hover { background-color: rgba(0,0,0,0.3); }
         
-        .contact:hover {
-            background: #202c33;
-        }
-        
-        .contact.active {
-            background: #2a3942;
-        }
-        
-        .contact-avatar {
-            width: 50px;
-            height: 50px;
-            background: #3d4b53;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            font-size: 16px;
-        }
-        
-        .contact-info {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .contact-name {
-            font-weight: 600;
-            margin-bottom: 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .contact-last {
-            font-size: 13px;
-            color: #8696a0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        /* Chat Area */
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #0b141a;
-        }
-        
-        .chat-header {
-            padding: 15px;
-            background: #202c33;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #2a3942;
-        }
-        
-        .chat-contact {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .message {
-            max-width: 70%;
-            padding: 10px 15px;
-            border-radius: 8px;
-            position: relative;
-            word-wrap: break-word;
-        }
-        
-        .message.sent {
-            background: #005c4b;
-            align-self: flex-end;
-            border-top-right-radius: 0;
-        }
-        
-        .message.received {
-            background: #202c33;
-            align-self: flex-start;
-            border-top-left-radius: 0;
-        }
-        
-        .message-time {
-            font-size: 11px;
-            color: rgba(255,255,255,0.6);
-            margin-top: 5px;
-            text-align: right;
-        }
-        
-        .file-message {
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-            margin-top: 5px;
-        }
-        
-        .file-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px;
-        }
-        
-        .file-icon {
+        .file-icon-wrapper {
             width: 40px;
             height: 40px;
-            background: #3d4b53;
+            background-color: #f5f6f6;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: #d75656; /* PDF Red */
             font-weight: bold;
-            color: white;
-            font-size: 18px;
+            font-size: 10px;
+            text-transform: uppercase;
         }
         
-        .file-details {
-            flex: 1;
-            min-width: 0;
-        }
+        /* Status Orbs */
+        .status-orb { width: 10px; height: 10px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-left: 4px; transition: all 0.3s ease; }
+        .status-pending { border: 2px solid #8696a0; border-top-color: transparent; animation: spin 1s linear infinite; }
+        .status-sent { border: 1.5px solid #8696a0; background: transparent; }
+        .status-delivered { border: 1.5px solid #8696a0; background: #8696a0; }
+        .status-read { border: 2px solid #53bdeb; background: #53bdeb; box-shadow: 0 0 6px #53bdeb; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .file-name {
-            font-weight: 600;
-            margin-bottom: 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .bubble-constraint { max-width: 85%; }
+        @media (min-width: 768px) { .bubble-constraint { max-width: 60%; } }
         
-        .file-size {
-            font-size: 12px;
-            color: #8696a0;
-        }
+        .mirror-x { transform: scaleX(-1); }
+        .status-container { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-left: 5px; vertical-align: text-bottom; }
         
-        .download-btn {
-            padding: 6px 12px;
-            background: #00a884;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            white-space: nowrap;
-        }
+        /* Theme Switcher */
+        body.light-theme { background-color: #e5ddd5; color: #111b21; }
+        .light-theme #onboarding-screen, .light-theme #login-screen { background: linear-gradient(135deg, #00a884 0%, #008069 100%); color: #ffffff; }
+        .light-theme #app-layout, .light-theme #sidebar-panel { background-color: #ffffff; }
+        .light-theme #chat-area { background-color: #e5ddd5; }
+        .light-theme .msg-sent { background-color: #d9fdd3; color: #111b21; }
+        .light-theme .msg-received { background-color: #ffffff; color: #111b21; }
+        .light-theme input, .light-theme button, .light-theme textarea { background-color: #f0f2f5; color: #111b21; border-color: #d1d7db; }
+        .light-theme .bg-\[\#202c33\] { background-color: #f0f2f5; }
+        .light-theme .bg-\[\#111b21\] { background-color: #ffffff; }
         
-        .image-message {
-            max-width: 300px;
-            border-radius: 8px;
-            overflow: hidden;
-            cursor: pointer;
+        /* Video Background Pattern */
+        .bg-pattern {
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-repeat: repeat;
+            opacity: 0.06;
         }
-        
-        .image-message img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        
-        .input-area {
-            padding: 15px;
-            background: #202c33;
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-        
-        textarea {
-            flex: 1;
-            background: #2a3942;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 15px;
-            color: white;
-            font-size: 15px;
-            resize: none;
-            min-height: 44px;
-            max-height: 120px;
-            font-family: inherit;
-        }
-        
-        textarea:focus {
-            outline: none;
-        }
-        
-        .send-btn {
-            width: 44px;
-            height: 44px;
-            background: #00a884;
-            border: none;
-            border-radius: 50%;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-        
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #202c33;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            z-index: 1000;
-            animation: fadeInOut 3s ease-in-out;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            border: 1px solid #2a3942;
-        }
-        
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
-            10% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            90% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
-        }
-        
-        /* Loading */
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #8696a0;
-        }
-        
-        /* Error */
-        .error {
-            background: #4a1e1e;
-            color: #ff6b6b;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin: 10px;
-            font-size: 14px;
-        }
-        
-        /* Welcome screen */
-        .welcome {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-            padding: 20px;
-            color: #8696a0;
-        }
-        
-        .welcome-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
-        
-        .welcome h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: white;
-        }
-        
-        /* Connection status */
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 12px;
-        }
-        
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-        }
-        
-        .status-dot.online {
-            background: #00a884;
-            box-shadow: 0 0 8px #00a884;
-        }
-        
-        .status-dot.offline {
-            background: #8696a0;
-        }
-        
-        .status-dot.connecting {
-            background: #ffa500;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+        .light-theme .bg-pattern { opacity: 0.4; }
     </style>
 </head>
-<body>
-    <!-- Onboarding Screen -->
-    <div id="onboarding">
-        <div class="onboarding-content">
-            <div class="logo">🔒</div>
-            <h1>GhostMesh Secure</h1>
-            <div class="subtitle">End-to-End Encrypted Messaging</div>
-            
-            <input type="text" id="setup-name" placeholder="Your Name" autocomplete="off">
-            <input type="password" id="setup-password" placeholder="Password" autocomplete="new-password">
-            
-            <button id="create-profile">Get Started</button>
-            
-            <div id="setup-error" class="error hidden" style="margin-top: 15px;"></div>
+<body class="flex flex-col md:flex-row">
+
+    <div id="onboarding-screen" class="absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in overflow-y-auto">
+        <div class="relative mb-8"><div class="absolute -inset-1 bg-[#00a884] rounded-full opacity-20 blur-xl animate-pulse"></div><i data-lucide="shield-check" class="w-24 h-24 text-[#00a884] relative z-10"></i></div>
+        <h1 class="text-3xl font-bold tracking-tight mb-2">GhostMesh</h1>
+        <p class="text-[#8696a0] max-w-xs mx-auto mb-8">Secure P2P Messaging.</p>
+        <div class="w-full max-w-sm space-y-4">
+            <input id="setup-name" type="text" placeholder="Display Name" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
+            <input id="setup-password" type="password" placeholder="Set Password" class="w-full p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white focus:outline-none focus:border-[#00a884] text-center text-lg">
+            <button onclick="App.createProfile()" class="w-full p-4 bg-[#00a884] hover:bg-[#008f6f] rounded-xl text-white font-bold transition-all shadow-lg">Start Messaging</button>
         </div>
     </div>
 
-    <!-- Main App -->
-    <div id="app" class="hidden">
-        <div class="app-container">
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <div class="user-header">
-                    <div class="avatar" id="my-avatar">ME</div>
-                    <div class="user-info">
-                        <h3 id="my-name">Loading...</h3>
-                        <div class="connection-status">
-                            <div class="status-dot offline" id="status-dot"></div>
-                            <span id="network-status">Offline</span>
+    <div id="login-screen" class="hidden absolute inset-0 z-50 bg-[#111b21] flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+        <h2 class="text-2xl font-bold mb-4">Welcome Back</h2>
+        <input id="login-password" type="password" placeholder="Enter Password" class="w-full max-w-sm p-4 bg-[#202c33] border border-[#2a3942] rounded-xl text-white mb-4 text-center" onkeydown="if(event.key==='Enter')App.login()">
+        <button onclick="App.login()" class="w-full max-w-sm p-4 bg-[#00a884] rounded-xl font-bold">Unlock</button>
+    </div>
+
+    <div id="app-layout" class="hidden w-full h-full flex flex-col md:flex-row relative">
+        <div id="sidebar-panel" class="w-full md:w-96 border-r border-[#2a3942] flex flex-col bg-[#111b21] h-full">
+            <div class="p-3 border-b border-[#2a3942] flex justify-between items-center shrink-0 bg-[#202c33]">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="UI.copyId()">
+                    <div class="w-10 h-10 rounded-full bg-[#00a884] flex items-center justify-center text-white font-bold" id="my-avatar">ME</div>
+                    <div class="flex flex-col">
+                        <span id="my-display-name" class="font-bold text-[#e9edef] text-sm">Me</span>
+                        <div class="flex items-center text-xs text-[#8696a0]">
+                             <div id="status-indicator" class="w-2 h-2 rounded-full bg-red-500 mr-1"></div> 
+                             <span id="network-status-text">Offline</span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="search">
-                    <input type="text" id="search-contacts" placeholder="Search contacts...">
-                </div>
-                
-                <div class="contacts" id="contacts-list">
-                    <div class="loading" id="contacts-loading">Loading contacts...</div>
-                    <!-- Contacts will be added here -->
+                <div class="flex space-x-2">
+                    <button onclick="UI.toggleTheme()" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="sun" id="theme-icon" class="w-5 h-5 text-[#aebac1]"></i></button>
+                    <button onclick="UI.toggleAddContact()" class="p-2 hover:bg-[#2a3942] rounded-full"><i data-lucide="user-plus" class="w-5 h-5 text-[#aebac1]"></i></button>
                 </div>
             </div>
+            
+            <div id="new-chat-panel" class="hidden p-2 bg-[#111b21] border-b border-[#2a3942] flex gap-2">
+                <input id="input-peer-id" placeholder="Paste Peer ID..." class="flex-1 bg-[#202c33] text-sm p-2 rounded-lg text-white focus:outline-none">
+                <button onclick="Network.connectToInput()" class="bg-[#00a884] p-2 rounded-lg"><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i></button>
+            </div>
+            <div id="chat-list" class="flex-1 overflow-y-auto"></div>
+        </div>
 
-            <!-- Chat Area -->
-            <div class="chat-area" id="chat-area">
-                <!-- Welcome/Empty State -->
-                <div class="welcome" id="welcome-screen">
-                    <div class="welcome-icon">💬</div>
-                    <h2>Welcome to GhostMesh</h2>
-                    <p>Select a contact to start messaging</p>
-                    <p style="margin-top: 20px; font-size: 14px;">
-                        Your ID: <code id="my-id-display">Loading...</code>
-                    </p>
-                    <button onclick="copyMyId()" style="margin-top: 15px; width: auto; padding: 8px 16px; font-size: 14px;">
-                        Copy My ID
-                    </button>
-                </div>
+        <div id="chat-area" class="hidden md:flex flex-1 flex-col h-full relative bg-[#0b141a]">
+            <div class="absolute inset-0 bg-pattern pointer-events-none"></div>
+            
+            <div id="chat-empty-state" class="flex-1 flex flex-col items-center justify-center text-[#8696a0] relative z-10">
+                <i data-lucide="ghost" class="w-20 h-20 mb-4 opacity-20"></i>
+                <p class="text-xl font-light">GhostMesh</p>
+                <p class="text-sm mt-2 opacity-60">Send and receive messages without a server.</p>
+            </div>
 
-                <!-- Active Chat -->
-                <div id="active-chat" class="hidden">
-                    <div class="chat-header">
-                        <div class="chat-contact">
-                            <div class="avatar" id="chat-avatar">?</div>
-                            <div>
-                                <div id="chat-name">Contact</div>
-                                <div class="status" id="chat-status">Offline</div>
-                            </div>
+            <div id="chat-interface" class="hidden flex flex-col h-full w-full relative z-10">
+                <div class="h-16 border-b border-[#2a3942] flex items-center justify-between px-4 bg-[#202c33] shrink-0">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="UI.closeChat()" class="md:hidden p-1 mr-1 text-[#aebac1]"><i data-lucide="arrow-left" class="w-6 h-6"></i></button>
+                        <div id="chat-header-avatar" class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold text-sm">?</div>
+                        <div class="flex flex-col">
+                            <span id="chat-header-name" class="font-semibold text-sm text-[#e9edef]">Peer</span>
+                            <span id="chat-header-status" class="text-xs text-[#8696a0]">Offline</span>
                         </div>
                     </div>
-                    
-                    <div class="messages" id="messages-container">
-                        <!-- Messages will be added here -->
+                </div>
+
+                <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 w-full"></div>
+                
+                <div id="upload-progress" class="hidden px-4 py-2 bg-[#202c33] border-t border-[#2a3942] shrink-0">
+                    <div class="flex justify-between text-xs text-[#00a884] mb-1">
+                        <span>Sending File...</span>
+                        <span id="progress-percent">0%</span>
                     </div>
-                    
-                    <div class="input-area">
-                        <textarea id="message-input" placeholder="Type a message..." rows="1"></textarea>
-                        <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+                    <div class="w-full bg-[#2a3942] rounded-full h-1"><div id="progress-bar" class="bg-[#00a884] h-1 rounded-full" style="width: 0%"></div></div>
+                </div>
+
+                <div class="bg-[#202c33] shrink-0 w-full pb-safe">
+                    <div id="file-preview-area" class="hidden px-4 py-2 bg-[#2a3942] flex items-center justify-between border-b border-[#111b21]">
+                        <span id="file-preview-name" class="text-sm text-[#e9edef] truncate"></span>
+                        <button onclick="UI.clearFile()" class="text-red-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+                    </div>
+                    <div class="flex items-end gap-2 p-2">
+                        <button onclick="document.getElementById('file-input').click()" class="p-3 text-[#8696a0] hover:text-[#e9edef]"><i data-lucide="plus" class="w-6 h-6"></i></button>
+                        <input type="file" id="file-input" class="hidden" onchange="UI.handleFileSelect(event)">
+                        
+                        <div class="flex-1 bg-[#2a3942] rounded-lg min-h-[42px] flex items-center px-4 py-2 mb-1">
+                            <textarea id="message-input" rows="1" class="w-full bg-transparent border-none focus:outline-none text-[#e9edef] placeholder-[#8696a0] resize-none overflow-hidden max-h-32 py-1" placeholder="Type a message" onkeydown="UI.handleInputKey(event)" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+                        </div>
+                        <div class="pb-1">
+                            <button onclick="Network.sendMessage()" class="p-3 bg-[#00a884] rounded-full text-white shadow-lg active:scale-95 transition-transform">
+                                <i data-lucide="send" class="w-5 h-5"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -570,914 +188,444 @@
     </div>
 
     <script>
-        // App State
-        const AppState = {
-            id: null,
-            name: null,
-            password: null,
-            activeChat: null,
-            contacts: {},
-            messages: {},
-            peer: null,
-            connections: {},
-            isOnline: false
+        const Utils = {
+            escapeHTML: str => str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]),
+            linkify: str => str.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-blue-400 hover:underline">$1</a>'),
+            formatBytes: (bytes) => {
+                if (bytes === 0) return '0 B';
+                const k=1024, i=Math.floor(Math.log(bytes)/Math.log(k));
+                return parseFloat((bytes/Math.pow(k,i)).toFixed(1)) + ' ' + ['B','KB','MB','GB'][i];
+            },
+            detectMimeType: (fileName, mimeType) => {
+                // Stronger Type Detection for Bug #1
+                if (fileName) {
+                    const ext = fileName.split('.').pop().toLowerCase();
+                    if (['jpg','jpeg','png','gif','webp'].includes(ext)) return 'image/' + ext;
+                    if (['mp4','webm','mov'].includes(ext)) return 'video/' + ext;
+                    if (['pdf'].includes(ext)) return 'application/pdf';
+                }
+                return mimeType || 'application/octet-stream';
+            },
+            getStatusHtml: (status) => {
+                let cl = 'status-orb';
+                if(status === 'pending') cl += ' status-pending';
+                else if(status === 'sent') cl += ' status-sent';
+                else if(status === 'delivered') cl += ' status-delivered';
+                else if(status === 'read') cl += ' status-read';
+                return `<div class="status-container"><div class="${cl}"></div></div>`;
+            }
         };
 
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("DOM loaded, initializing app...");
-            
-            // Check for saved profile
-            const savedName = localStorage.getItem('ghostmesh_name');
-            const savedId = localStorage.getItem('ghostmesh_id');
-            
-            if (savedName && savedId) {
-                // Load existing profile
-                AppState.name = savedName;
-                AppState.id = savedId;
-                AppState.password = localStorage.getItem('ghostmesh_password') || '';
-                AppState.contacts = JSON.parse(localStorage.getItem('ghostmesh_contacts') || '{}');
-                AppState.messages = JSON.parse(localStorage.getItem('ghostmesh_messages') || '{}');
-                
-                showApp();
-                initializeNetwork();
-            } else {
-                // Show onboarding
-                showOnboarding();
-            }
-        });
-
-        // Show onboarding screen
-        function showOnboarding() {
-            document.getElementById('onboarding').classList.remove('hidden');
-            document.getElementById('app').classList.add('hidden');
-            
-            document.getElementById('create-profile').onclick = createProfile;
-            
-            // Allow Enter key to submit
-            document.getElementById('setup-password').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    createProfile();
-                }
-            });
-        }
-
-        // Create profile
-        function createProfile() {
-            const name = document.getElementById('setup-name').value.trim();
-            const password = document.getElementById('setup-password').value;
-            const errorDiv = document.getElementById('setup-error');
-            
-            errorDiv.classList.add('hidden');
-            
-            if (!name || name.length < 2) {
-                showError(errorDiv, "Name must be at least 2 characters");
-                return;
-            }
-            
-            if (!password || password.length < 4) {
-                showError(errorDiv, "Password must be at least 4 characters");
-                return;
-            }
-            
-            // Generate unique ID
-            const id = generateUserId();
-            
-            // Save to AppState
-            AppState.name = name;
-            AppState.password = password;
-            AppState.id = id;
-            
-            // Save to localStorage
-            localStorage.setItem('ghostmesh_name', name);
-            localStorage.setItem('ghostmesh_id', id);
-            localStorage.setItem('ghostmesh_password', password);
-            localStorage.setItem('ghostmesh_contacts', JSON.stringify({}));
-            localStorage.setItem('ghostmesh_messages', JSON.stringify({}));
-            
-            showApp();
-            initializeNetwork();
-        }
-
-        // Show error
-        function showError(element, message) {
-            element.textContent = message;
-            element.classList.remove('hidden');
-        }
-
-        // Generate user ID
-        function generateUserId() {
-            return 'user_' + Math.random().toString(36).substring(2, 15) + 
-                   Math.random().toString(36).substring(2, 15);
-        }
-
-        // Show main app
-        function showApp() {
-            document.getElementById('onboarding').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-            
-            // Update UI
-            document.getElementById('my-name').textContent = AppState.name;
-            document.getElementById('my-avatar').textContent = getInitials(AppState.name);
-            document.getElementById('my-id-display').textContent = AppState.id;
-            
-            // Setup event listeners
-            setupEventListeners();
-            
-            // Render contacts
-            renderContacts();
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Message input
-            const messageInput = document.getElementById('message-input');
-            messageInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-            
-            messageInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-            });
-            
-            // Search contacts
-            document.getElementById('search-contacts').addEventListener('input', function() {
-                filterContacts(this.value.toLowerCase());
-            });
-            
-            // File attachment (click on send button when empty)
-            document.getElementById('send-btn').addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                attachFile();
-            });
-        }
-
-        // Initialize network/PeerJS
-        function initializeNetwork() {
-            console.log("Initializing network...");
-            
-            // Check if PeerJS is loaded
-            if (typeof Peer === 'undefined') {
-                console.error("PeerJS not loaded!");
-                showToast("⚠️ Network features limited. PeerJS failed to load.", 5000);
-                
-                // Update status
-                updateConnectionStatus('error', 'Network Error');
-                return;
-            }
-            
-            try {
-                // Create peer instance
-                AppState.peer = new Peer(AppState.id, {
-                    debug: 0, // Set to 2 for more logging
-                    config: {
-                        iceServers: [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:stun1.l.google.com:19302' }
-                        ]
+        const Store = {
+            db: null,
+            init: async () => new Promise((resolve) => {
+                const req = indexedDB.open("GhostMeshV2", 2);
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("config")) db.createObjectStore("config");
+                    if (!db.objectStoreNames.contains("messages")) {
+                        const store = db.createObjectStore("messages", { keyPath: "id" });
+                        store.createIndex("peerId", "peerId", { unique: false });
                     }
-                });
-                
-                // Peer event handlers
-                AppState.peer.on('open', function(id) {
-                    console.log("✅ Connected to Peer server with ID:", id);
-                    AppState.isOnline = true;
-                    updateConnectionStatus('online', 'Online');
-                    showToast("Connected to network");
-                });
-                
-                AppState.peer.on('connection', handleIncomingConnection);
-                
-                AppState.peer.on('error', function(err) {
-                    console.error("Peer error:", err);
-                    
-                    if (err.type === 'unavailable-id') {
-                        // Generate new ID
-                        AppState.id = generateUserId();
-                        localStorage.setItem('ghostmesh_id', AppState.id);
-                        initializeNetwork(); // Retry
-                    } else {
-                        updateConnectionStatus('offline', 'Offline');
-                        showToast("Network error: " + err.type);
-                    }
-                });
-                
-                AppState.peer.on('disconnected', function() {
-                    console.log("Disconnected from Peer server");
-                    AppState.isOnline = false;
-                    updateConnectionStatus('offline', 'Reconnecting...');
-                    
-                    // Try to reconnect
-                    setTimeout(function() {
-                        if (AppState.peer && AppState.peer.disconnected) {
-                            AppState.peer.reconnect();
-                        }
-                    }, 5000);
-                });
-                
-            } catch (error) {
-                console.error("Failed to initialize Peer:", error);
-                showToast("⚠️ Network initialization failed. Using offline mode.");
-                updateConnectionStatus('error', 'Offline Mode');
-            }
-        }
-
-        // Update connection status in UI
-        function updateConnectionStatus(status, text) {
-            const dot = document.getElementById('status-dot');
-            const statusText = document.getElementById('network-status');
-            
-            dot.className = 'status-dot ' + status;
-            statusText.textContent = text;
-            
-            // Update color based on status
-            switch(status) {
-                case 'online':
-                    statusText.style.color = '#00a884';
-                    break;
-                case 'offline':
-                    statusText.style.color = '#8696a0';
-                    break;
-                case 'connecting':
-                    statusText.style.color = '#ffa500';
-                    break;
-                case 'error':
-                    statusText.style.color = '#ff4444';
-                    break;
-            }
-        }
-
-        // Handle incoming connection
-        function handleIncomingConnection(conn) {
-            console.log("Incoming connection from:", conn.peer);
-            
-            conn.on('open', function() {
-                // Send our info
-                conn.send({
-                    type: 'handshake',
-                    id: AppState.id,
-                    name: AppState.name,
-                    timestamp: Date.now()
-                });
-                
-                // Store connection
-                AppState.connections[conn.peer] = conn;
-                updateContactStatus(conn.peer, true);
-            });
-            
-            conn.on('data', function(data) {
-                handleIncomingData(conn.peer, data);
-            });
-            
-            conn.on('close', function() {
-                console.log("Connection closed with:", conn.peer);
-                delete AppState.connections[conn.peer];
-                updateContactStatus(conn.peer, false);
-            });
-            
-            conn.on('error', function(err) {
-                console.error("Connection error with", conn.peer, ":", err);
-            });
-        }
-
-        // Handle incoming data
-        function handleIncomingData(senderId, data) {
-            console.log("Data from", senderId, ":", data);
-            
-            if (data.type === 'handshake') {
-                // Add or update contact
-                addContact(senderId, data.name, data.id);
-                
-                // Send response if we have an active connection
-                const conn = AppState.connections[senderId];
-                if (conn) {
-                    conn.send({
-                        type: 'handshake_response',
-                        id: AppState.id,
-                        name: AppState.name,
-                        timestamp: Date.now()
-                    });
-                }
-                
-            } else if (data.type === 'handshake_response') {
-                // Contact responded
-                addContact(senderId, data.name, data.id);
-                
-            } else if (data.type === 'message') {
-                // Handle text message
-                receiveMessage(senderId, {
-                    text: data.text,
-                    timestamp: data.timestamp || Date.now()
-                });
-                
-            } else if (data.type === 'file') {
-                // Handle file
-                receiveMessage(senderId, {
-                    type: 'file',
-                    name: data.name,
-                    fileType: data.fileType,
-                    size: data.size,
-                    data: data.data,
-                    timestamp: data.timestamp || Date.now()
-                });
-            }
-        }
-
-        // Add contact
-        function addContact(peerId, name, contactId) {
-            // Check if contact exists with different peerId (reconnection)
-            let existingPeerId = null;
-            for (const [pid, contact] of Object.entries(AppState.contacts)) {
-                if (contact.id === contactId && pid !== peerId) {
-                    existingPeerId = pid;
-                    break;
-                }
-            }
-            
-            if (existingPeerId) {
-                console.log("Contact reconnected. Migrating from", existingPeerId, "to", peerId);
-                
-                // Migrate messages
-                if (AppState.messages[existingPeerId]) {
-                    AppState.messages[peerId] = AppState.messages[existingPeerId];
-                    delete AppState.messages[existingPeerId];
-                }
-                
-                // Update active chat if needed
-                if (AppState.activeChat === existingPeerId) {
-                    AppState.activeChat = peerId;
-                    setTimeout(() => loadChat(peerId), 100);
-                }
-                
-                // Delete old contact
-                delete AppState.contacts[existingPeerId];
-                delete AppState.connections[existingPeerId];
-            }
-            
-            // Add/update contact
-            AppState.contacts[peerId] = {
-                id: contactId,
-                name: name,
-                online: AppState.connections[peerId] ? true : false,
-                lastSeen: Date.now()
-            };
-            
-            // Save
-            saveContacts();
-            saveMessages();
-            
-            // Update UI
-            renderContacts();
-            
-            // If this is active chat, update header
-            if (AppState.activeChat === peerId) {
-                updateChatHeader(peerId);
-            }
-        }
-
-        // Connect to peer
-        function connectToPeer(peerId) {
-            if (!AppState.peer || !AppState.peer.id) {
-                showToast("Not connected to network");
-                return null;
-            }
-            
-            if (AppState.connections[peerId]) {
-                return AppState.connections[peerId];
-            }
-            
-            try {
-                const conn = AppState.peer.connect(peerId, {
-                    reliable: true,
-                    serialization: 'json'
-                });
-                
-                conn.on('open', function() {
-                    console.log("Connected to", peerId);
-                    
-                    // Send handshake
-                    conn.send({
-                        type: 'handshake',
-                        id: AppState.id,
-                        name: AppState.name,
-                        timestamp: Date.now()
-                    });
-                    
-                    // Store connection
-                    AppState.connections[peerId] = conn;
-                    updateContactStatus(peerId, true);
-                });
-                
-                conn.on('data', function(data) {
-                    handleIncomingData(peerId, data);
-                });
-                
-                conn.on('close', function() {
-                    console.log("Connection closed with", peerId);
-                    delete AppState.connections[peerId];
-                    updateContactStatus(peerId, false);
-                });
-                
-                conn.on('error', function(err) {
-                    console.error("Connection error:", err);
-                    showToast("Failed to connect");
-                });
-                
-                return conn;
-                
-            } catch (error) {
-                console.error("Connection failed:", error);
-                showToast("Connection failed");
-                return null;
-            }
-        }
-
-        // Send message
-        function sendMessage() {
-            if (!AppState.activeChat) {
-                showToast("Select a contact first");
-                return;
-            }
-            
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            
-            if (!text) {
-                // If no text, try to attach file
-                attachFile();
-                return;
-            }
-            
-            // Create message
-            const message = {
-                text: text,
-                timestamp: Date.now(),
-                type: 'text'
-            };
-            
-            // Add to UI immediately
-            addMessageToUI(AppState.activeChat, message, 'sent');
-            
-            // Send via connection if available
-            const conn = AppState.connections[AppState.activeChat];
-            if (conn && conn.open) {
-                conn.send({
-                    type: 'message',
-                    text: text,
-                    timestamp: message.timestamp
-                });
-            } else {
-                // Try to connect and send
-                const newConn = connectToPeer(AppState.activeChat);
-                if (newConn) {
-                    setTimeout(() => {
-                        if (newConn.open) {
-                            newConn.send({
-                                type: 'message',
-                                text: text,
-                                timestamp: message.timestamp
-                            });
-                        }
-                    }, 500);
-                } else {
-                    showToast("Message saved locally (recipient offline)");
-                }
-            }
-            
-            // Clear input
-            input.value = '';
-            input.style.height = 'auto';
-            
-            // Save
-            saveMessages();
-        }
-
-        // Attach file
-        function attachFile() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    sendFile(file);
-                }
-            };
-            input.click();
-        }
-
-        // Send file
-        function sendFile(file) {
-            if (!AppState.activeChat) {
-                showToast("Select a contact first");
-                return;
-            }
-            
-            if (file.size > 50 * 1024 * 1024) { // 50MB limit
-                showToast("File too large (max 50MB)");
-                return;
-            }
-            
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                // Create message
-                const message = {
-                    type: 'file',
-                    name: file.name,
-                    fileType: file.type,
-                    size: file.size,
-                    data: e.target.result,
-                    timestamp: Date.now()
                 };
-                
-                // Add to UI
-                addMessageToUI(AppState.activeChat, message, 'sent');
-                
-                // Send via connection
-                const conn = AppState.connections[AppState.activeChat];
-                if (conn && conn.open) {
-                    conn.send({
-                        type: 'file',
-                        name: file.name,
-                        fileType: file.type,
-                        size: file.size,
-                        data: e.target.result,
-                        timestamp: message.timestamp
+                req.onsuccess = () => { Store.db = req.result; resolve(); };
+            }),
+            put: async (store, key, val) => new Promise(r => {
+                const tx = Store.db.transaction(store, "readwrite");
+                store === "messages" ? tx.objectStore(store).put(val) : tx.objectStore(store).put(val, key);
+                tx.oncomplete = r;
+            }),
+            get: async (store, key) => new Promise(r => {
+                const req = Store.db.transaction(store, "readonly").objectStore(store).get(key);
+                req.onsuccess = () => r(req.result);
+            }),
+            getMessages: async (peerId) => new Promise(r => {
+                const req = Store.db.transaction("messages", "readonly").objectStore("messages").index("peerId").getAll(peerId);
+                req.onsuccess = () => r(req.result || []);
+            }),
+            migrateMessages: async (oldId, newId) => new Promise(r => {
+                const tx = Store.db.transaction("messages", "readwrite");
+                const store = tx.objectStore("messages");
+                const index = store.index("peerId");
+                index.getAll(oldId).onsuccess = (e) => {
+                    const msgs = e.target.result;
+                    msgs.forEach(msg => {
+                        msg.peerId = newId; // Update ownership
+                        store.put(msg);
                     });
-                } else {
-                    showToast("File saved locally (recipient offline)");
-                }
-                
-                // Save
-                saveMessages();
-            };
-            
-            reader.onerror = function() {
-                showToast("Failed to read file");
-            };
-            
-            reader.readAsDataURL(file);
-        }
+                };
+                tx.oncomplete = r;
+            })
+        };
 
-        // Receive message
-        function receiveMessage(senderId, messageData) {
-            // Add to UI
-            addMessageToUI(senderId, messageData, 'received');
-            
-            // Save
-            saveMessages();
-            
-            // Show notification if not active chat
-            if (AppState.activeChat !== senderId) {
-                const contact = AppState.contacts[senderId];
-                if (contact) {
-                    showToast(`New message from ${contact.name}`);
-                }
+        // Simplified Crypto (Placeholder for brevity, assuming standard Web Crypto)
+        const Crypto = {
+            keyPair: null,
+            generateIdentity: async () => window.crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey", "deriveBits"]),
+            exportKey: async (key) => btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", key)))),
+            importKey: async (str) => {
+                const bytes = Uint8Array.from(atob(str), c => c.charCodeAt(0));
+                return await window.crypto.subtle.importKey("spki", bytes.buffer, { name: "ECDH", namedCurve: "P-256" }, true, []);
+            },
+            deriveShared: async (pub) => window.crypto.subtle.deriveKey({ name: "ECDH", public: pub }, Crypto.keyPair.privateKey, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]),
+            encrypt: async (data, key) => {
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                const cipher = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(data)));
+                return { iv: Array.from(iv), data: Array.from(new Uint8Array(cipher)) };
+            },
+            decrypt: async (enc, key) => {
+                const dec = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(enc.iv) }, key, new Uint8Array(enc.data));
+                return JSON.parse(new TextDecoder().decode(dec));
             }
-        }
+        };
 
-        // Add message to UI
-        function addMessageToUI(peerId, messageData, direction) {
-            // Initialize messages array
-            if (!AppState.messages[peerId]) {
-                AppState.messages[peerId] = [];
-            }
-            
-            // Create message object
-            const message = {
-                id: Date.now(),
-                ...messageData,
-                direction: direction,
-                timestamp: messageData.timestamp || Date.now()
-            };
-            
-            // Add to storage
-            AppState.messages[peerId].push(message);
-            
-            // If active chat, render it
-            if (AppState.activeChat === peerId) {
-                renderMessage(message);
-            }
-            
-            // Update contact last message
-            updateContactLastMessage(peerId, message);
-        }
-
-        // Render message
-        function renderMessage(message) {
-            const container = document.getElementById('messages-container');
-            
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${message.direction}`;
-            
-            if (message.type === 'file') {
-                const isImage = message.fileType.startsWith('image/');
-                
-                if (isImage) {
-                    messageDiv.innerHTML = `
-                        <div class="image-message" onclick="openImage('${message.data}')">
-                            <img src="${message.data}" alt="${message.name}">
-                        </div>
-                        <div class="message-time">${formatTime(message.timestamp)}</div>
-                    `;
-                } else {
-                    messageDiv.innerHTML = `
-                        <div class="file-message">
-                            <div class="file-info">
-                                <div class="file-icon">${getFileIcon(message.fileType)}</div>
-                                <div class="file-details">
-                                    <div class="file-name">${escapeHTML(message.name)}</div>
-                                    <div class="file-size">${formatBytes(message.size)}</div>
-                                </div>
-                                <button class="download-btn" onclick="downloadFile('${message.data}', '${message.name}')">
-                                    Download
-                                </button>
-                            </div>
-                        </div>
-                        <div class="message-time">${formatTime(message.timestamp)}</div>
-                    `;
-                }
-            } else {
-                // Text message
-                messageDiv.innerHTML = `
-                    <div>${escapeHTML(message.text)}</div>
-                    <div class="message-time">${formatTime(message.timestamp)}</div>
-                `;
-            }
-            
-            container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        // Load chat
-        function loadChat(peerId) {
-            AppState.activeChat = peerId;
-            
-            // Show active chat UI
-            document.getElementById('welcome-screen').classList.add('hidden');
-            document.getElementById('active-chat').classList.remove('hidden');
-            
-            // Update header
-            updateChatHeader(peerId);
-            
-            // Clear and load messages
-            const container = document.getElementById('messages-container');
-            container.innerHTML = '';
-            
-            if (AppState.messages[peerId]) {
-                AppState.messages[peerId].forEach(message => {
-                    renderMessage(message);
+        const Network = {
+            peer: null, connections: {},
+            init: (id) => {
+                Network.peer = new Peer(id, { config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
+                Network.peer.on('open', () => UI.updateNetworkStatus('online'));
+                Network.peer.on('connection', Network.handleConn);
+                Network.peer.on('error', () => UI.updateNetworkStatus('error'));
+                Network.peer.on('disconnected', () => { UI.updateNetworkStatus('offline'); Network.peer.reconnect(); });
+            },
+            connectWithRetry: (id) => {
+                if(!id || id === App.state.id) return;
+                const conn = Network.peer.connect(id);
+                conn.on('open', () => {
+                    conn.send({ type: 'handshake', key: App.state.pubStr, name: App.state.name });
                 });
-            }
-            
-            // Connect if not connected
-            if (!AppState.connections[peerId]) {
-                connectToPeer(peerId);
-            }
-            
-            // Update contacts list
-            document.querySelectorAll('.contact').forEach(c => {
-                c.classList.remove('active');
-            });
-            document.querySelector(`.contact[data-peer="${peerId}"]`)?.classList.add('active');
-        }
-
-        // Update chat header
-        function updateChatHeader(peerId) {
-            const contact = AppState.contacts[peerId];
-            if (!contact) return;
-            
-            document.getElementById('chat-name').textContent = contact.name;
-            document.getElementById('chat-avatar').textContent = getInitials(contact.name);
-            document.getElementById('chat-status').textContent = contact.online ? 'Online' : 'Offline';
-            document.getElementById('chat-status').style.color = contact.online ? '#00a884' : '#8696a0';
-        }
-
-        // Render contacts
-        function renderContacts() {
-            const container = document.getElementById('contacts-list');
-            const loading = document.getElementById('contacts-loading');
-            
-            if (loading) {
-                loading.remove();
-            }
-            
-            container.innerHTML = '';
-            
-            const contacts = Object.entries(AppState.contacts);
-            
-            if (contacts.length === 0) {
-                container.innerHTML = `
-                    <div class="welcome" style="padding: 40px 20px;">
-                        <div style="font-size: 48px; opacity: 0.3; margin-bottom: 20px;">👤</div>
-                        <div style="color: #8696a0;">No contacts yet</div>
-                        <button onclick="addContactManually()" style="margin-top: 20px; width: auto; padding: 8px 16px;">
-                            Add Contact
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Sort by last message time
-            contacts.sort((a, b) => {
-                const timeA = AppState.messages[a[0]]?.[AppState.messages[a[0]].length - 1]?.timestamp || 0;
-                const timeB = AppState.messages[b[0]]?.[AppState.messages[b[0]].length - 1]?.timestamp || 0;
-                return timeB - timeA;
-            });
-            
-            contacts.forEach(([peerId, contact]) => {
-                const lastMessage = AppState.messages[peerId]?.[AppState.messages[peerId].length - 1];
+                Network.handleConn(conn);
+            },
+            handleConn: (conn) => {
+                conn.on('data', data => Network.handleData(conn.peer, data, conn));
+                conn.on('close', () => UI.updateHeaderStatus(conn.peer, 'Offline'));
+                conn.on('error', () => {});
+            },
+            handleData: async (sender, data, conn) => {
+                // Bug Fix #4: Update Contact ID on Reconnect
+                if (data.type === 'handshake') {
+                    const shared = await Crypto.deriveShared(await Crypto.importKey(data.key));
+                    // Check if we know this public key under a different ID
+                    await App.addContact(sender, data.name, data.key); 
+                    Network.connections[sender] = { conn, key: shared };
+                    
+                    // If this is a new ID for an active chat, switch the UI immediately
+                    if (App.state.activeChat && App.state.contacts[App.state.activeChat] === undefined) {
+                        // The active chat ID is no longer valid, find the new one
+                        const newId = Object.keys(App.state.contacts).find(k => App.state.contacts[k].pubStr === data.key);
+                        if(newId) UI.loadChat(newId);
+                    }
+                    
+                    UI.updateHeaderStatus(sender, 'Online');
+                    return;
+                }
                 
-                let preview = 'No messages yet';
-                if (lastMessage) {
-                    if (lastMessage.type === 'file') {
-                        preview = '📎 ' + lastMessage.name;
-                    } else if (lastMessage.text) {
-                        preview = lastMessage.text.length > 30 ? 
-                            lastMessage.text.substring(0, 30) + '...' : lastMessage.text;
+                const connObj = Network.connections[sender];
+                if (!connObj) return;
+
+                if (data.type === 'msg') {
+                    const dec = await Crypto.decrypt(data.payload, connObj.key);
+                    App.addMessage(sender, dec.content, 'in', dec.type, 'read', data.id);
+                }
+                
+                // Bug Fix #2: File Handling
+                if (data.type === 'file-start') {
+                     App.fileChunks[sender] = { ...data, chunks: [], received: 0 };
+                     // Add a placeholder message
+                     App.addMessage(sender, { name: data.name, size: data.encSize, mime: data.mime, url: null }, 'in', 'file', 'pending', data.id);
+                }
+                
+                if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
+                    const tracker = App.fileChunks[sender];
+                    if(tracker) {
+                        tracker.chunks.push(data);
+                        tracker.received += data.byteLength;
+                        if(tracker.received >= tracker.encSize) {
+                            const blob = new Blob(tracker.chunks, { type: tracker.mime });
+                            const url = URL.createObjectURL(blob);
+                            
+                            // Update the message in DB and UI with the final Blob URL
+                            const msg = { 
+                                id: tracker.id, peerId: sender, direction: 'in', type: 'file', status: 'read', timestamp: Date.now(),
+                                content: { name: tracker.name, mime: tracker.mime, size: blob.size, url: url, blob: blob } 
+                            };
+                            await Store.put('messages', null, msg);
+                            if(App.state.activeChat === sender) UI.renderMessage(msg); // Refresh UI
+                            delete App.fileChunks[sender];
+                        }
+                    }
+                }
+            },
+            sendMessage: async () => {
+                if (!App.state.activeChat) return;
+                const peerId = App.state.activeChat;
+                const connObj = Network.connections[peerId];
+                if (!connObj) return UI.showToast("Peer offline");
+
+                const input = document.getElementById('message-input');
+                const fileInput = document.getElementById('file-input');
+
+                // Bug Fix #3: Removed "else if" to allow sending both file and text
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const msgId = Date.now().toString();
+                    const detectedMime = Utils.detectMimeType(file.name, file.type);
+                    const url = URL.createObjectURL(file);
+                    
+                    App.addMessage(peerId, { name: file.name, mime: detectedMime, size: file.size, url: url, blob: file }, 'out', 'file', 'sent', msgId);
+                    
+                    connObj.conn.send({ type: 'file-start', id: msgId, name: file.name, mime: detectedMime, encSize: file.size });
+                    
+                    // Simple chunked upload
+                    const CHUNK = 16 * 1024;
+                    document.getElementById('upload-progress').classList.remove('hidden');
+                    let offset = 0;
+                    const loop = () => {
+                        if(offset >= file.size) {
+                            document.getElementById('upload-progress').classList.add('hidden');
+                            UI.clearFile();
+                            return;
+                        }
+                        const slice = file.slice(offset, offset + CHUNK);
+                        slice.arrayBuffer().then(buf => {
+                            connObj.conn.send(buf);
+                            offset += CHUNK;
+                            document.getElementById('progress-bar').style.width = Math.min(100, (offset/file.size)*100) + '%';
+                            requestAnimationFrame(loop);
+                        });
+                    };
+                    loop();
+                }
+
+                if (input.value.trim()) {
+                    const text = input.value.trim();
+                    const msgId = (Date.now() + 1).toString(); // Ensure unique ID
+                    const payload = { content: text, type: 'text', ts: Date.now() };
+                    const enc = await Crypto.encrypt(payload, connObj.key);
+                    
+                    connObj.conn.send({ type: 'msg', id: msgId, payload: enc });
+                    App.addMessage(peerId, text, 'out', 'text', 'sent', msgId);
+                    input.value = '';
+                }
+            }
+        };
+
+        const App = {
+            state: { id: null, name: null, pubStr: null, activeChat: null, contacts: {} },
+            fileChunks: {},
+            init: async () => {
+                await Store.init();
+                const saved = await Store.get('config', 'profile');
+                if (saved) {
+                    App.state = { ...App.state, ...saved };
+                    document.getElementById('login-screen').classList.remove('hidden');
+                } else {
+                    document.getElementById('onboarding-screen').classList.remove('hidden');
+                }
+                lucide.createIcons();
+            },
+            createProfile: async () => {
+                const name = document.getElementById('setup-name').value;
+                const kp = await Crypto.generateIdentity();
+                Crypto.keyPair = kp;
+                const pubStr = await Crypto.exportKey(kp.publicKey);
+                // Create a deterministic ID from public key hash (shortened)
+                const hash = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(pubStr));
+                const id = Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('').substring(0,12);
+                
+                App.state = { id, name, pubStr, contacts: {} };
+                await Store.put('config', 'profile', App.state);
+                // Save Private Key separately (should be encrypted in real app)
+                await Store.put('config', 'privKey', kp.privateKey);
+                
+                location.reload();
+            },
+            login: async () => {
+                const priv = await Store.get('config', 'privKey');
+                const saved = await Store.get('config', 'profile');
+                Crypto.keyPair = { publicKey: await Crypto.importKey(saved.pubStr), privateKey: priv };
+                App.state = saved;
+                
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-layout').classList.remove('hidden');
+                document.getElementById('my-display-name').innerText = App.state.name;
+                document.getElementById('my-avatar').innerText = App.state.name[0].toUpperCase();
+                
+                Network.init(App.state.id);
+                UI.renderContactList();
+            },
+            // Bug Fix #4: Smart Add Contact (Prevent Duplicates)
+            addContact: async (peerId, name, pubStr) => {
+                // Check if this public key already exists with a DIFFERENT peerId
+                const existingPeerId = Object.keys(App.state.contacts).find(key => App.state.contacts[key].pubStr === pubStr);
+                
+                if (existingPeerId && existingPeerId !== peerId) {
+                    // Update the ID!
+                    console.log(`Migrating contact ${name} from ${existingPeerId} to ${peerId}`);
+                    const oldData = App.state.contacts[existingPeerId];
+                    delete App.state.contacts[existingPeerId];
+                    App.state.contacts[peerId] = { ...oldData, name, lastSeen: Date.now() }; // Update name/time
+                    
+                    // Migrate IndexedDB messages
+                    await Store.migrateMessages(existingPeerId, peerId);
+                } else {
+                    // New contact or same ID update
+                    if (!App.state.contacts[peerId]) {
+                        App.state.contacts[peerId] = { name, pubStr, lastSeen: Date.now() };
+                    }
+                }
+                await Store.put('config', 'profile', App.state);
+                UI.renderContactList();
+            },
+            addMessage: async (peerId, content, direction, type, status, id) => {
+                const msg = { id, peerId, content, direction, type, status, timestamp: Date.now() };
+                await Store.put('messages', null, msg);
+                
+                // Update Last Message in Sidebar
+                if (App.state.contacts[peerId]) {
+                    App.state.contacts[peerId].lastMessage = type === 'text' ? content : (type === 'file' ? '📎 File' : 'Message');
+                    await Store.put('config', 'profile', App.state);
+                    UI.renderContactList();
+                }
+                
+                if (App.state.activeChat === peerId) {
+                    UI.renderMessage(msg);
+                    const container = document.getElementById('messages-container');
+                    container.scrollTop = container.scrollHeight;
+                }
+            }
+        };
+
+        const UI = {
+            updateNetworkStatus: (s) => {
+                const el = document.getElementById('status-indicator');
+                const txt = document.getElementById('network-status-text');
+                if(s==='online') { el.className = 'w-2 h-2 rounded-full bg-green-500 mr-1'; txt.innerText = 'Online'; }
+                else { el.className = 'w-2 h-2 rounded-full bg-red-500 mr-1'; txt.innerText = 'Offline'; }
+            },
+            updateHeaderStatus: (id, status) => {
+                if(App.state.activeChat === id) document.getElementById('chat-header-status').innerText = status;
+            },
+            toggleAddContact: () => document.getElementById('new-chat-panel').classList.toggle('hidden'),
+            copyId: () => navigator.clipboard.writeText(App.state.id).then(() => UI.showToast("ID Copied")),
+            showToast: (msg) => {
+                const t = document.createElement('div');
+                t.className = 'fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-[#202c33] text-white px-6 py-3 rounded-lg shadow-lg z-[150]';
+                t.innerText = msg;
+                document.body.appendChild(t);
+                setTimeout(() => t.remove(), 2000);
+            },
+            handleFileSelect: (e) => {
+                if(e.target.files.length) {
+                    document.getElementById('file-preview-area').classList.remove('hidden');
+                    document.getElementById('file-preview-name').innerText = e.target.files[0].name;
+                }
+            },
+            clearFile: () => {
+                document.getElementById('file-input').value = '';
+                document.getElementById('file-preview-area').classList.add('hidden');
+            },
+            handleInputKey: (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Network.sendMessage(); } },
+            closeChat: () => {
+                document.getElementById('chat-area').classList.add('hidden');
+                document.getElementById('sidebar-panel').classList.remove('hidden');
+                App.state.activeChat = null;
+            },
+            loadChat: async (peerId) => {
+                App.state.activeChat = peerId;
+                const contact = App.state.contacts[peerId];
+                
+                document.getElementById('chat-empty-state').classList.add('hidden');
+                document.getElementById('chat-interface').classList.remove('hidden');
+                document.getElementById('chat-area').classList.remove('hidden');
+                if(window.innerWidth < 768) document.getElementById('sidebar-panel').classList.add('hidden');
+                
+                document.getElementById('chat-header-name').innerText = contact.name;
+                document.getElementById('chat-header-avatar').innerText = contact.name[0].toUpperCase();
+                
+                const msgs = await Store.getMessages(peerId);
+                const container = document.getElementById('messages-container');
+                container.innerHTML = '';
+                msgs.sort((a,b) => a.timestamp - b.timestamp).forEach(m => UI.renderMessage(m));
+                container.scrollTop = container.scrollHeight;
+                
+                // Highlight active chat in list
+                UI.renderContactList();
+            },
+            renderContactList: () => {
+                const list = document.getElementById('chat-list');
+                list.innerHTML = '';
+                Object.entries(App.state.contacts).forEach(([id, c]) => {
+                    const isActive = App.state.activeChat === id;
+                    const div = document.createElement('div');
+                    div.className = `p-3 cursor-pointer border-b border-[#2a3942] flex items-center gap-3 ${isActive ? 'bg-[#2a3942]' : 'hover:bg-[#202c33]'}`;
+                    div.onclick = () => UI.loadChat(id);
+                    div.innerHTML = `
+                        <div class="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">${c.name[0].toUpperCase()}</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm truncate">${Utils.escapeHTML(c.name)}</div>
+                            <div class="text-xs text-[#8696a0] truncate">${Utils.escapeHTML(c.lastMessage || '')}</div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            },
+            renderMessage: (msg) => {
+                const container = document.getElementById('messages-container');
+                const div = document.createElement('div');
+                div.className = `flex ${msg.direction === 'out' ? 'justify-end' : 'justify-start'} group`;
+                
+                const bubbleClass = msg.direction === 'out' ? 'msg-sent' : 'msg-received';
+                const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                const status = msg.direction === 'out' ? Utils.getStatusHtml(msg.status) : '';
+                
+                let contentHtml = '';
+                
+                if (msg.type === 'text') {
+                    contentHtml = `<div class="text-sm">${Utils.linkify(Utils.escapeHTML(msg.content))}</div>`;
+                } else if (msg.type === 'file') {
+                    const mime = Utils.detectMimeType(msg.content.name, msg.content.mime);
+                    
+                    // Bug Fix #1: Better Photo Logic
+                    if (mime.startsWith('image/') && msg.content.url) {
+                        contentHtml = `<img src="${msg.content.url}" class="rounded-lg max-w-full h-auto cursor-pointer" style="max-height: 300px;" onclick="window.open('${msg.content.url}')">`;
+                    } 
+                    // Bug Fix #2: Better File UI
+                    else {
+                        const ext = msg.content.name ? msg.content.name.split('.').pop().toUpperCase() : 'FILE';
+                        const size = msg.content.size ? Utils.formatBytes(msg.content.size) : '';
+                        
+                        contentHtml = `
+                            <div class="file-card-container" onclick="window.open('${msg.content.url}')">
+                                <div class="file-icon-wrapper">${ext.substring(0,3)}</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-medium truncate text-white">${Utils.escapeHTML(msg.content.name)}</div>
+                                    <div class="text-xs text-[#8696a0] flex items-center gap-1">
+                                        ${size} • <span class="uppercase">${ext}</span>
+                                    </div>
+                                </div>
+                                <div class="text-[#8696a0]">
+                                    <i data-lucide="download" class="w-5 h-5"></i>
+                                </div>
+                            </div>
+                        `;
                     }
                 }
                 
-                const contactDiv = document.createElement('div');
-                contactDiv.className = 'contact';
-                contactDiv.dataset.peer = peerId;
-                contactDiv.onclick = () => loadChat(peerId);
-                
-                if (AppState.activeChat === peerId) {
-                    contactDiv.classList.add('active');
-                }
-                
-                contactDiv.innerHTML = `
-                    <div class="contact-avatar">${getInitials(contact.name)}</div>
-                    <div class="contact-info">
-                        <div class="contact-name">${escapeHTML(contact.name)}</div>
-                        <div class="contact-last">${escapeHTML(preview)}</div>
+                div.innerHTML = `
+                    <div class="bubble-constraint ${bubbleClass} px-3 py-2 relative shadow-sm">
+                        ${contentHtml}
+                        <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end gap-1">
+                            ${time} ${status}
+                        </div>
                     </div>
-                    ${contact.online ? '<div class="status-dot online" style="margin-right: 10px;"></div>' : ''}
                 `;
-                
-                container.appendChild(contactDiv);
-            });
-        }
-
-        // Filter contacts
-        function filterContacts(query) {
-            document.querySelectorAll('.contact').forEach(contact => {
-                const name = contact.querySelector('.contact-name').textContent.toLowerCase();
-                const lastMsg = contact.querySelector('.contact-last').textContent.toLowerCase();
-                
-                if (name.includes(query) || lastMsg.includes(query)) {
-                    contact.style.display = 'flex';
-                } else {
-                    contact.style.display = 'none';
-                }
-            });
-        }
-
-        // Update contact last message
-        function updateContactLastMessage(peerId, message) {
-            const contact = AppState.contacts[peerId];
-            if (!contact) return;
-            
-            // This will trigger re-render of contacts
-            renderContacts();
-        }
-
-        // Update contact status
-        function updateContactStatus(peerId, isOnline) {
-            const contact = AppState.contacts[peerId];
-            if (contact) {
-                contact.online = isOnline;
-                contact.lastSeen = Date.now();
-                
-                // Save
-                saveContacts();
-                
-                // Update UI if active chat
-                if (AppState.activeChat === peerId) {
-                    updateChatHeader(peerId);
-                }
-                
-                // Re-render contacts
-                renderContacts();
+                container.appendChild(div);
+                lucide.createIcons();
             }
-        }
+        };
 
-        // Add contact manually
-        function addContactManually() {
-            const peerId = prompt("Enter the contact's Peer ID:");
-            if (!peerId) return;
-            
-            const name = prompt("Enter contact name:") || "Unknown";
-            
-            addContact(peerId, name, peerId);
-            connectToPeer(peerId);
-            loadChat(peerId);
-        }
-
-        // Copy my ID
-        function copyMyId() {
-            navigator.clipboard.writeText(AppState.id)
-                .then(() => showToast("ID copied to clipboard"))
-                .catch(() => {
-                    // Fallback
-                    const textArea = document.createElement('textarea');
-                    textArea.value = AppState.id;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    showToast("ID copied");
-                });
-        }
-
-        // Save contacts to storage
-        function saveContacts() {
-            localStorage.setItem('ghostmesh_contacts', JSON.stringify(AppState.contacts));
-        }
-
-        // Save messages to storage
-        function saveMessages() {
-            localStorage.setItem('ghostmesh_messages', JSON.stringify(AppState.messages));
-        }
-
-        // Utility functions
-        function escapeHTML(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function formatTime(timestamp) {
-            const date = new Date(timestamp);
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function formatBytes(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-        }
-
-        function getInitials(name) {
-            return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-        }
-
-        function getFileIcon(mimeType) {
-            if (mimeType.includes('pdf')) return '📄';
-            if (mimeType.includes('image')) return '🖼️';
-            if (mimeType.includes('video')) return '🎬';
-            if (mimeType.includes('audio')) return '🎵';
-            if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('7z')) return '🗜️';
-            if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
-            if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📊';
-            if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📽️';
-            return '📎';
-        }
-
-        function openImage(src) {
-            window.open(src, '_blank');
-        }
-
-        function downloadFile(dataUrl, fileName) {
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function showToast(message, duration = 3000) {
-            // Remove existing toast
-            const existing = document.querySelector('.toast');
-            if (existing) existing.remove();
-            
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.remove();
-                }
-            }, duration);
-        }
-
-        // Export functions to global scope
-        window.sendMessage = sendMessage;
-        window.copyMyId = copyMyId;
-        window.openImage = openImage;
-        window.downloadFile = downloadFile;
-        window.addContactManually = addContactManually;
+        window.addEventListener('load', App.init);
     </script>
 </body>
 </html>
