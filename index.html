@@ -418,7 +418,8 @@
                 return `<div class="status-container"><div class="${cl}"></div></div>`;
             },
             getFileIcon: (mime, name) => {
-                const ext = name.split('.').pop().toUpperCase();
+                const parts = name.split('.');
+                const ext = parts.length > 1 ? parts.pop().toUpperCase() : 'FILE';
                 let color = '#8696a0'; // default gray
                 let label = ext.substring(0, 3);
                 
@@ -1148,7 +1149,7 @@
         };
 
         const UI = {
-            typingTimeout: null, selectionMode: false, selectedMessages: new Set(),
+            typingTimeout: null, selectionMode: false, selectedMessages: new Set(), currentAudio: null,
             toggleTheme: async () => {
                 const body = document.body; const themeIcon = document.getElementById('theme-icon');
                 if (body.classList.contains('light-theme')) { body.classList.remove('light-theme'); themeIcon.setAttribute('data-lucide', 'sun'); await Store.put('config', 'theme', 'dark'); }
@@ -1411,6 +1412,12 @@
             },
             generateAvatar: (name) => { if (!name) return '?'; const words = name.trim().split(/\s+/); return (words.length >= 2 ? words[0][0] + words[1][0] : name.substring(0, 2)).toUpperCase(); },
             playAudio: (btn, url) => {
+                // Stop any currently playing audio
+                if (UI.currentAudio) {
+                    UI.currentAudio.pause();
+                    UI.currentAudio = null;
+                }
+                
                 const audio = new Audio(url);
                 const waveform = btn.parentElement;
                 const icon = btn.querySelector('i');
@@ -1425,21 +1432,20 @@
                     icon.setAttribute('data-lucide', 'play');
                     waveform.classList.remove('playing');
                     if (typeof lucide !== 'undefined') lucide.createIcons();
+                    if (UI.currentAudio === audio) UI.currentAudio = null;
                 };
                 
                 audio.onended = () => {
                     icon.setAttribute('data-lucide', 'play');
                     waveform.classList.remove('playing');
                     if (typeof lucide !== 'undefined') lucide.createIcons();
+                    if (UI.currentAudio === audio) UI.currentAudio = null;
                 };
                 
-                if (audio.paused) {
-                    // Stop any other playing audio
-                    document.querySelectorAll('audio').forEach(a => a.pause());
-                    audio.play();
-                } else {
-                    audio.pause();
-                }
+                UI.currentAudio = audio;
+                audio.play().catch(() => {
+                    UI.currentAudio = null;
+                });
             }
         };
 
