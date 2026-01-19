@@ -418,16 +418,17 @@
                 return `<div class="status-container"><div class="${cl}"></div></div>`;
             },
             getFileIcon: (mime, name) => {
+                if (!name) return '<div class="file-icon-box" style="background-color: #8696a0">FILE</div>';
                 const parts = name.split('.');
                 const ext = parts.length > 1 ? parts.pop().toUpperCase() : 'FILE';
                 let color = '#8696a0'; // default gray
                 let label = ext.substring(0, 3);
                 
-                if (mime.includes('pdf')) { color = '#ef4444'; label = 'PDF'; }
-                else if (mime.includes('word') || ext === 'DOC' || ext === 'DOCX') { color = '#3b82f6'; label = 'DOC'; }
-                else if (mime.includes('zip') || ext === 'ZIP' || ext === 'RAR') { color = '#f97316'; label = 'ZIP'; }
-                else if (mime.includes('excel') || ext === 'XLS' || ext === 'XLSX') { color = '#10b981'; label = 'XLS'; }
-                else if (mime.includes('powerpoint') || ext === 'PPT' || ext === 'PPTX') { color = '#f59e0b'; label = 'PPT'; }
+                if (mime && mime.includes('pdf')) { color = '#ef4444'; label = 'PDF'; }
+                else if (mime && (mime.includes('word') || ext === 'DOC' || ext === 'DOCX')) { color = '#3b82f6'; label = 'DOC'; }
+                else if (mime && (mime.includes('zip') || ext === 'ZIP' || ext === 'RAR')) { color = '#f97316'; label = 'ZIP'; }
+                else if (mime && (mime.includes('excel') || ext === 'XLS' || ext === 'XLSX')) { color = '#10b981'; label = 'XLS'; }
+                else if (mime && (mime.includes('powerpoint') || ext === 'PPT' || ext === 'PPTX')) { color = '#f59e0b'; label = 'PPT'; }
                 
                 return `<div class="file-icon-box" style="background-color: ${color}">${label}</div>`;
             }
@@ -1411,16 +1412,25 @@
                 if (sorted.length === 0) container.innerHTML = '<div class="p-4 text-center text-[#8696a0] text-sm">No contacts yet</div>';
             },
             generateAvatar: (name) => { if (!name) return '?'; const words = name.trim().split(/\s+/); return (words.length >= 2 ? words[0][0] + words[1][0] : name.substring(0, 2)).toUpperCase(); },
-            playAudio: (btn, url) => {
-                // Stop any currently playing audio
+            stopCurrentAudio: () => {
                 if (UI.currentAudio) {
                     UI.currentAudio.pause();
                     UI.currentAudio = null;
                 }
+            },
+            playAudio: (btn, url) => {
+                UI.stopCurrentAudio();
                 
                 const audio = new Audio(url);
                 const waveform = btn.parentElement;
                 const icon = btn.querySelector('i');
+                
+                const resetUI = () => {
+                    icon.setAttribute('data-lucide', 'play');
+                    waveform.classList.remove('playing');
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    if (UI.currentAudio === audio) UI.currentAudio = null;
+                };
                 
                 audio.onplay = () => {
                     icon.setAttribute('data-lucide', 'pause');
@@ -1428,23 +1438,14 @@
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                 };
                 
-                audio.onpause = () => {
-                    icon.setAttribute('data-lucide', 'play');
-                    waveform.classList.remove('playing');
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                    if (UI.currentAudio === audio) UI.currentAudio = null;
-                };
-                
-                audio.onended = () => {
-                    icon.setAttribute('data-lucide', 'play');
-                    waveform.classList.remove('playing');
-                    if (typeof lucide !== 'undefined') lucide.createIcons();
-                    if (UI.currentAudio === audio) UI.currentAudio = null;
-                };
+                audio.onpause = resetUI;
+                audio.onended = resetUI;
                 
                 UI.currentAudio = audio;
-                audio.play().catch(() => {
-                    UI.currentAudio = null;
+                audio.play().catch((err) => {
+                    console.warn('Audio playback failed:', err);
+                    resetUI();
+                    UI.showToast('Cannot play audio');
                 });
             }
         };
@@ -1471,14 +1472,17 @@
         window.addEventListener('load', App.init);
         window.addEventListener('beforeunload', () => { Utils.revokeBlobs(); if (Media.localStream) Media.localStream.getTracks().forEach(t => t.stop()); if (Media.scanner) Media.scanner.stop().catch(()=>{}); if (Network.peer) { Network.stopPingMonitor(); Network.peer.destroy(); } });
         
-        // Auto-reconnection on page visibility
+        // Auto-reconnection on page visibility with staggered delays
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && App.state.id) {
-                // Reconnect to all known contacts
-                Object.keys(App.state.contacts).forEach(peerId => {
-                    if (!Network.connections[peerId]?.conn?.open) {
-                        Network.connectWithRetry(peerId);
-                    }
+                // Reconnect to all known contacts with staggered delays
+                const peerIds = Object.keys(App.state.contacts);
+                peerIds.forEach((peerId, index) => {
+                    setTimeout(() => {
+                        if (!Network.connections[peerId]?.conn?.open) {
+                            Network.connectWithRetry(peerId);
+                        }
+                    }, index * 500); // 500ms delay between each reconnection attempt
                 });
             }
         });
