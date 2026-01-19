@@ -582,9 +582,12 @@
                 return await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
             },
             createSessionToken: async (password) => {
-                // Create a time-limited encrypted token
+                // Create a time-limited encrypted token with password
+                // We encrypt the password using a device-specific key
                 const tokenData = {
-                    password: password,
+                    passwordHash: Array.from(new Uint8Array(
+                        await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(password))
+                    )),
                     created: Date.now(),
                     expires: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 days
                 };
@@ -592,8 +595,17 @@
                 const salt = window.crypto.getRandomValues(new Uint8Array(16));
                 const iv = window.crypto.getRandomValues(new Uint8Array(12));
                 
-                // Use device-specific key (derived from browser fingerprint)
+                // Use device-specific key (stable device ID)
                 const deviceKey = await Crypto.deriveDeviceKey(salt);
+                
+                // Encrypt the password with device key for auto-login
+                const passwordIv = window.crypto.getRandomValues(new Uint8Array(12));
+                const encryptedPassword = await window.crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv: passwordIv },
+                    deviceKey,
+                    new TextEncoder().encode(password)
+                );
+                
                 const encrypted = await window.crypto.subtle.encrypt(
                     { name: "AES-GCM", iv },
                     deviceKey,
@@ -603,7 +615,9 @@
                 return {
                     salt: Array.from(salt),
                     iv: Array.from(iv),
-                    data: Array.from(new Uint8Array(encrypted))
+                    data: Array.from(new Uint8Array(encrypted)),
+                    passwordIv: Array.from(passwordIv),
+                    encryptedPassword: Array.from(new Uint8Array(encryptedPassword))
                 };
             },
             validateSessionToken: async (tokenObj) => {
@@ -611,8 +625,12 @@
                     const salt = new Uint8Array(tokenObj.salt);
                     const iv = new Uint8Array(tokenObj.iv);
                     const data = new Uint8Array(tokenObj.data);
+                    const passwordIv = new Uint8Array(tokenObj.passwordIv);
+                    const encryptedPassword = new Uint8Array(tokenObj.encryptedPassword);
                     
                     const deviceKey = await Crypto.deriveDeviceKey(salt);
+                    
+                    // Decrypt session token
                     const decrypted = await window.crypto.subtle.decrypt(
                         { name: "AES-GCM", iv },
                         deviceKey,
@@ -626,17 +644,44 @@
                         throw new Error('Session expired');
                     }
                     
-                    return tokenData.password;
+                    // Decrypt password
+                    const decryptedPassword = await window.crypto.subtle.decrypt(
+                        { name: "AES-GCM", iv: passwordIv },
+                        deviceKey,
+                        encryptedPassword
+                    );
+                    
+                    const password = new TextDecoder().decode(decryptedPassword);
+                    
+                    // Verify password hash matches
+                    const passwordHash = Array.from(new Uint8Array(
+                        await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(password))
+                    ));
+                    
+                    const matches = passwordHash.every((byte, i) => byte === tokenData.passwordHash[i]);
+                    
+                    if (!matches) {
+                        throw new Error('Invalid session');
+                    }
+                    
+                    return password;
                 } catch(e) {
                     throw new Error('Invalid session');
                 }
             },
             deriveDeviceKey: async (salt) => {
-                // Create device-specific key using browser/device fingerprint
-                const fingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
+                // Use stored device ID or create one (more stable than fingerprinting)
+                let deviceId = localStorage.getItem('ghostmesh_device_id');
+                if (!deviceId) {
+                    // Generate a stable random device ID
+                    const randomBytes = window.crypto.getRandomValues(new Uint8Array(32));
+                    deviceId = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+                    localStorage.setItem('ghostmesh_device_id', deviceId);
+                }
+                
                 const keyMaterial = await window.crypto.subtle.importKey(
                     "raw",
-                    new TextEncoder().encode(fingerprint),
+                    new TextEncoder().encode(deviceId),
                     { name: "PBKDF2" },
                     false,
                     ["deriveKey"]
@@ -646,7 +691,7 @@
                     {
                         name: "PBKDF2",
                         salt: salt,
-                        iterations: 10000,
+                        iterations: 100000, // Increased to match password encryption
                         hash: "SHA-256"
                     },
                     keyMaterial,
