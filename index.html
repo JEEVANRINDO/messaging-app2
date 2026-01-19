@@ -515,10 +515,11 @@
                 PING_INTERVAL: 5000,              // 5 seconds
                 MAX_RETRY_ATTEMPTS: 3,
                 INITIAL_BACKOFF: 1000,            // 1 second
-                DEBUG_MODE: true                   // Set to false for production
+                DEBUG_MODE: false                  // Set to true for debugging
             },
             
-            peer: null, connections: {}, uploadCancelled: false, typingTimers: {}, connectionStates: {},
+            peer: null, connections: {}, uploadCancelled: false, typingTimers: {}, connectionStates: {}, 
+            pingIntervalId: null, reconnectIntervalId: null,
             debugLog: (message, data) => {
                 if (!Network.CONFIG.DEBUG_MODE) return;
                 const timestamp = new Date().toISOString();
@@ -1165,8 +1166,12 @@
                 }
             },
             startPingMonitor: () => {
+                // Clear existing intervals if any
+                if (Network.pingIntervalId) clearInterval(Network.pingIntervalId);
+                if (Network.reconnectIntervalId) clearInterval(Network.reconnectIntervalId);
+                
                 // Ping active connections
-                setInterval(() => {
+                Network.pingIntervalId = setInterval(() => {
                     Object.keys(Network.connections).forEach(peerId => {
                         const connObj = Network.connections[peerId];
                         if (connObj?.conn?.open && connObj.handshakeComplete) {
@@ -1177,22 +1182,35 @@
                 }, Network.CONFIG.PING_INTERVAL);
                 
                 // Check for disconnected contacts and attempt reconnection
-                setInterval(() => {
+                Network.reconnectIntervalId = setInterval(() => {
                     Object.keys(App.state.contacts).forEach(peerId => {
                         const connObj = Network.connections[peerId];
+                        const connState = Network.connectionStates[peerId];
                         
-                        // Skip if already connected or currently connecting
-                        if (connObj?.conn?.open || Network.connectionStates[peerId] === 'connecting') {
+                        // Skip if already connected, connecting, or recently failed
+                        if (connObj?.conn?.open || connState === 'connecting' || connState === 'failed') {
                             return;
                         }
                         
-                        // Attempt reconnection for offline contacts
+                        // Attempt reconnection for offline contacts (with backoff)
                         if (!connObj || !connObj.conn || connObj.conn.disconnected) {
                             Network.debugLog('Auto-reconnect attempt', { peerId });
+                            // Use higher initial backoff for auto-reconnect to avoid spam
                             Network.connectWithRetry(peerId, 0, 5000);
                         }
                     });
                 }, Network.CONFIG.RECONNECT_INTERVAL);
+            },
+            
+            stopPingMonitor: () => {
+                if (Network.pingIntervalId) {
+                    clearInterval(Network.pingIntervalId);
+                    Network.pingIntervalId = null;
+                }
+                if (Network.reconnectIntervalId) {
+                    clearInterval(Network.reconnectIntervalId);
+                    Network.reconnectIntervalId = null;
+                }
             }
         };
 
@@ -1400,8 +1418,15 @@
                     return;
                 }
                 
-                // Sanitize name
+                // Sanitize name with warning if truncated
                 const sanitizedName = name.trim().substring(0, App.CONFIG.MAX_NAME_LENGTH);
+                if (name.trim().length > App.CONFIG.MAX_NAME_LENGTH) {
+                    Network.debugLog('Contact name truncated', { 
+                        original: name.trim(), 
+                        truncated: sanitizedName 
+                    });
+                    UI.showToast(`Name truncated to ${App.CONFIG.MAX_NAME_LENGTH} characters`);
+                }
                 
                 if (!App.state.contacts[peerId]) {
                     App.state.contacts[peerId] = { 
@@ -2779,6 +2804,7 @@
                 Media.scanner.stop().catch(() => {});
             }
             if (Network.peer) {
+                Network.stopPingMonitor();
                 Network.peer.destroy();
             }
         });
