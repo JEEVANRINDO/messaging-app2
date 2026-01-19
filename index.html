@@ -101,6 +101,17 @@
         .light-theme .smart-replies { background: #f0f2f5; border-top-color: #d1d7db; }
         .light-theme .smart-reply-chip { background: #ffffff; color: #111b21; border-color: #d1d7db; }
         .light-theme .smart-reply-chip:hover { background: #e9edef; }
+        
+        /* Search Highlight */
+        .search-highlight { background-color: #ffd700; color: #000; padding: 2px 4px; border-radius: 2px; }
+        
+        /* Connection Quality */
+        .connection-indicator { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+        .signal-bar { width: 3px; height: 8px; background: #8696a0; border-radius: 1px; }
+        .signal-bar.active { background: #00a884; }
+        .signal-good .signal-bar { background: #00a884; }
+        .signal-medium .signal-bar:nth-child(1), .signal-medium .signal-bar:nth-child(2) { background: #ffa500; }
+        .signal-poor .signal-bar:nth-child(1) { background: #ff4444; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -190,11 +201,32 @@
                         </div>
                     </div>
                     <div class="flex space-x-4 text-[#aebac1]">
-                        <button onclick="Media.startCall(false)"><i data-lucide="phone" class="w-5 h-5"></i></button>
-                        <button onclick="Media.startCall(true)"><i data-lucide="video" class="w-5 h-5"></i></button>
+                        <button onclick="UI.toggleSearch()" title="Search messages"><i data-lucide="search" class="w-5 h-5"></i></button>
+                        <button onclick="UI.toggleChatMenu()" title="More options"><i data-lucide="more-vertical" class="w-5 h-5"></i></button>
+                        <button onclick="Media.startCall(false)" title="Audio call"><i data-lucide="phone" class="w-5 h-5"></i></button>
+                        <button onclick="Media.startCall(true)" title="Video call"><i data-lucide="video" class="w-5 h-5"></i></button>
                     </div>
                 </div>
 
+                <!-- Chat Menu Dropdown -->
+                <div id="chat-menu" class="hidden absolute top-16 right-4 bg-[#202c33] border border-[#2a3942] rounded-lg shadow-xl z-50 min-w-[200px]">
+                    <button onclick="UI.exportChat()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3">
+                        <i data-lucide="download" class="w-4 h-4"></i> Export Chat
+                    </button>
+                    <button onclick="UI.showMediaGallery()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942]">
+                        <i data-lucide="image" class="w-4 h-4"></i> Media Gallery
+                    </button>
+                    <button onclick="UI.clearChat()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942] text-red-400">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Clear Chat
+                    </button>
+                </div>
+
+                <!-- Search Bar -->
+                <div id="search-bar" class="hidden px-4 py-2 bg-[#202c33] border-b border-[#2a3942] flex items-center gap-2">
+                    <input id="search-input" type="text" placeholder="Search messages..." class="flex-1 bg-[#2a3942] text-sm p-2 rounded-lg text-white focus:outline-none" oninput="UI.searchMessages()">
+                    <button onclick="UI.toggleSearch()" class="text-[#8696a0]"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                
                 <!-- Typing Indicator (below header) -->
                 <div id="typing-indicator-container" class="hidden px-4 py-2 bg-[#0b141a] border-b border-[#2a3942]">
                     <div class="typing-indicator">
@@ -267,6 +299,32 @@
     <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col"><video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video><div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe"><button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button><button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button><button onclick="Media.flipCameraView()" class="p-4 text-white"><i data-lucide="flip-horizontal" class="w-8 h-8"></i></button></div></div>
     <div id="video-overlay" class="hidden fixed inset-0 z-[140] bg-[#0b141a] flex flex-col p-4 pb-safe"><div class="flex-1 relative rounded-2xl overflow-hidden bg-[#111b21] mb-4"><video id="remote-video" autoplay playsinline class="w-full h-full object-cover z-0 relative bg-black"></video><div class="absolute top-4 right-4 w-28 h-40 bg-black rounded-xl border border-[#2a3942] overflow-hidden shadow-2xl z-30"><video id="local-video" autoplay playsinline muted class="w-full h-full object-cover mirror-x"></video></div></div><div class="h-24 flex items-center justify-center"><button onclick="Media.endCall()" class="p-5 bg-red-500 rounded-full text-white shadow-xl"><i data-lucide="phone-off" class="w-8 h-8"></i></button></div></div>
     <div id="incoming-call-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-center justify-center backdrop-blur-sm p-4"><div class="bg-[#202c33] p-6 rounded-2xl border border-[#2a3942] text-center max-w-sm w-full animate-bounce-slight"><div class="w-20 h-20 bg-[#2a3942] rounded-full flex items-center justify-center mx-auto mb-4 ring-2 ring-[#00a884]"><i data-lucide="phone-incoming" class="w-10 h-10 text-[#00a884] animate-pulse"></i></div><h3 id="incoming-call-title" class="text-xl font-bold mb-2">Incoming Call...</h3><p id="caller-id-display" class="text-[#8696a0] text-sm mb-8 truncate px-4"></p><div class="flex space-x-8 justify-center"><button id="btn-decline-call" class="flex flex-col items-center gap-2 text-red-400"><div class="p-4 bg-red-500/20 rounded-full"><i data-lucide="phone-off" class="w-8 h-8"></i></div><span class="text-xs">Decline</span></button><button id="btn-accept-call" class="flex flex-col items-center gap-2 text-[#00a884]"><div class="p-4 bg-[#00a884]/20 rounded-full"><i data-lucide="phone" class="w-8 h-8"></i></div><span class="text-xs">Accept</span></button></div></div></div>
+    
+    <!-- Media Gallery Modal -->
+    <div id="media-gallery-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col p-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-white font-bold text-lg">Media Gallery</h3>
+            <button onclick="UI.closeMediaGallery()" class="text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+        <div id="media-gallery-grid" class="flex-1 overflow-y-auto grid grid-cols-3 gap-2"></div>
+    </div>
+    
+    <!-- Export Modal -->
+    <div id="export-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full">
+            <h3 class="text-white font-bold mb-4 text-lg">Export Chat</h3>
+            <p class="text-[#8696a0] text-sm mb-6">Choose export format:</p>
+            <div class="space-y-3">
+                <button onclick="UI.exportChatJSON()" class="w-full py-3 bg-[#2a3942] text-white rounded-xl hover:bg-[#374045] flex items-center justify-center gap-2">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> Export as JSON
+                </button>
+                <button onclick="UI.exportChatText()" class="w-full py-3 bg-[#2a3942] text-white rounded-xl hover:bg-[#374045] flex items-center justify-center gap-2">
+                    <i data-lucide="file-text" class="w-5 h-5"></i> Export as Text
+                </button>
+                <button onclick="document.getElementById('export-modal').classList.add('hidden')" class="w-full py-3 bg-[#111b21] text-[#8696a0] rounded-xl">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const Utils = {
@@ -425,7 +483,10 @@
                     return;
                 }
                 Network.peer = new Peer(id, { pingInterval: 5000, config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] } });
-                Network.peer.on('open', () => UI.updateHeaderStatus(App.state.activeChat, "Online"));
+                Network.peer.on('open', () => { 
+                    UI.updateHeaderStatus(App.state.activeChat, "Online");
+                    Network.startPingMonitor();
+                });
                 Network.peer.on('connection', Network.handleConn);
                 Network.peer.on('call', Media.handleIncoming);
                 Network.peer.on('disconnected', () => { UI.updateHeaderStatus(App.state.activeChat, "Offline"); setTimeout(() => !Network.peer.destroyed && Network.peer.reconnect(), 2000); });
@@ -541,6 +602,25 @@
                     await Store.deleteReaction(reactionId);
                     if (App.state.activeChat === sender) {
                         UI.updateReactions(data.msgId);
+                    }
+                    return;
+                }
+                
+                if (data.type === 'ping') {
+                    const connObj = Network.connections[sender];
+                    if (connObj?.conn?.open) {
+                        connObj.conn.send({ type: 'pong', ts: data.ts });
+                    }
+                    return;
+                }
+                
+                if (data.type === 'pong') {
+                    const connObj = Network.connections[sender];
+                    if (connObj?.pingStart) {
+                        connObj.ping = Date.now() - data.ts;
+                        if (App.state.activeChat === sender) {
+                            UI.updateHeaderStatus(sender, 'Online');
+                        }
                     }
                     return;
                 }
@@ -721,6 +801,17 @@
                     await Store.deleteReaction(reactionId);
                     UI.updateReactions(msgId);
                 }
+            },
+            startPingMonitor: () => {
+                setInterval(() => {
+                    Object.keys(Network.connections).forEach(peerId => {
+                        const connObj = Network.connections[peerId];
+                        if (connObj?.conn?.open) {
+                            connObj.pingStart = Date.now();
+                            connObj.conn.send({ type: 'ping', ts: connObj.pingStart });
+                        }
+                    });
+                }, 5000);
             }
         };
 
@@ -1236,6 +1327,198 @@
                 UI.typingTimeout = setTimeout(() => UI.saveDraft(), 500);
             },
             
+            toggleSearch: () => {
+                const searchBar = document.getElementById('search-bar');
+                const searchInput = document.getElementById('search-input');
+                
+                if (searchBar.classList.contains('hidden')) {
+                    searchBar.classList.remove('hidden');
+                    searchInput.focus();
+                } else {
+                    searchBar.classList.add('hidden');
+                    searchInput.value = '';
+                    UI.clearSearchHighlights();
+                }
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            searchMessages: () => {
+                const query = document.getElementById('search-input').value.toLowerCase().trim();
+                const container = document.getElementById('messages-container');
+                const messages = container.querySelectorAll('[id^="msg-"]');
+                
+                UI.clearSearchHighlights();
+                
+                if (!query) return;
+                
+                messages.forEach(msgEl => {
+                    const textContent = msgEl.textContent.toLowerCase();
+                    if (textContent.includes(query)) {
+                        const bubble = msgEl.querySelector('[class*="msg-"]');
+                        if (bubble) {
+                            // Simple highlight - wrap matching text
+                            const html = bubble.innerHTML;
+                            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                            bubble.innerHTML = html.replace(regex, '<span class="search-highlight">$1</span>');
+                        }
+                    }
+                });
+            },
+            
+            clearSearchHighlights: () => {
+                const highlights = document.querySelectorAll('.search-highlight');
+                highlights.forEach(el => {
+                    const parent = el.parentNode;
+                    parent.replaceChild(document.createTextNode(el.textContent), el);
+                    parent.normalize();
+                });
+            },
+            
+            toggleChatMenu: () => {
+                const menu = document.getElementById('chat-menu');
+                menu.classList.toggle('hidden');
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                
+                // Close menu when clicking outside
+                if (!menu.classList.contains('hidden')) {
+                    setTimeout(() => {
+                        const closeHandler = (e) => {
+                            if (!menu.contains(e.target)) {
+                                menu.classList.add('hidden');
+                                document.removeEventListener('click', closeHandler);
+                            }
+                        };
+                        document.addEventListener('click', closeHandler);
+                    }, 100);
+                }
+            },
+            
+            exportChat: () => {
+                document.getElementById('chat-menu').classList.add('hidden');
+                document.getElementById('export-modal').classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            exportChatJSON: async () => {
+                if (!App.state.activeChat) return;
+                
+                const messages = await Store.getMessages(App.state.activeChat);
+                const contact = App.state.contacts[App.state.activeChat];
+                
+                const exportData = {
+                    contact: contact?.name || App.state.activeChat,
+                    peerId: App.state.activeChat,
+                    exportDate: new Date().toISOString(),
+                    messageCount: messages.length,
+                    messages: messages.map(m => ({
+                        id: m.id,
+                        type: m.type,
+                        direction: m.direction,
+                        content: typeof m.content === 'string' ? m.content : '[Media]',
+                        timestamp: new Date(m.timestamp).toISOString(),
+                        status: m.status
+                    }))
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `chat-${contact?.name || App.state.activeChat}-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                document.getElementById('export-modal').classList.add('hidden');
+                UI.showToast('Chat exported as JSON!');
+            },
+            
+            exportChatText: async () => {
+                if (!App.state.activeChat) return;
+                
+                const messages = await Store.getMessages(App.state.activeChat);
+                const contact = App.state.contacts[App.state.activeChat];
+                
+                let text = `Chat Export: ${contact?.name || App.state.activeChat}\n`;
+                text += `Export Date: ${new Date().toISOString()}\n`;
+                text += `Total Messages: ${messages.length}\n`;
+                text += `${'='.repeat(50)}\n\n`;
+                
+                messages.forEach(m => {
+                    const time = new Date(m.timestamp).toLocaleString();
+                    const direction = m.direction === 'out' ? 'You' : contact?.name;
+                    const content = typeof m.content === 'string' ? m.content : `[${m.type}]`;
+                    text += `[${time}] ${direction}: ${content}\n`;
+                });
+                
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `chat-${contact?.name || App.state.activeChat}-${Date.now()}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                document.getElementById('export-modal').classList.add('hidden');
+                UI.showToast('Chat exported as text!');
+            },
+            
+            showMediaGallery: async () => {
+                if (!App.state.activeChat) return;
+                
+                document.getElementById('chat-menu').classList.add('hidden');
+                const modal = document.getElementById('media-gallery-modal');
+                const grid = document.getElementById('media-gallery-grid');
+                
+                const messages = await Store.getMessages(App.state.activeChat);
+                const mediaMessages = messages.filter(m => 
+                    (m.type === 'file' && m.content.mime?.startsWith('image')) ||
+                    (m.type === 'file' && m.content.mime?.startsWith('video'))
+                );
+                
+                if (mediaMessages.length === 0) {
+                    grid.innerHTML = '<div class="col-span-3 text-center text-[#8696a0] py-8">No media shared yet</div>';
+                } else {
+                    grid.innerHTML = mediaMessages.map(m => {
+                        const url = m.content.url || (m.content.blob ? Utils.addBlob(URL.createObjectURL(m.content.blob)) : '');
+                        if (!url) return '';
+                        
+                        if (m.content.mime?.startsWith('image')) {
+                            return `<div class="aspect-square bg-[#202c33] rounded overflow-hidden cursor-pointer" onclick="window.open('${url}', '_blank')">
+                                <img src="${url}" class="w-full h-full object-cover">
+                            </div>`;
+                        } else if (m.content.mime?.startsWith('video')) {
+                            return `<div class="aspect-square bg-[#202c33] rounded overflow-hidden cursor-pointer relative" onclick="window.open('${url}', '_blank')">
+                                <video src="${url}" class="w-full h-full object-cover"></video>
+                                <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                                    <i data-lucide="play-circle" class="w-12 h-12 text-white"></i>
+                                </div>
+                            </div>`;
+                        }
+                        return '';
+                    }).join('');
+                }
+                
+                modal.classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            closeMediaGallery: () => {
+                document.getElementById('media-gallery-modal').classList.add('hidden');
+            },
+            
+            clearChat: async () => {
+                if (!App.state.activeChat) return;
+                
+                if (confirm('Clear all messages in this chat? This cannot be undone.')) {
+                    await Store.deleteMessagesForPeer(App.state.activeChat);
+                    document.getElementById('messages-container').innerHTML = '';
+                    document.getElementById('chat-menu').classList.add('hidden');
+                    UI.showToast('Chat cleared!');
+                }
+            },
+            
             closeChat: () => {
                 document.getElementById('chat-area').classList.add('hidden');
                 document.getElementById('sidebar-panel').classList.remove('hidden');
@@ -1253,7 +1536,30 @@
             
             updateHeaderStatus: (peerId, status) => {
                 if (App.state.activeChat === peerId) {
-                    document.getElementById('chat-header-status').innerText = status;
+                    const statusEl = document.getElementById('chat-header-status');
+                    
+                    // Show connection quality if online
+                    if (status === 'Online' && Network.connections[peerId]?.conn) {
+                        const ping = Network.connections[peerId].ping || 0;
+                        let quality = 'Good';
+                        let signalClass = 'signal-good';
+                        
+                        if (ping > 200) {
+                            quality = 'Poor';
+                            signalClass = 'signal-poor';
+                        } else if (ping > 100) {
+                            quality = 'Medium';
+                            signalClass = 'signal-medium';
+                        }
+                        
+                        statusEl.innerHTML = `Online <span class="connection-indicator ${signalClass}">
+                            <span class="signal-bar"></span>
+                            <span class="signal-bar"></span>
+                            <span class="signal-bar"></span>
+                        </span> ${ping > 0 ? `(${ping}ms)` : ''}`;
+                    } else {
+                        statusEl.innerText = status;
+                    }
                 }
             },
             
