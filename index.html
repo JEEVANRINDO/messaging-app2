@@ -216,8 +216,9 @@
                     <div class="w-10 h-10 rounded-full bg-[#00a884] flex-shrink-0 flex items-center justify-center text-white font-bold" id="my-avatar">ME</div>
                     <div class="flex flex-col items-start min-w-0 overflow-hidden">
                         <span id="my-display-name" class="font-bold text-[#e9edef] text-sm truncate w-full">Me</span>
-                        <div class="flex items-center text-xs text-[#00a884]">
-                            <div id="status-indicator" class="w-2 h-2 rounded-full bg-green-500 mr-1 animate-pulse"></div> Online
+                        <div class="flex items-center text-xs" id="network-status-container">
+                            <div id="status-indicator" class="w-2 h-2 rounded-full bg-gray-500 mr-1"></div> 
+                            <span id="network-status-text">Connecting...</span>
                         </div>
                     </div>
                 </div>
@@ -244,7 +245,7 @@
                 <button onclick="App.exportIdentity()" class="flex items-center text-xs text-[#8696a0] hover:text-[#e9edef] transition-colors">
                     <i data-lucide="download-cloud" class="w-4 h-4 mr-1"></i> Backup Identity
                 </button>
-                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v18.3 Hotfix</span>
+                <span class="text-[10px] text-[#8696a0] font-mono opacity-50">v18.4 Stable</span>
             </div>
         </div>
 
@@ -379,7 +380,45 @@
     </div>
 
     <!-- MODALS -->
-    <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-white font-bold mb-4 text-lg">My Ghost ID</h3><div id="qrcode-container" class="bg-white p-4 rounded-xl mx-auto mb-4 w-fit flex justify-center items-center"></div><button onclick="document.getElementById('qr-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
+    <div id="qr-modal" class="hidden fixed inset-0 z-[120] bg-black/90 flex items-center justify-center p-4">
+        <div class="bg-[#202c33] rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+            <!-- Header -->
+            <div class="bg-[#00a884] p-4 text-center">
+                <h3 class="text-white font-bold text-lg">Scan to Connect</h3>
+                <p class="text-white/80 text-xs mt-1">Have your contact scan this code</p>
+            </div>
+            
+            <!-- QR Code -->
+            <div class="bg-white p-6 flex items-center justify-center">
+                <div id="qr-code-container" class="inline-block"></div>
+            </div>
+            
+            <!-- Info Section -->
+            <div class="p-6 space-y-4">
+                <div class="bg-[#111b21] rounded-lg p-4">
+                    <p class="text-[#8696a0] text-xs uppercase tracking-wide mb-2">Your Name</p>
+                    <p class="text-white font-bold text-lg" id="qr-display-name">-</p>
+                </div>
+                
+                <div class="bg-[#111b21] rounded-lg p-4">
+                    <p class="text-[#8696a0] text-xs uppercase tracking-wide mb-2">Your Peer ID</p>
+                    <p class="text-[#00a884] font-mono text-sm break-all" id="qr-display-id">-</p>
+                </div>
+                
+                <div class="flex items-start gap-2 text-xs text-[#8696a0] bg-[#111b21] rounded-lg p-3">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-[#00a884] flex-shrink-0 mt-0.5"></i>
+                    <p>This QR code contains only your peer ID. Your encryption keys are exchanged securely during connection.</p>
+                </div>
+            </div>
+            
+            <!-- Close Button -->
+            <div class="p-6 pt-0">
+                <button onclick="UI.closeQRModal()" class="w-full py-3 bg-[#00a884] hover:bg-[#008f6f] rounded-lg font-bold text-white transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
     <div id="scanner-modal" class="hidden fixed inset-0 z-[120] bg-black/95 flex flex-col items-center justify-center p-4"><div class="bg-[#202c33] p-4 rounded-2xl w-full max-w-sm text-center relative"><h3 class="text-white font-bold mb-4">Scan Peer QR</h3><div id="reader" class="w-full rounded-lg overflow-hidden bg-black"></div><button onclick="UI.stopScanner()" class="mt-4 w-full py-3 bg-red-500/20 text-red-400 rounded-xl font-bold">Cancel</button></div></div>
     <div id="safety-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4"><div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full text-center"><h3 class="text-xl font-bold mb-2">Safety Fingerprint</h3><p class="text-[#8696a0] text-xs mb-4">Verify this number with your peer.</p><div id="safety-number" class="font-mono-safe text-[#00a884] text-2xl font-bold mb-6 tracking-widest break-all"></div><button onclick="document.getElementById('safety-modal').classList.add('hidden')" class="w-full py-3 bg-[#2a3942] text-white rounded-xl">Close</button></div></div>
     <div id="camera-modal" class="hidden fixed inset-0 z-[100] bg-black flex flex-col"><video id="camera-preview" autoplay playsinline class="flex-1 w-full object-cover"></video><div class="h-32 bg-black/50 absolute bottom-0 w-full flex items-center justify-around pb-safe"><button onclick="Media.closeCamera()" class="p-4 text-white"><i data-lucide="x" class="w-8 h-8"></i></button><button onclick="Media.takePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center bg-white/20 active:bg-white"></button><button onclick="Media.flipCameraView()" class="p-4 text-white"><i data-lucide="flip-horizontal" class="w-8 h-8"></i></button></div></div>
@@ -707,6 +746,8 @@
             CONFIG: {
                 CONNECTION_TIMEOUT: 15000,        // 15 seconds
                 RECONNECT_INTERVAL: 30000,        // 30 seconds
+                RECONNECT_DELAY: 3000,            // 3 seconds
+                PEER_READY_RETRY_DELAY: 2000,     // 2 seconds
                 PING_INTERVAL: 5000,              // 5 seconds
                 MAX_RETRY_ATTEMPTS: 3,
                 INITIAL_BACKOFF: 1000,            // 1 second
@@ -739,16 +780,32 @@
                 }
             },
             init: async (id) => {
-                if(Network.peer) return;
-                if (typeof Peer === 'undefined') {
-                    console.warn('PeerJS not loaded, network features disabled');
-                    UI.showToast('Network features unavailable');
+                if (!id) {
+                    console.error('[Network] Cannot initialize without ID');
+                    UI.updateNetworkStatus('error');
                     return;
                 }
                 
+                if(Network.peer) {
+                    // Already initialized
+                    if (Network.peer.open) {
+                        UI.updateNetworkStatus('online');
+                    }
+                    return;
+                }
+                
+                if (typeof Peer === 'undefined') {
+                    console.warn('PeerJS not loaded, network features disabled');
+                    UI.showToast('Network features unavailable');
+                    UI.updateNetworkStatus('error');
+                    return;
+                }
+                
+                UI.updateNetworkStatus('connecting');
+                UI.setNetworkButtons(false);
+                
                 Network.debugLog('Initializing peer', { id });
                 
-                // Enhanced STUN/TURN configuration with fallbacks
                 const config = {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
@@ -766,7 +823,9 @@
                 
                 Network.peer.on('open', (peerId) => { 
                     Network.debugLog('Peer opened', { peerId });
-                    UI.updateHeaderStatus(App.state.activeChat, "Online");
+                    UI.updateNetworkStatus('online');
+                    UI.setNetworkButtons(true);
+                    UI.showToast('Network ready!');
                     Network.startPingMonitor();
                 });
                 
@@ -779,7 +838,8 @@
                 
                 Network.peer.on('disconnected', () => { 
                     Network.debugLog('Peer disconnected, attempting reconnect');
-                    UI.updateHeaderStatus(App.state.activeChat, "Offline"); 
+                    UI.updateNetworkStatus('connecting');
+                    UI.setNetworkButtons(false);
                     UI.showToast('Connection lost, reconnecting...');
                     setTimeout(() => {
                         if(!Network.peer.destroyed) {
@@ -792,11 +852,17 @@
                     Network.debugLog('Peer error', { error: err.type, message: err.message });
                     
                     if (err.type === 'peer-unavailable') {
+                        // Don't show error status for peer-unavailable (they might be offline)
                         UI.showToast('Peer is unavailable or offline');
                     } else if (err.type === 'network') {
+                        UI.updateNetworkStatus('error');
                         UI.showToast('Network error - check connection');
                     } else if (err.type === 'server-error') {
+                        UI.updateNetworkStatus('error');
                         UI.showToast('Server error - trying again...');
+                        setTimeout(() => {
+                            if (Network.peer) Network.peer.reconnect();
+                        }, Network.CONFIG.RECONNECT_DELAY);
                     } else {
                         UI.showToast(`Connection error: ${err.type}`);
                     }
@@ -815,38 +881,56 @@
                 UI.showToast('Connecting...');
                 Network.connectWithRetry(id);
             },
-            connectWithRetry: async (id, retries = 0, backoff = 1000) => {
+            connectWithRetry: async (id, retries = 0, backoff = Network.CONFIG.INITIAL_BACKOFF) => {
                 const cleanId = id.trim();
                 
-                // Detailed logging
                 Network.debugLog('Connection attempt', { 
                     scannedId: cleanId, 
                     myId: App.state.id,
                     match: cleanId === App.state.id,
-                    retries 
+                    retries,
+                    backoff
                 });
                 
-                // PROPER validation
+                // Validate inputs
                 if (!cleanId) {
                     UI.showToast('Invalid peer ID');
                     return;
                 }
                 
                 if (cleanId === App.state.id) {
-                    UI.showToast('Cannot connect to your own device');
-                    console.error('[Connection] Self-connection attempted:', { cleanId, myId: App.state.id });
+                    UI.showToast('Cannot connect to yourself');
+                    Network.debugLog('Self-connection attempt blocked', { cleanId, myId: App.state.id });
+                    return;
+                }
+                
+                // Check if our own peer is ready
+                if (!Network.peer || !Network.peer.open) {
+                    UI.showToast('Your network is not ready yet. Please wait...');
+                    Network.debugLog('Local peer not ready', { 
+                        peerExists: !!Network.peer, 
+                        peerOpen: Network.peer?.open 
+                    });
+                    
+                    // Try to initialize if needed
+                    if (!Network.peer && App.state.id) {
+                        await Network.init(App.state.id);
+                    }
+                    
+                    // Retry after peer opens
+                    setTimeout(() => Network.connectWithRetry(cleanId, retries, backoff), Network.CONFIG.PEER_READY_RETRY_DELAY);
                     return;
                 }
                 
                 // Check if already connected
                 if (Network.connections[cleanId]?.conn?.open && Network.connections[cleanId]?.handshakeComplete) {
-                    Network.debugLog('Already connected', { id: cleanId });
                     UI.showToast('Already connected!');
                     UI.loadChat(cleanId);
+                    Network.debugLog('Already connected', { peerId: cleanId });
                     return;
                 }
                 
-                // Set connection state to connecting
+                // Set connection state
                 Network.connectionStates[cleanId] = 'connecting';
                 UI.updateConnectionState(cleanId, 'connecting');
                 
@@ -869,20 +953,23 @@
                         Network.connections[cleanId].handshakeComplete = false;
                     }
 
-                    // Set timeout for connection attempt
+                    // Connection timeout handler
                     const connectionTimeout = setTimeout(() => {
                         if (!Network.connections[cleanId]?.handshakeComplete) {
                             Network.debugLog('Connection timeout', { id: cleanId, retries });
                             conn.close();
                             
                             if (retries < Network.CONFIG.MAX_RETRY_ATTEMPTS) {
-                                const nextBackoff = backoff * 2; // Exponential backoff
-                                UI.showToast(`Retrying connection... (${retries + 1}/${Network.CONFIG.MAX_RETRY_ATTEMPTS})`);
+                                const nextBackoff = backoff * 2;
+                                UI.showToast(`Peer may be offline. Retrying... (${retries + 1}/${Network.CONFIG.MAX_RETRY_ATTEMPTS})`);
                                 setTimeout(() => Network.connectWithRetry(cleanId, retries + 1, nextBackoff), nextBackoff);
                             } else {
                                 Network.connectionStates[cleanId] = 'failed';
                                 UI.updateConnectionState(cleanId, 'failed');
-                                UI.showToast('Connection failed. Peer may be offline.');
+                                UI.showToast('Connection failed. Peer appears to be offline or unreachable.');
+                                
+                                // Clean up failed connection
+                                delete Network.connections[cleanId];
                             }
                         }
                     }, Network.CONFIG.CONNECTION_TIMEOUT);
@@ -891,8 +978,9 @@
                         Network.debugLog('Connection opened', { id: cleanId });
                         clearTimeout(connectionTimeout);
                         Network.connectionStates[cleanId] = 'handshaking';
+                        UI.updateConnectionState(cleanId, 'handshaking');
                         
-                        // Send handshake
+                        // Send handshake with public key
                         conn.send({ 
                             type: 'handshake', 
                             key: App.state.pubStr, 
@@ -907,14 +995,31 @@
                         Network.debugLog('Connection error', { id: cleanId, error: err });
                         clearTimeout(connectionTimeout);
                         
-                        if (retries < Network.CONFIG.MAX_RETRY_ATTEMPTS) {
-                            const nextBackoff = backoff * 2;
-                            UI.showToast(`Connection error, retrying... (${retries + 1}/${Network.CONFIG.MAX_RETRY_ATTEMPTS})`);
-                            setTimeout(() => Network.connectWithRetry(cleanId, retries + 1, nextBackoff), nextBackoff);
+                        // Special handling for peer-unavailable
+                        const errorType = err.type || err.message || 'unknown';
+                        
+                        if (errorType.includes('peer-unavailable') || errorType.includes('unavailable')) {
+                            if (retries < Network.CONFIG.MAX_RETRY_ATTEMPTS) {
+                                const nextBackoff = backoff * 2;
+                                UI.showToast(`Peer unavailable. They may still be connecting... (${retries + 1}/${Network.CONFIG.MAX_RETRY_ATTEMPTS})`);
+                                setTimeout(() => Network.connectWithRetry(cleanId, retries + 1, nextBackoff), nextBackoff);
+                            } else {
+                                Network.connectionStates[cleanId] = 'failed';
+                                UI.updateConnectionState(cleanId, 'failed');
+                                UI.showToast('Peer is offline or not ready yet. Ask them to check their network status.');
+                                delete Network.connections[cleanId];
+                            }
                         } else {
-                            Network.connectionStates[cleanId] = 'failed';
-                            UI.updateConnectionState(cleanId, 'failed');
-                            UI.showToast('Connection failed after multiple attempts');
+                            if (retries < Network.CONFIG.MAX_RETRY_ATTEMPTS) {
+                                const nextBackoff = backoff * 2;
+                                UI.showToast(`Connection error: ${errorType}. Retrying... (${retries + 1}/${Network.CONFIG.MAX_RETRY_ATTEMPTS})`);
+                                setTimeout(() => Network.connectWithRetry(cleanId, retries + 1, nextBackoff), nextBackoff);
+                            } else {
+                                Network.connectionStates[cleanId] = 'failed';
+                                UI.updateConnectionState(cleanId, 'failed');
+                                UI.showToast('Connection failed after multiple attempts');
+                                delete Network.connections[cleanId];
+                            }
                         }
                     });
                     
@@ -1001,20 +1106,26 @@
             },
             handleData: async (sender, data, conn) => {
                 if (data.type === 'handshake') {
-                    Network.debugLog('Received handshake', { from: sender });
+                    Network.debugLog('Received handshake', { from: sender, hasKey: !!data.key, hasName: !!data.name });
                     
                     try {
+                        if (!data.key) {
+                            throw new Error('Handshake missing public key');
+                        }
+                        
                         const pub = await Crypto.importKey(data.key);
                         const shared = await Crypto.deriveShared(pub);
                         const pubStr = btoa(String.fromCharCode(...new Uint8Array(await window.crypto.subtle.exportKey("spki", pub))));
                         
-                        await App.addContact(sender, data.name, pubStr);
+                        // Create/update contact with public key
+                        await App.addContact(sender, data.name || `Peer_${sender.substring(0, 6)}`, pubStr);
                         
                         Network.connections[sender] = { 
                             ...Network.connections[sender], 
                             conn, 
                             key: shared, 
                             seqOut: 0,
+                            lastSeq: 0,
                             handshakeComplete: true
                         };
                         
@@ -1027,7 +1138,7 @@
                             id: App.state.id 
                         });
                         
-                        Network.debugLog('Handshake complete, sending ack', { to: sender });
+                        Network.debugLog('Handshake complete', { peer: sender, hasSharedKey: !!shared });
                         
                         if (!App.state.activeChat) {
                             UI.loadChat(sender);
@@ -1041,10 +1152,12 @@
                         // Process any pending messages
                         await Network.processQueue(sender);
                     } catch (err) {
-                        Network.debugLog('Handshake error', { error: err });
+                        Network.debugLog('Handshake error', { error: err.message, stack: err.stack });
                         UI.showToast('Key exchange failed');
                         conn.close();
                     }
+                    
+                    return; // Important: prevent fall-through
                 }
                 
                 if (data.type === 'handshake-ack') {
@@ -2001,6 +2114,12 @@
             },
             
             startScanner: async () => {
+                // Check if network is ready
+                if (!Network.peer || !Network.peer.open) {
+                    UI.showToast('Network not ready. Please wait...');
+                    return;
+                }
+                
                 if (typeof Html5Qrcode === 'undefined') {
                     UI.showToast('QR Scanner library not available');
                     return;
@@ -2020,48 +2139,31 @@
                             
                             const scannedId = decodedText.trim();
                             
-                            console.log('[QR Scanner] Scanned ID:', scannedId);
-                            console.log('[QR Scanner] My ID:', App.state.id);
-                            console.log('[QR Scanner] Match:', scannedId === App.state.id);
+                            Network.debugLog('QR code scanned', { scannedId, myId: App.state.id });
                             
-                            if (!scannedId) {
-                                UI.showToast('Invalid QR code - empty ID');
-                                return;
-                            }
-                            
-                            // ✅ Validate ID format (16 hex characters)
+                            // Validate ID format (16 hex characters)
                             if (!/^[a-fA-F0-9]{16}$/.test(scannedId)) {
                                 UI.showToast('Invalid QR code format');
-                                console.error('[QR Scanner] Invalid ID format:', scannedId);
+                                Network.debugLog('Invalid ID format', { scannedId, expected: '16 hex chars' });
                                 return;
                             }
                             
                             // Check if scanning own ID
                             if (scannedId === App.state.id) {
                                 UI.showToast('Cannot scan your own QR code');
-                                console.warn('[QR Scanner] Self-scan detected');
+                                Network.debugLog('Self-scan attempt blocked', { scannedId });
                                 return;
                             }
                             
-                            // Check if already connected
-                            if (Network.connections[scannedId]?.conn?.open && Network.connections[scannedId]?.handshakeComplete) {
-                                UI.showToast('Already connected!');
-                                UI.loadChat(scannedId);
-                                return;
-                            }
+                            // DON'T create placeholder contact - let handshake do it
+                            // The handshake will receive the name and public key
                             
-                            // Add contact if not exists
-                            if (!App.state.contacts[scannedId]) {
-                                await App.addContact(scannedId, `Peer_${scannedId.substring(0, Math.min(6, scannedId.length))}`, '');
-                            }
-                            
-                            UI.showToast('Initiating connection...');
+                            UI.showToast('Connecting to peer...');
                             Network.connectWithRetry(scannedId);
-                            
-                            // Auto-open chat after slight delay
-                            setTimeout(() => UI.loadChat(scannedId), 500);
                         },
-                        () => {}
+                        () => {
+                            // Ignore continuous scan errors
+                        }
                     );
                     UI.showToast('Point camera at QR code');
                 } catch(e) {
@@ -2080,39 +2182,111 @@
             },
             
             showQR: () => {
-                const modal = document.getElementById('qr-modal');
-                const container = document.getElementById('qrcode-container');
-                container.innerHTML = '';
-                
-                if (typeof QRCode === 'undefined') {
-                    UI.showToast('QR Code library not available');
+                // Check if network is ready
+                if (!Network.peer || !Network.peer.open) {
+                    UI.showToast('Network not ready. Please wait...');
                     return;
                 }
                 
-                if (App.state.id) {
-                    // Show the unique peer ID in QR code
-                    console.log('[QR Code] Generating QR for ID:', App.state.id);
+                const modal = document.getElementById('qr-modal');
+                const qrContainer = document.getElementById('qr-code-container');
+                const displayName = document.getElementById('qr-display-name');
+                const displayId = document.getElementById('qr-display-id');
+                
+                modal.classList.remove('hidden');
+                qrContainer.innerHTML = '';
+                
+                if (displayName) displayName.innerText = App.state.name || 'Unknown';
+                if (displayId) displayId.innerText = App.state.id || 'Not Available';
+                
+                if (typeof QRCode !== 'undefined') {
+                    Network.debugLog('Generating QR code', { id: App.state.id, peerOpen: Network.peer.open });
                     
-                    new QRCode(container, {
+                    new QRCode(qrContainer, {
                         text: App.state.id,
-                        width: 256,
-                        height: 256,
-                        colorDark: "#000000",
-                        colorLight: "#ffffff",
+                        width: 200,
+                        height: 200,
+                        colorDark: '#000000',
+                        colorLight: '#ffffff',
                         correctLevel: QRCode.CorrectLevel.H
                     });
                     
-                    // Show ID and name for verification
-                    const infoDiv = document.createElement('div');
-                    infoDiv.className = 'mt-4 text-xs text-[#8696a0]';
-                    infoDiv.innerHTML = `
-                        <div class="mb-2"><strong>Name:</strong> ${Utils.escapeHTML(App.state.name)}</div>
-                        <div class="font-mono text-[10px] break-all"><strong>ID:</strong> ${App.state.id}</div>
-                    `;
-                    container.appendChild(infoDiv);
-                    
-                    modal.classList.remove('hidden');
+                    // Recreate lucide icons for the modal
+                    if (typeof lucide !== 'undefined') {
+                        setTimeout(() => lucide.createIcons(), 100);
+                    }
+                } else {
+                    qrContainer.innerHTML = '<p class="text-red-400 text-sm p-4">QRCode library not loaded</p>';
                 }
+            },
+            
+            closeQRModal: () => {
+                document.getElementById('qr-modal').classList.add('hidden');
+            },
+            
+            updateNetworkStatus: (status) => {
+                const indicator = document.getElementById('status-indicator');
+                const statusText = document.getElementById('network-status-text');
+                const container = document.getElementById('network-status-container');
+                
+                if (!indicator || !statusText || !container) return;
+                
+                const statusConfig = {
+                    'connecting': {
+                        color: 'bg-yellow-500',
+                        text: 'Connecting...',
+                        textColor: 'text-yellow-500',
+                        animate: true
+                    },
+                    'online': {
+                        color: 'bg-green-500',
+                        text: 'Online',
+                        textColor: 'text-[#00a884]',
+                        animate: false
+                    },
+                    'offline': {
+                        color: 'bg-red-500',
+                        text: 'Offline',
+                        textColor: 'text-red-400',
+                        animate: false
+                    },
+                    'error': {
+                        color: 'bg-red-500',
+                        text: 'Network Error',
+                        textColor: 'text-red-400',
+                        animate: true
+                    }
+                };
+                
+                const config = statusConfig[status] || statusConfig.connecting;
+                
+                indicator.className = `w-2 h-2 rounded-full ${config.color} mr-1`;
+                if (config.animate) {
+                    indicator.classList.add('animate-pulse');
+                }
+                
+                statusText.textContent = config.text;
+                container.className = `flex items-center text-xs ${config.textColor}`;
+            },
+            
+            setNetworkButtons: (enabled) => {
+                const buttons = [
+                    document.querySelector('[onclick*="showQR"]'),
+                    document.querySelector('[onclick*="startScanner"]'),
+                    document.querySelector('[onclick*="toggleAddContact"]')
+                ];
+                
+                buttons.forEach(btn => {
+                    if (btn) {
+                        if (enabled) {
+                            btn.disabled = false;
+                            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            btn.disabled = true;
+                            btn.classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+                    }
+                });
             },
             
             filterContacts: () => {
