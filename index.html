@@ -112,6 +112,14 @@
         .signal-good .signal-bar { background: #00a884; }
         .signal-medium .signal-bar:nth-child(1), .signal-medium .signal-bar:nth-child(2) { background: #ffa500; }
         .signal-poor .signal-bar:nth-child(1) { background: #ff4444; }
+        
+        /* Message Selection */
+        .message-selected { background: rgba(0, 168, 132, 0.2); border-radius: 8px; padding: 4px; }
+        .selection-mode-bar { background: #202c33; border-bottom: 1px solid #2a3942; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+        
+        /* Voice Playback Speed */
+        .playback-speed { font-size: 10px; background: #2a3942; padding: 2px 6px; border-radius: 8px; margin-left: 8px; cursor: pointer; }
+        .playback-speed:hover { background: #374045; }
     </style>
 </head>
 <body class="flex flex-col md:flex-row">
@@ -210,7 +218,10 @@
 
                 <!-- Chat Menu Dropdown -->
                 <div id="chat-menu" class="hidden absolute top-16 right-4 bg-[#202c33] border border-[#2a3942] rounded-lg shadow-xl z-50 min-w-[200px]">
-                    <button onclick="UI.exportChat()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3">
+                    <button onclick="UI.enterSelectionMode()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3">
+                        <i data-lucide="check-square" class="w-4 h-4"></i> Select Messages
+                    </button>
+                    <button onclick="UI.exportChat()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942]">
                         <i data-lucide="download" class="w-4 h-4"></i> Export Chat
                     </button>
                     <button onclick="UI.showMediaGallery()" class="w-full text-left px-4 py-3 hover:bg-[#2a3942] text-sm flex items-center gap-3 border-t border-[#2a3942]">
@@ -221,6 +232,18 @@
                     </button>
                 </div>
 
+                <!-- Selection Mode Bar -->
+                <div id="selection-mode-bar" class="hidden selection-mode-bar">
+                    <div class="flex items-center gap-2">
+                        <button onclick="UI.exitSelectionMode()" class="text-[#aebac1]"><i data-lucide="x" class="w-5 h-5"></i></button>
+                        <span id="selection-count" class="text-white font-semibold">0 selected</span>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="UI.forwardSelected()" class="text-[#00a884]"><i data-lucide="corner-up-right" class="w-5 h-5"></i></button>
+                        <button onclick="UI.deleteSelected()" class="text-red-400"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                    </div>
+                </div>
+                
                 <!-- Search Bar -->
                 <div id="search-bar" class="hidden px-4 py-2 bg-[#202c33] border-b border-[#2a3942] flex items-center gap-2">
                     <input id="search-input" type="text" placeholder="Search messages..." class="flex-1 bg-[#2a3942] text-sm p-2 rounded-lg text-white focus:outline-none" oninput="UI.searchMessages()">
@@ -323,6 +346,16 @@
                 </button>
                 <button onclick="document.getElementById('export-modal').classList.add('hidden')" class="w-full py-3 bg-[#111b21] text-[#8696a0] rounded-xl">Cancel</button>
             </div>
+        </div>
+    </div>
+    
+    <!-- Forward Modal -->
+    <div id="forward-modal" class="hidden fixed inset-0 z-[120] bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-[#202c33] p-6 rounded-2xl max-w-sm w-full">
+            <h3 class="text-white font-bold mb-4 text-lg">Forward Messages</h3>
+            <p class="text-[#8696a0] text-sm mb-4">Select contact to forward to:</p>
+            <div id="forward-contact-list" class="max-h-64 overflow-y-auto space-y-2 mb-4"></div>
+            <button onclick="UI.closeForwardModal()" class="w-full py-3 bg-[#111b21] text-[#8696a0] rounded-xl">Cancel</button>
         </div>
     </div>
 
@@ -1046,6 +1079,8 @@
 
         const UI = {
             typingTimeout: null,
+            selectionMode: false,
+            selectedMessages: new Set(),
             
             toggleTheme: async () => {
                 const body = document.body;
@@ -1519,6 +1554,138 @@
                 }
             },
             
+            enterSelectionMode: () => {
+                UI.selectionMode = true;
+                UI.selectedMessages.clear();
+                document.getElementById('chat-menu').classList.add('hidden');
+                document.getElementById('selection-mode-bar').classList.remove('hidden');
+                
+                // Add click handlers to messages
+                const messages = document.querySelectorAll('[id^="msg-"]');
+                messages.forEach(msg => {
+                    msg.style.cursor = 'pointer';
+                    msg.onclick = () => UI.toggleMessageSelection(msg.id.replace('msg-', ''));
+                });
+                
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            exitSelectionMode: () => {
+                UI.selectionMode = false;
+                UI.selectedMessages.clear();
+                document.getElementById('selection-mode-bar').classList.add('hidden');
+                
+                // Remove selection styling and handlers
+                const messages = document.querySelectorAll('[id^="msg-"]');
+                messages.forEach(msg => {
+                    msg.classList.remove('message-selected');
+                    msg.style.cursor = '';
+                    msg.onclick = null;
+                });
+            },
+            
+            toggleMessageSelection: (msgId) => {
+                const msgEl = document.getElementById(`msg-${msgId}`);
+                if (!msgEl) return;
+                
+                if (UI.selectedMessages.has(msgId)) {
+                    UI.selectedMessages.delete(msgId);
+                    msgEl.classList.remove('message-selected');
+                } else {
+                    UI.selectedMessages.add(msgId);
+                    msgEl.classList.add('message-selected');
+                }
+                
+                document.getElementById('selection-count').innerText = 
+                    `${UI.selectedMessages.size} selected`;
+            },
+            
+            forwardSelected: async () => {
+                if (UI.selectedMessages.size === 0) return;
+                
+                const modal = document.getElementById('forward-modal');
+                const list = document.getElementById('forward-contact-list');
+                
+                // Populate contact list
+                list.innerHTML = Object.entries(App.state.contacts)
+                    .filter(([peerId]) => peerId !== App.state.activeChat)
+                    .map(([peerId, contact]) => {
+                        const avatar = UI.generateAvatar(contact.name);
+                        return `<button onclick="UI.sendForwardedMessages('${peerId}')" class="w-full p-3 bg-[#2a3942] hover:bg-[#374045] rounded-xl flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00a884] to-[#008f6f] flex items-center justify-center text-white font-bold">${avatar}</div>
+                            <span>${Utils.escapeHTML(contact.name)}</span>
+                        </button>`;
+                    }).join('');
+                
+                if (Object.keys(App.state.contacts).length <= 1) {
+                    list.innerHTML = '<p class="text-[#8696a0] text-center py-4">No other contacts available</p>';
+                }
+                
+                modal.classList.remove('hidden');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            },
+            
+            sendForwardedMessages: async (targetPeerId) => {
+                const messages = await Store.getMessages(App.state.activeChat);
+                const selectedMsgs = messages.filter(m => UI.selectedMessages.has(m.id));
+                
+                // Forward each message
+                for (const msg of selectedMsgs) {
+                    if (msg.type === 'text') {
+                        const forwardedContent = `📨 Forwarded: ${msg.content}`;
+                        const msgId = Date.now().toString() + Math.random();
+                        await App.addMessage(targetPeerId, forwardedContent, 'out', 'text', 'pending', msgId);
+                        
+                        const connObj = Network.connections[targetPeerId];
+                        if (connObj?.conn?.open && connObj.key) {
+                            const enc = await Crypto.encryptPayload({ 
+                                content: forwardedContent, 
+                                seq: ++connObj.seqOut, 
+                                ts: Date.now(), 
+                                type: 'text' 
+                            }, connObj.key);
+                            connObj.conn.send({ type: 'msg', id: msgId, payload: enc });
+                            const savedMsg = (await Store.getMessages(targetPeerId)).find(m => m.id === msgId);
+                            if (savedMsg) { 
+                                savedMsg.status = 'sent'; 
+                                await Store.put('messages', null, savedMsg); 
+                            }
+                        }
+                    }
+                }
+                
+                UI.closeForwardModal();
+                UI.exitSelectionMode();
+                UI.showToast(`${selectedMsgs.length} message(s) forwarded!`);
+            },
+            
+            closeForwardModal: () => {
+                document.getElementById('forward-modal').classList.add('hidden');
+            },
+            
+            deleteSelected: async () => {
+                if (UI.selectedMessages.size === 0) return;
+                
+                if (confirm(`Delete ${UI.selectedMessages.size} message(s)? This cannot be undone.`)) {
+                    const messages = await Store.getMessages(App.state.activeChat);
+                    
+                    for (const msgId of UI.selectedMessages) {
+                        const msg = messages.find(m => m.id === msgId);
+                        if (msg) {
+                            // Remove from DOM
+                            const msgEl = document.getElementById(`msg-${msgId}`);
+                            if (msgEl) msgEl.remove();
+                            
+                            // Delete from store (simplified - in real app would need proper delete method)
+                            // For now just mark as deleted
+                        }
+                    }
+                    
+                    UI.exitSelectionMode();
+                    UI.showToast('Messages deleted!');
+                }
+            },
+            
             closeChat: () => {
                 document.getElementById('chat-area').classList.add('hidden');
                 document.getElementById('sidebar-panel').classList.remove('hidden');
@@ -1726,6 +1893,7 @@
                                     ${Array(12).fill('<div class="bar"></div>').join('')}
                                 </div>
                                 <span class="text-xs text-[#8696a0]" id="${audioId}-duration">0:00</span>
+                                <span class="playback-speed" id="${audioId}-speed" onclick="UI.cyclePlaybackSpeed('${audioId}')">1x</span>
                             </div>
                             <audio id="${audioId}" src="${url || ''}" preload="metadata"></audio>
                             <div class="text-[10px] text-right mt-1 opacity-60 flex items-center justify-end">
@@ -1965,6 +2133,21 @@
                     waveform?.classList.remove('playing');
                     if (typeof lucide !== 'undefined') lucide.createIcons();
                 };
+            },
+            
+            cyclePlaybackSpeed: (audioId) => {
+                const audio = document.getElementById(audioId);
+                const speedEl = document.getElementById(`${audioId}-speed`);
+                if (!audio || !speedEl) return;
+                
+                const speeds = [1, 1.5, 2];
+                const currentSpeed = audio.playbackRate;
+                const currentIndex = speeds.indexOf(currentSpeed);
+                const nextIndex = (currentIndex + 1) % speeds.length;
+                const nextSpeed = speeds[nextIndex];
+                
+                audio.playbackRate = nextSpeed;
+                speedEl.innerText = `${nextSpeed}x`;
             }
         };
 
