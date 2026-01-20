@@ -1182,7 +1182,13 @@
                 }
                 
                 // Now add/update with current peer ID
-                App.state.contacts[peerId] = { name: sanitizedName, pubStr, lastSeen: Date.now() };
+                // Preserve existing contact fields (lastMessage, unread, draft) if contact exists
+                App.state.contacts[peerId] = { 
+                    ...App.state.contacts[peerId],  // Preserve existing fields
+                    name: sanitizedName, 
+                    pubStr, 
+                    lastSeen: Date.now() 
+                };
                 await Store.put('config', 'contacts', App.state.contacts);
                 UI.renderContactList();
             },
